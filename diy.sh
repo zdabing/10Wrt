@@ -80,8 +80,10 @@ echo ">>> 安装 feeds..."
 ./scripts/feeds install -a
 
 # ============================================================
-# 辅助函数
+# 第三方插件
 # ============================================================
+
+mkdir -p package/new
 
 clone_or_warn() {
     local repo="$1" dst="$2" name="$3"
@@ -92,37 +94,10 @@ clone_or_warn() {
     fi
 }
 
-# ============================================================
-# 第三方插件 - 从 QiuSimons/OpenWrt-Add 批量获取
-# ============================================================
-
-mkdir -p package/new
-
-echo ">>> 克隆 QiuSimons/OpenWrt-Add 软件包合集..."
-OPENWRT_ADD_DIR="package/new"
-if git clone --depth 1 https://github.com/QiuSimons/OpenWrt-Add.git "$OPENWRT_ADD_DIR/openwrt-add" 2>/dev/null; then
-    # 将合集目录下所有包软链接到 package/new/ 下（跳过非包目录）
-    pushd "$OPENWRT_ADD_DIR" >/dev/null
-    for pkg in openwrt-add/*/; do
-        pkgname=$(basename "$pkg")
-        # 跳过非包目录（dotfiles、脚本、仓库根目录）
-        [ -f "${pkg}Makefile" ] || [ -f "${pkg}README.md" ] || continue
-        rm -rf "$pkgname" 2>/dev/null || true
-        mv "$pkg" "$pkgname"
-    done
-    rm -rf openwrt-add
-    popd >/dev/null
-    echo ">>> QiuSimons/OpenWrt-Add 已展开到 package/new/"
-else
-    echo "!!! 警告：OpenWrt-Add 克隆失败，回退逐个克隆..."
-    # 回退：逐个克隆必须的包
-    clone_or_warn "https://github.com/timsaya/openwrt-bandix.git"   "package/new/bandix"    "bandix 后端"
-    clone_or_warn "https://github.com/sbwml/luci-app-quickfile.git" "package/new/quickfile" "luci-app-quickfile"
-    clone_or_warn "https://github.com/sbwml/luci-app-mosdns.git"    "package/new/mosdns"    "luci-app-mosdns"
-    clone_or_warn "https://github.com/timsaya/luci-app-bandix.git"  "package/new/bandix-luci" "luci-app-bandix"
-fi
-
-# ---- 额外包（不在 QiuSimons 合集里的）----
+clone_or_warn "https://github.com/timsaya/openwrt-bandix.git"     "package/new/bandix"    "bandix 后端"
+clone_or_warn "https://github.com/timsaya/luci-app-bandix.git"    "package/new/bandix-luci" "luci-app-bandix（前端）"
+clone_or_warn "https://github.com/sbwml/luci-app-quickfile.git"   "package/new/quickfile" "luci-app-quickfile"
+clone_or_warn "https://github.com/sbwml/luci-app-mosdns.git"      "package/new/mosdns"    "luci-app-mosdns"
 clone_or_warn "https://github.com/eamonxg/luci-theme-aurora.git"  "package/new/aurora"    "luci-theme-aurora"
 
 # 将默认主题从 bootstrap 改为 aurora
