@@ -9,7 +9,7 @@ set -e
 echo ">>> [diy.sh] 开始自定义配置..."
 
 # ---- 编译优化：Os（体积优先）→ O2（性能优先）----
-sed -i 's/Os/O2/g' include/target.mk
+sed -i 's/-Os/-O2/g' include/target.mk
 echo ">>> 编译优化级别：Os → O2"
 
 # ---- 移除 SNAPSHOT 标签 ----
@@ -62,8 +62,9 @@ rm -rf "$GOLANG_BACKUP"
 
 # ---- 2. Node.js 替换为预编译版 ----
 echo ">>> 替换 Node.js 为预编译版..."
+NODE_BACKUP=$(mktemp -d)
+cp -rf feeds/packages/lang/node "$NODE_BACKUP/" 2>/dev/null || true
 rm -rf feeds/packages/lang/node
-# 从 QiuSimons/OpenWrt-Add 拉取预编译 Node（只取需要的目录）
 TMP_ADD=$(mktemp -d)
 git clone --depth 1 --filter=blob:none --sparse https://github.com/QiuSimons/OpenWrt-Add.git "$TMP_ADD" 2>/dev/null
 (cd "$TMP_ADD" && git sparse-checkout set feeds_packages_lang_node-prebuilt)
@@ -71,9 +72,10 @@ if [ -d "$TMP_ADD/feeds_packages_lang_node-prebuilt" ]; then
     cp -rf "$TMP_ADD/feeds_packages_lang_node-prebuilt" feeds/packages/lang/node
     echo ">>> Node.js 已替换为预编译版"
 else
-    echo "!!! 警告：Node.js 预编译版拉取失败，使用原始版本"
+    echo "!!! 警告：Node.js 预编译版拉取失败，恢复原始版本"
+    cp -rf "$NODE_BACKUP/node" feeds/packages/lang/ 2>/dev/null || true
 fi
-rm -rf "$TMP_ADD"
+rm -rf "$TMP_ADD" "$NODE_BACKUP"
 
 # ---- 安装 feeds ----
 echo ">>> 安装 feeds..."
@@ -94,11 +96,21 @@ clone_or_warn() {
     fi
 }
 
-clone_or_warn "https://github.com/timsaya/openwrt-bandix.git"     "package/new/bandix"    "bandix 后端"
+clone_or_warn "https://github.com/timsaya/openwrt-bandix.git"     "package/new/bandix-tmp" "bandix 后端"
+# openwrt-bandix 仓库嵌套了 openwrt-bandix/ 子目录，需要展开
+if [ -d "package/new/bandix-tmp/openwrt-bandix" ]; then
+    mkdir -p package/new/bandix
+    cp -rf package/new/bandix-tmp/openwrt-bandix/. package/new/bandix/
+    rm -rf package/new/bandix-tmp
+    echo ">>> bandix 后端目录已展开"
+elif [ -d "package/new/bandix-tmp" ]; then
+    mv package/new/bandix-tmp package/new/bandix
+fi
 clone_or_warn "https://github.com/timsaya/luci-app-bandix.git"    "package/new/bandix-luci" "luci-app-bandix（前端）"
 clone_or_warn "https://github.com/sbwml/luci-app-quickfile.git"   "package/new/quickfile" "luci-app-quickfile"
 clone_or_warn "https://github.com/sbwml/luci-app-mosdns.git"      "package/new/mosdns"    "luci-app-mosdns"
 clone_or_warn "https://github.com/eamonxg/luci-theme-aurora.git"  "package/new/aurora"    "luci-theme-aurora"
+clone_or_warn "https://github.com/nikkinikki-org/OpenWrt-nikki.git" "package/new/nikki"    "luci-app-nikki"
 
 # 将默认主题从 bootstrap 改为 aurora
 if [ -d package/new/aurora ]; then

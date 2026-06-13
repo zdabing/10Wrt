@@ -51,8 +51,8 @@ jobs:
         uses: actions/cache@v4
         with:
           path: immortalwrt/dl
-          key: dl-immortalwrt
-          restore-keys: dl-
+          key: dl-immortalwrt-r5c
+          restore-keys: dl-immortalwrt-
 
       - name: 复制种子配置
         run: |
@@ -174,7 +174,7 @@ jobs:
           fi
           echo "固件目录: $FIRMWARE_DIR"
           ls -lh "$FIRMWARE_DIR"/
-          gh release create "$TAG" $FIRMWARE_DIR/*.img.gz $FIRMWARE_DIR/*.img $FIRMWARE_DIR/*.tar.gz 2>/dev/null \
+          gh release create "$TAG" $FIRMWARE_DIR/*.img.gz $FIRMWARE_DIR/*.img $FIRMWARE_DIR/*.tar.gz \
             --title "$TITLE" \
             --notes "### 管理地址: http://10.0.0.1" \
             --latest \
