@@ -6,7 +6,7 @@ on:
       version:
         description: 'ImmortalWrt 版本分支'
         required: false
-        default: 'openwrt-24.10'
+        default: 'openwrt-25.12'
         type: string
 
 concurrency:
