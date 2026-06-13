@@ -8,15 +8,6 @@ on:
         required: false
         default: 'openwrt-24.10'
         type: string
-  push:
-    branches: [main]
-    paths:
-      - 'configs/r5c.seed'
-      - 'diy.sh'
-      - '.github/workflows/build-r5c.yml'
-      - 'files/**'
-  schedule:
-    - cron: '0 30 1 * *'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}

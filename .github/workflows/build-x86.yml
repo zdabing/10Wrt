@@ -8,15 +8,6 @@ on:
         required: false
         default: 'openwrt-24.10'
         type: string
-  push:
-    branches: [main]
-    paths:
-      - 'configs/x86_64.seed'
-      - 'diy.sh'
-      - '.github/workflows/build-x86.yml'
-      - 'files/**'
-  schedule:
-    - cron: '0 0 * * 1'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
