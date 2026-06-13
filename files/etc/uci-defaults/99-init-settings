@@ -1,0 +1,20 @@
+#!/bin/sh
+# 首次启动自动配置：开启 Packet Steering（多队列网卡软中断均衡）
+uci -q get network.globals.packet_steering > /dev/null || {
+    uci set network.globals='globals'
+    uci set network.globals.packet_steering=1
+    uci commit network
+}
+
+# 时区设为 Asia/Shanghai
+uci set system.@system[0].timezone='CST-8'
+uci set system.@system[0].zonename='Asia/Shanghai'
+uci commit system
+
+# Luci 诊断目标改为国内站点
+uci set luci.diag.dns='www.baidu.com'
+uci set luci.diag.ping='www.baidu.com'
+uci set luci.diag.route='www.baidu.com'
+uci commit luci
+
+exit 0
