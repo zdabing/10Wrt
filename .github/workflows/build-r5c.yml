@@ -1,0 +1,137 @@
+name: Build NanoPi R5C
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'ImmortalWrt 版本分支'
+        required: false
+        default: 'openwrt-24.10'
+        type: string
+  push:
+    branches: [main]
+    paths:
+      - 'configs/r5c.seed'
+      - 'diy.sh'
+      - '.github/workflows/build-r5c.yml'
+      - 'files/**'
+  schedule:
+    - cron: '0 30 1 * *'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+
+    env:
+      IMMORTALWRT_REPO: https://github.com/immortalwrt/immortalwrt.git
+      IMMORTALWRT_VERSION: ${{ inputs.version || 'openwrt-24.10' }}
+
+    steps:
+      - name: 检出配置仓库
+        uses: actions/checkout@v4
+        with:
+          path: config
+
+      - name: 清理磁盘空间
+        run: |
+          sudo apt clean
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/share/boost
+          df -h
+
+      - name: 安装编译依赖
+        run: |
+          sudo apt update
+          sudo apt install -y --no-install-recommends \
+            build-essential bash curl file gawk gcc-multilib \
+            gettext git graphviz libelf-dev libncurses5-dev \
+            libssl-dev python3 python3-distutils python3-setuptools \
+            rsync swig unzip wget zlib1g-dev
+
+      - name: 检出 ImmortalWrt 源码
+        run: |
+          git clone --depth=1 -b ${{ env.IMMORTALWRT_VERSION }} \
+            ${{ env.IMMORTALWRT_REPO }} immortalwrt
+
+      - name: 还原 dl 缓存
+        uses: actions/cache@v4
+        with:
+          path: immortalwrt/dl
+          key: dl-immortalwrt
+          restore-keys: dl-
+
+      - name: 更新 feeds
+        run: |
+          cd immortalwrt
+          ./scripts/feeds update -a
+          ./scripts/feeds install -a
+
+      - name: 复制种子配置
+        run: |
+          cp config/configs/r5c.seed immortalwrt/.config
+
+      - name: 复制 files 覆盖层
+        run: |
+          if [ -d config/files ]; then
+            cp -rv config/files immortalwrt/
+          fi
+
+      - name: 执行 diy.sh 自定义脚本
+        run: |
+          cp config/diy.sh immortalwrt/
+          chmod +x immortalwrt/diy.sh
+          cd immortalwrt
+          ./diy.sh
+
+      - name: 展开配置
+        run: |
+          cd immortalwrt
+          make defconfig
+          echo "=== 关键配置项 ==="
+          grep -E '^(CONFIG_TARGET|CONFIG_PACKAGE_luci)' .config | sort
+
+      - name: 验证设备配置
+        run: |
+          cd immortalwrt
+          if ! grep -q "CONFIG_TARGET_rockchip_armv8_DEVICE_friendlyarm_nanopi-r5c=y" .config; then
+            echo "错误：R5C 设备未在 .config 中选中！"
+            grep 'CONFIG_TARGET.*DEVICE_' .config || echo "(无)"
+            exit 1
+          fi
+          echo "设备配置验证通过：friendlyarm_nanopi-r5c"
+
+      - name: 编译固件
+        run: |
+          cd immortalwrt
+          make -j$(nproc) V=s 2>&1 | tee build.log
+        timeout-minutes: 360
+
+      - name: 上传固件
+        uses: actions/upload-artifact@v4
+        with:
+          name: 10Wrt-r5c-${{ github.run_id }}
+          path: |
+            immortalwrt/bin/targets/**/*.img.gz
+            immortalwrt/bin/targets/**/*.img
+            immortalwrt/bin/targets/**/*.bin
+            immortalwrt/bin/targets/**/*.tar.gz
+            immortalwrt/bin/targets/**/immortalwrt-*-*
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: 生成固件清单
+        if: always()
+        run: |
+          echo "## 10Wrt NanoPi R5C 编译结果" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -d immortalwrt/bin/targets ]; then
+            echo "### 固件文件" >> $GITHUB_STEP_SUMMARY
+            find immortalwrt/bin/targets -type f \( \
+              -name "*.img.gz" -o -name "*.img" -o -name "*.bin" -o -name "*.tar.gz" \) | \
+              sort | sed 's/^/- /' >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 管理地址: http://10.0.0.1" >> $GITHUB_STEP_SUMMARY

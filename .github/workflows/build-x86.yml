@@ -1,16 +1,20 @@
-name: Build ImmortalWrt
+name: Build x86/64
 
 on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'ImmortalWrt 版本分支（标签或分支名）'
+        description: 'ImmortalWrt 版本分支'
         required: false
         default: 'openwrt-24.10'
         type: string
   push:
     branches: [main]
-  # 每周一凌晨自动构建
+    paths:
+      - 'configs/x86_64.seed'
+      - 'diy.sh'
+      - '.github/workflows/build-x86.yml'
+      - 'files/**'
   schedule:
     - cron: '0 0 * * 1'
 
@@ -20,19 +24,6 @@ concurrency:
 
 jobs:
   build:
-    strategy:
-      fail-fast: false
-      matrix:
-        target:
-          - name: x86_64
-            seed: x86_64.seed
-            label: x86/64
-            device_symbol: ''
-          - name: r5c
-            seed: r5c.seed
-            label: NanoPi R5C
-            device_symbol: CONFIG_TARGET_rockchip_armv8_DEVICE_friendlyarm_nanopi-r5c=y
-
     runs-on: ubuntu-22.04
 
     env:
@@ -55,64 +46,39 @@ jobs:
         run: |
           sudo apt update
           sudo apt install -y --no-install-recommends \
-            build-essential \
-            bash \
-            curl \
-            file \
-            gawk \
-            gcc-multilib \
-            gettext \
-            git \
-            graphviz \
-            libelf-dev \
-            libncurses5-dev \
-            libssl-dev \
-            python3 \
-            python3-distutils \
-            python3-setuptools \
-            rsync \
-            swig \
-            unzip \
-            wget \
-            zlib1g-dev
-          echo "依赖安装完成"
+            build-essential bash curl file gawk gcc-multilib \
+            gettext git graphviz libelf-dev libncurses5-dev \
+            libssl-dev python3 python3-distutils python3-setuptools \
+            rsync swig unzip wget zlib1g-dev
 
       - name: 检出 ImmortalWrt 源码
         run: |
           git clone --depth=1 -b ${{ env.IMMORTALWRT_VERSION }} \
             ${{ env.IMMORTALWRT_REPO }} immortalwrt
-          cd immortalwrt
-          echo "源码版本: $(git log --oneline -1)"
 
       - name: 还原 dl 缓存
         uses: actions/cache@v4
         with:
           path: immortalwrt/dl
           key: dl-immortalwrt
-          restore-keys: |
-            dl-
+          restore-keys: dl-
 
       - name: 更新 feeds
         run: |
           cd immortalwrt
           ./scripts/feeds update -a
           ./scripts/feeds install -a
-          echo "Feeds 更新完成"
 
       - name: 复制种子配置
         run: |
-          cp config/configs/${{ matrix.target.seed }} immortalwrt/.config
-          echo "已使用配置: ${{ matrix.target.seed }}"
+          cp config/configs/x86_64.seed immortalwrt/.config
 
-      # 复制自定义文件覆盖层（首次启动脚本等）
       - name: 复制 files 覆盖层
         run: |
           if [ -d config/files ]; then
             cp -rv config/files immortalwrt/
-            echo "自定义文件覆盖层已复制"
           fi
 
-      # 执行自定义脚本（修改默认 IP、添加包源等）
       - name: 执行 diy.sh 自定义脚本
         run: |
           cp config/diy.sh immortalwrt/
@@ -126,41 +92,17 @@ jobs:
           make defconfig
           echo "=== 关键配置项 ==="
           grep -E '^(CONFIG_TARGET|CONFIG_PACKAGE_luci)' .config | sort
-          echo "===================="
-
-      - name: 验证设备配置
-        if: ${{ matrix.target.device_symbol != '' }}
-        run: |
-          cd immortalwrt
-          if ! grep -q "${{ matrix.target.device_symbol }}" .config; then
-            echo "错误：目标设备未在 .config 中选中！"
-            echo "期望: ${{ matrix.target.device_symbol }}"
-            echo "实际包含的设备:"
-            grep 'CONFIG_TARGET.*DEVICE_' .config || echo "(无)"
-            exit 1
-          fi
-          echo "设备配置验证通过"
 
       - name: 编译固件
         run: |
           cd immortalwrt
-          nproc_val=$(nproc)
-          echo "使用 $nproc_val 线程并行编译"
-          make -j$nproc_val V=s 2>&1 | tee build.log
+          make -j$(nproc) V=s 2>&1 | tee build.log
         timeout-minutes: 360
-        continue-on-error: false
-
-      - name: 清理编译缓存
-        run: |
-          cd immortalwrt
-          # 保留 dl 目录（已缓存），清理临时对象
-          rm -rf build_dir/host staging_dir/host
-          echo "编译缓存已清理"
 
       - name: 上传固件
         uses: actions/upload-artifact@v4
         with:
-          name: immortalwrt-${{ matrix.target.name }}-${{ github.run_id }}
+          name: 10Wrt-x86_64-${{ github.run_id }}
           path: |
             immortalwrt/bin/targets/**/*.img.gz
             immortalwrt/bin/targets/**/*.img
@@ -173,15 +115,13 @@ jobs:
       - name: 生成固件清单
         if: always()
         run: |
-          echo "## ImmortalWrt ${{ matrix.target.label }} 编译结果" >> $GITHUB_STEP_SUMMARY
+          echo "## 10Wrt x86/64 编译结果" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           if [ -d immortalwrt/bin/targets ]; then
             echo "### 固件文件" >> $GITHUB_STEP_SUMMARY
             find immortalwrt/bin/targets -type f \( \
               -name "*.img.gz" -o -name "*.img" -o -name "*.bin" -o -name "*.tar.gz" \) | \
               sort | sed 's/^/- /' >> $GITHUB_STEP_SUMMARY
-          else
-            echo "⚠️ 未生成固件文件" >> $GITHUB_STEP_SUMMARY
           fi
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### 管理地址: http://10.0.0.1" >> $GITHUB_STEP_SUMMARY
