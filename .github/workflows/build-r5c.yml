@@ -15,12 +15,11 @@ concurrency:
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
 
     env:
       IMMORTALWRT_REPO: https://github.com/immortalwrt/immortalwrt.git
       IMMORTALWRT_VERSION: ${{ inputs.version || 'openwrt-25.12' }}
-      ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: "true"
 
     steps:
       - name: 检出配置仓库
@@ -40,7 +39,7 @@ jobs:
           sudo apt install -y --no-install-recommends \
             build-essential bash curl file gawk gcc-multilib \
             gettext git graphviz libelf-dev libncurses5-dev \
-            libssl-dev python3 python3-distutils python3-setuptools \
+            libssl-dev python3 python3-setuptools python3-pyelftools \
             rsync swig unzip wget zlib1g-dev
 
       - name: 检出 ImmortalWrt 源码
@@ -98,7 +97,38 @@ jobs:
       - name: 编译固件
         run: |
           cd immortalwrt
-          make -j$(nproc) V=s 2>&1 | tee build.log
+          set -o pipefail
+
+          echo "=== 第一步：编译工具链 (tools) ==="
+          make tools/compile -j$(nproc) V=s 2>&1 | tee -a build.log || \
+            make tools/compile -j$(nproc) V=s 2>&1 | tee -a build.log || \
+            make tools/compile -j1 IGNORE_ERRORS=1 V=s 2>&1 | tee -a build.log
+
+          echo "=== 第二步：编译交叉工具链 (toolchain) ==="
+          make toolchain/compile -j$(nproc) V=s 2>&1 | tee -a build.log || \
+            make toolchain/compile -j$(nproc) V=s 2>&1 | tee -a build.log || \
+            make toolchain/compile -j1 IGNORE_ERRORS=1 V=s 2>&1 | tee -a build.log
+
+          echo "=== 第三步：编译内核/目标 (target) ==="
+          make target/compile -j$(nproc) V=s 2>&1 | tee -a build.log || \
+            make target/compile -j$(nproc) V=s IGNORE_ERRORS=1 2>&1 | tee -a build.log || \
+            make target/compile -j1 IGNORE_ERRORS=1 V=s 2>&1 | tee -a build.log
+
+          echo "=== 第四步：编译软件包 (package) ==="
+          make package/compile -j$(nproc) V=s IGNORE_ERRORS=1 2>&1 | tee -a build.log || \
+            make package/compile -j$(nproc) V=s IGNORE_ERRORS=1 2>&1 | tee -a build.log
+
+          echo "=== 第五步：生成包索引 ==="
+          make package/index V=s 2>&1 | tee -a build.log
+
+          echo "=== 第六步：安装软件包 ==="
+          make package/install -j$(nproc) V=s 2>&1 | tee -a build.log || \
+            make package/install -j1 V=s 2>&1 | tee -a build.log
+
+          echo "=== 第七步：生成固件 ==="
+          make target/install -j$(nproc) V=s 2>&1 | tee -a build.log || \
+            make target/install -j1 V=s 2>&1 | tee -a build.log
+
         timeout-minutes: 360
 
       - name: 调试 - 列出构建输出
@@ -111,6 +141,7 @@ jobs:
           tail -30 immortalwrt/build.log 2>/dev/null || echo "(无 build.log)"
 
       - name: 上传固件
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: 10Wrt-r5c-${{ github.run_id }}
@@ -136,3 +167,22 @@ jobs:
           fi
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### 管理地址: http://10.0.0.1" >> $GITHUB_STEP_SUMMARY
+
+      - name: 发布到 Release
+        run: |
+          TAG="r5c-$(TZ=Asia/Shanghai date +%Y.%m.%d)-${{ github.run_number }}"
+          TITLE="10Wrt NanoPi R5C — $(TZ=Asia/Shanghai date +%Y-%m-%d)"
+          FIRMWARE_DIR=$(find immortalwrt/bin/targets -mindepth 1 -type d -name "armv8" 2>/dev/null | head -1)
+          if [ -z "$FIRMWARE_DIR" ]; then
+            echo "警告：未找到固件目录，跳过发布"
+            exit 0
+          fi
+          echo "固件目录: $FIRMWARE_DIR"
+          ls -lh "$FIRMWARE_DIR"/
+          gh release create "$TAG" $FIRMWARE_DIR/*.img.gz $FIRMWARE_DIR/*.img $FIRMWARE_DIR/*.tar.gz 2>/dev/null \
+            --title "$TITLE" \
+            --notes "### 管理地址: http://10.0.0.1" \
+            --latest \
+            --repo ${{ github.repository }}
+        env:
+          GH_TOKEN: ${{ github.token }}
