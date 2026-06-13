@@ -54,12 +54,6 @@ jobs:
           key: dl-immortalwrt
           restore-keys: dl-
 
-      - name: 更新 feeds
-        run: |
-          cd immortalwrt
-          ./scripts/feeds update -a
-          ./scripts/feeds install -a
-
       - name: 复制种子配置
         run: |
           cp config/configs/x86_64.seed immortalwrt/.config
