@@ -19,7 +19,8 @@ jobs:
 
     env:
       IMMORTALWRT_REPO: https://github.com/immortalwrt/immortalwrt.git
-      IMMORTALWRT_VERSION: ${{ inputs.version || 'openwrt-24.10' }}
+      IMMORTALWRT_VERSION: ${{ inputs.version || 'openwrt-25.12' }}
+      ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: "true"
 
     steps:
       - name: 检出配置仓库
@@ -89,6 +90,15 @@ jobs:
           cd immortalwrt
           make -j$(nproc) V=s 2>&1 | tee build.log
         timeout-minutes: 360
+
+      - name: 调试 - 列出构建输出
+        if: always()
+        run: |
+          echo "=== bin/targets 目录结构 ==="
+          find immortalwrt/bin/targets -type f 2>/dev/null | head -50 || echo "(空)"
+          echo ""
+          echo "=== build.log 最后 30 行 ==="
+          tail -30 immortalwrt/build.log 2>/dev/null || echo "(无 build.log)"
 
       - name: 上传固件
         uses: actions/upload-artifact@v4
