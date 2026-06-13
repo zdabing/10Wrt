@@ -14,6 +14,7 @@ tmp/
 # AI 助手缓存
 .reasonix/
 reasonix.toml
+.codegraph/
 
 # 系统文件
 .DS_Store
