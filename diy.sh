@@ -60,31 +60,32 @@ else
 fi
 rm -rf "$GOLANG_BACKUP"
 
-# ---- 2. Node.js 替换为预编译版 + bandix 后端 ----
-echo ">>> 从 QiuSimons/OpenWrt-Add 拉取预编译 Node + bandix..."
+# ---- 2. Node.js 替换为预编译版 ----
+echo ">>> 替换 Node.js 为预编译版..."
 rm -rf feeds/packages/lang/node
+# 从 QiuSimons/OpenWrt-Add 拉取预编译 Node（只取需要的目录）
 TMP_ADD=$(mktemp -d)
 git clone --depth 1 --filter=blob:none --sparse https://github.com/QiuSimons/OpenWrt-Add.git "$TMP_ADD" 2>/dev/null
-cd "$TMP_ADD" && git sparse-checkout set feeds_packages_lang_node-prebuilt openwrt-bandix && cd - >/dev/null
-
-# Node.js 预编译版
+cd "$TMP_ADD" && git sparse-checkout set feeds_packages_lang_node-prebuilt && cd - >/dev/null
 if [ -d "$TMP_ADD/feeds_packages_lang_node-prebuilt" ]; then
     cp -rf "$TMP_ADD/feeds_packages_lang_node-prebuilt" feeds/packages/lang/node
     echo ">>> Node.js 已替换为预编译版"
 else
     echo "!!! 警告：Node.js 预编译版拉取失败，使用原始版本"
 fi
-
-# bandix 后端（luci-app-bandix 依赖）
-if [ -d "$TMP_ADD/openwrt-bandix" ]; then
-    mkdir -p package/new/bandix
-    cp -rf "$TMP_ADD/openwrt-bandix" package/new/
-    echo ">>> bandix 后端已添加"
-else
-    echo "!!! 警告：bandix 后端拉取失败"
-fi
-
 rm -rf "$TMP_ADD"
+
+# ---- 3. bandix 后端（luci-app-bandix 依赖）----
+echo ">>> 添加 bandix 后端..."
+clone_or_warn_dep() {
+    local repo="$1" dst="$2" name="$3"
+    if git clone --depth 1 "$repo" "$dst" 2>/dev/null; then
+        echo ">>> 已添加 $name"
+    else
+        echo "!!! 警告：$name 拉取失败，依赖它的包可能编译失败"
+    fi
+}
+clone_or_warn_dep "https://github.com/timsaya/openwrt-bandix.git" "package/new/bandix" "bandix 后端"
 
 # ---- 安装 feeds ----
 echo ">>> 安装 feeds..."
