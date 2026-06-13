@@ -5,9 +5,9 @@
 | **Runner** | GitHub `ubuntu-latest` | self-hosted | self-hosted |
 | **设备** | R5C / x86_64 | R5C / x86 | 24个 Rockchip 设备 |
 | **内核** | 默认 | BBRv3+LRNG+SFE+Fullcone | LRNG+natflow+DPDK+BTF/BPF |
-| **GCC** | 14 | 默认 | **16** |
-| **binutils** | 2.43 | 默认 | **2.46** |
-| **包管理** | opkg | opkg | **APK** (Alpine) |
+| **GCC** | 16 | 默认 | **16** |
+| **binutils** | 2.46 | 默认 | **2.46** |
+| **包管理** | APK | opkg | **APK** (Alpine) |
 | **编译** | 分7步+重试 | 未知 | 分阶段+重试 |
 | **发布** | Artifact + Release | Release | Release |
 
@@ -81,20 +81,24 @@ CONFIG_PACKAGE_vmlinux-btf=y
 
 ---
 
-## 建议搬到 10Wrt（按性价比排序）
+## 已搬入 10Wrt ✅
 
-### 立即可搬（纯 config 改动）
+| 改动 | 状态 |
+|---|---|
+| `CONFIG_USE_APK=y` — APK 包管理 | ✅ 已启用 |
+| `CONFIG_ZLIB_OPTIMIZE_SPEED=y` — zlib 速度优化 | ✅ 已启用 |
+| `CONFIG_OPENSSL_OPTIMIZE_SPEED=y` — OpenSSL 速度优化 | ✅ 已启用 |
+| `CONFIG_PACKAGE_kmod-fast-classifier=y` — 快速分类器 | ✅ 已启用 |
+| `CONFIG_PACKAGE_nat6=y` — IPv6 NAT | ✅ 已启用 |
+| GCC 16 + binutils 2.46 | ✅ 已启用 |
+
+## 尚未搬入（按性价比排序）
 
 | 优先级 | 改动 | 来源 |
 |---|---|---|
-| ⭐⭐⭐ | `CONFIG_USE_APK=y` — 换 APK 包管理 | RockChip |
-| ⭐⭐⭐ | `CONFIG_ZLIB_OPTIMIZE_SPEED=y` — zlib 速度优化 | 两个项目都有 |
-| ⭐⭐⭐ | `CONFIG_OPENSSL_OPTIMIZE_SPEED=y` — OpenSSL 速度优化 | 两个项目都有 |
-| ⭐⭐ | `CONFIG_PACKAGE_kmod-fast-classifier=y` — 快速分类器 | YAOF |
-| ⭐⭐ | `CONFIG_PACKAGE_nat6=y` — IPv6 NAT | 两个项目都有 |
-| ⭐⭐ | `CONFIG_KERNEL_CPUSETS=y` — CPU 亲和性 | RockChip |
-| ⭐⭐ | GCC 16 + binutils 2.46（需确认支持） | RockChip |
-| ⭐ | `CONFIG_ALL_KMODS=y` — 编译所有内核模块 | YAOF |
+| ⭐⭐⭐ | `CONFIG_KERNEL_CPUSETS=y` — CPU 亲和性 | RockChip |
+| ⭐⭐ | `CONFIG_ALL_KMODS=y` — 编译所有内核模块 | YAOF |
+| ⭐⭐ | BTF/BPF 支持 (`CONFIG_BPF_TOOLCHAIN_HOST=y` 等) | RockChip |
 
 ### 需额外工作
 
@@ -109,7 +113,7 @@ CONFIG_PACKAGE_vmlinux-btf=y
 
 ## 当前 10Wrt vs 两个参考项目的最大差距
 
-1. **没有 SFE/快速转发** — 路由性能差一截
-2. **编译优化级别不够** — 只有 O2，没有 `ZLIB_OPTIMIZE_SPEED`、`OPENSSL_OPTIMIZE_SPEED`
-3. **还是 opkg** — APK 快几倍
-4. **没有 BTF** — 用不了 DAE/DAED 等新代理
+1. **没有 SFE/快速转发** — 路由性能差一截（已有 fast-classifier，但缺 shortcut-fe 内核 patch）
+2. **没有 BTF** — 用不了 DAE/DAED 等新代理
+3. **没有 LRNG** — 随机数性能不如 YAOF
+4. **没有 natflow** — 硬件加速流卸载缺失

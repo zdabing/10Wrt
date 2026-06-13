@@ -164,6 +164,7 @@ jobs:
 
       - name: 发布到 Release
         run: |
+          shopt -s nullglob
           TAG="r5c-$(TZ=Asia/Shanghai date +%Y.%m.%d)-${{ github.run_number }}"
           TITLE="10Wrt NanoPi R5C — $(TZ=Asia/Shanghai date +%Y-%m-%d)"
           FIRMWARE_DIR=$(find immortalwrt/bin/targets -mindepth 1 -type d -name "armv8" 2>/dev/null | head -1)

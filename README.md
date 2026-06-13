@@ -45,7 +45,7 @@
 | **luci-app-firewall** | 防火墙管理 |
 | **luci-app-status** | 状态监控 |
 | **luci-app-opkg** | 软件包管理 |
-| **luci-app-aurora** | Aurora 主题（默认） |
+| **luci-theme-aurora** | Aurora 主题（默认） |
 
 #### 网络工具
 
@@ -98,14 +98,14 @@ git push
 
 **方式一：手动触发**
 1. 打开 GitHub 仓库 → **Actions** 标签
-2. 选择 **Build ImmortalWrt**
+2. 选择 **Build NanoPi R5C** 或 **Build x86/64**
 3. 点击 **Run workflow** → 选择分支 → 点击 **Run**
 
 **方式二：推送代码自动触发**
-- 推送到 `main` 分支自动开始编译
+- 如需推送触发，在 workflow 文件中添加 `push` 触发器即可
 
 **方式三：定时触发**
-- 每周一凌晨 0:00 自动编译
+- 如需定时触发，在 workflow 文件中添加 `schedule` 触发器即可
 
 ### 3. 下载固件
 
@@ -136,7 +136,8 @@ dd if=immortalwrt-*-x86-64-generic-ext4-combined-efi.img of=/dev/sdX bs=4M statu
 │   └── r5c.seed                              # NanoPi R5C 种子配置
 ├── files/
 │   └── etc/uci-defaults/99-init-settings     # 首次启动脚本
-└── .github/workflows/build-immortalwrt.yml   # GitHub Actions 工作流
+├── .github/workflows/build-r5c.yml           # R5C 工作流
+├── .github/workflows/build-x86.yml           # x86/64 工作流
 ```
 
 ### 自定义修改

@@ -66,7 +66,7 @@ rm -rf feeds/packages/lang/node
 # 从 QiuSimons/OpenWrt-Add 拉取预编译 Node（只取需要的目录）
 TMP_ADD=$(mktemp -d)
 git clone --depth 1 --filter=blob:none --sparse https://github.com/QiuSimons/OpenWrt-Add.git "$TMP_ADD" 2>/dev/null
-cd "$TMP_ADD" && git sparse-checkout set feeds_packages_lang_node-prebuilt && cd - >/dev/null
+(cd "$TMP_ADD" && git sparse-checkout set feeds_packages_lang_node-prebuilt)
 if [ -d "$TMP_ADD/feeds_packages_lang_node-prebuilt" ]; then
     cp -rf "$TMP_ADD/feeds_packages_lang_node-prebuilt" feeds/packages/lang/node
     echo ">>> Node.js 已替换为预编译版"

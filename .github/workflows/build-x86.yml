@@ -78,6 +78,16 @@ jobs:
           echo "=== 关键配置项 ==="
           grep -E '^(CONFIG_TARGET|CONFIG_PACKAGE_luci)' .config | sort
 
+      - name: 验证设备配置
+        run: |
+          cd immortalwrt
+          if ! grep -q "CONFIG_TARGET_x86_64_Generic=y" .config; then
+            echo "错误：x86/64 设备未在 .config 中选中！"
+            grep 'CONFIG_TARGET.*DEVICE_\|CONFIG_TARGET_x86' .config || echo "(无)"
+            exit 1
+          fi
+          echo "设备配置验证通过：x86/64 Generic"
+
       - name: 编译固件
         run: |
           cd immortalwrt
@@ -154,6 +164,7 @@ jobs:
 
       - name: 发布到 Release
         run: |
+          shopt -s nullglob
           TAG="x86_64-$(TZ=Asia/Shanghai date +%Y.%m.%d)-${{ github.run_number }}"
           TITLE="10Wrt x86/64 — $(TZ=Asia/Shanghai date +%Y-%m-%d)"
           FIRMWARE_DIR=$(find immortalwrt/bin/targets -mindepth 1 -type d -name "64" 2>/dev/null | head -1)
