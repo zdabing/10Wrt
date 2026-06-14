@@ -58,8 +58,10 @@ CONFIG_PACKAGE_luci-mod-admin-full=y
 CONFIG_PACKAGE_luci-proto-ipv6=y
 CONFIG_PACKAGE_luci-proto-ppp=y
 CONFIG_PACKAGE_luci-proto-wireguard=y
+CONFIG_PACKAGE_luci-app-wireguard=y
 CONFIG_PACKAGE_luci-theme-bootstrap=y
 CONFIG_PACKAGE_luci-theme-aurora=y
+CONFIG_PACKAGE_luci-app-aurora-config=y
 
 # Nginx（替换 uhttpd，性能更好，支持 QUIC/HTTP3）
 CONFIG_PACKAGE_luci-nginx=y
@@ -71,7 +73,6 @@ CONFIG_PACKAGE_nginx-mod-stream=y
 CONFIG_PACKAGE_nginx-ssl-util=y
 
 # Luci 应用
-CONFIG_PACKAGE_luci-app-status=y
 CONFIG_PACKAGE_luci-app-firewall=y
 CONFIG_PACKAGE_luci-app-mosdns=y
 CONFIG_PACKAGE_luci-app-upnp=y
@@ -109,7 +110,6 @@ CONFIG_PACKAGE_iperf3=y
 CONFIG_PACKAGE_tcpdump=y
 CONFIG_PACKAGE_traceroute=y
 CONFIG_PACKAGE_wget=y
-CONFIG_PACKAGE_mosdns=y
 CONFIG_PACKAGE_luci-app-3cat=y
 
 # DDNS 脚本（多平台支持）
