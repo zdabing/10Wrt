@@ -18,7 +18,7 @@ sed -i 's,-SNAPSHOT,,g' package/base-files/image-config.in
 echo ">>> 固件版本已移除 SNAPSHOT 标签"
 
 # ---- 关闭 CPU 漏洞缓解（路由器场景用不上，换性能）----
-sed -i 's,rootwait,rootwait mitigations=off,g' target/linux/rockchip/image/default.bootscript 2>/dev/null || true
+sed -i 's,rootwait,rootwait mitigations=off pci=realloc,g' target/linux/rockchip/image/default.bootscript 2>/dev/null || true
 sed -i 's,@CMDLINE@ noinitrd,noinitrd mitigations=off,g' target/linux/x86/image/grub-efi.cfg 2>/dev/null || true
 sed -i 's,@CMDLINE@ noinitrd,noinitrd mitigations=off,g' target/linux/x86/image/grub-iso.cfg 2>/dev/null || true
 sed -i 's,@CMDLINE@ noinitrd,noinitrd mitigations=off,g' target/linux/x86/image/grub-pc.cfg 2>/dev/null || true
@@ -77,6 +77,28 @@ else
 fi
 rm -rf "$TMP_ADD" "$NODE_BACKUP"
 
+# ---- Nginx / uwsgi 性能优化（参考 YAOF） ----
+echo ">>> Nginx / uwsgi 性能优化..."
+# Nginx
+sed -i "s/large_client_header_buffers 2 1k/large_client_header_buffers 4 32k/g" feeds/packages/net/nginx-util/files/uci.conf.template 2>/dev/null || true
+sed -i "s/client_max_body_size 128M/client_max_body_size 2048M/g" feeds/packages/net/nginx-util/files/uci.conf.template 2>/dev/null || true
+sed -i '/client_max_body_size/a\\tclient_body_buffer_size 8192M;' feeds/packages/net/nginx-util/files/uci.conf.template 2>/dev/null || true
+sed -i '/client_max_body_size/a\\tserver_names_hash_bucket_size 128;' feeds/packages/net/nginx-util/files/uci.conf.template 2>/dev/null || true
+sed -i '/ubus_parallel_req/a\        ubus_script_timeout 600;' feeds/packages/net/nginx/files-luci-support/60_nginx-luci-support 2>/dev/null || true
+sed -ri "/luci-webui.socket/i\ \t\tuwsgi_send_timeout 600\;\n\t\tuwsgi_connect_timeout 600\;\n\t\tuwsgi_read_timeout 600\;" feeds/packages/net/nginx/files-luci-support/luci.locations 2>/dev/null || true
+sed -ri "/luci-cgi_io.socket/i\ \t\tuwsgi_send_timeout 600\;\n\t\tuwsgi_connect_timeout 600\;\n\t\tuwsgi_read_timeout 600\;" feeds/packages/net/nginx/files-luci-support/luci.locations 2>/dev/null || true
+# uwsgi
+sed -i 's,procd_set_param stderr 1,procd_set_param stderr 0,g' feeds/packages/net/uwsgi/files/uwsgi.init 2>/dev/null || true
+sed -i 's,buffer-size = 10000,buffer-size = 131072,g' feeds/packages/net/uwsgi/files-luci-support/luci-webui.ini 2>/dev/null || true
+sed -i 's,logger = luci,#logger = luci,g' feeds/packages/net/uwsgi/files-luci-support/luci-webui.ini 2>/dev/null || true
+sed -i '$a cgi-timeout = 600' feeds/packages/net/uwsgi/files-luci-support/luci-*.ini 2>/dev/null || true
+sed -i 's/threads = 1/threads = 2/g' feeds/packages/net/uwsgi/files-luci-support/luci-webui.ini 2>/dev/null || true
+sed -i 's/processes = 3/processes = 4/g' feeds/packages/net/uwsgi/files-luci-support/luci-webui.ini 2>/dev/null || true
+sed -i 's/cheaper = 1/cheaper = 2/g' feeds/packages/net/uwsgi/files-luci-support/luci-webui.ini 2>/dev/null || true
+# rpcd
+sed -i 's/option timeout 30/option timeout 60/g' package/system/rpcd/files/rpcd.config 2>/dev/null || true
+sed -i 's#20) \* 1000#60) \* 1000#g' feeds/luci/modules/luci-base/htdocs/luci-static/resources/rpc.js 2>/dev/null || true
+
 # ---- 安装 feeds ----
 echo ">>> 安装 feeds..."
 ./scripts/feeds install -a
@@ -108,11 +130,11 @@ elif [ -d "package/new/bandix-tmp" ]; then
 fi
 clone_or_warn "https://github.com/timsaya/luci-app-bandix.git"    "package/new/bandix-luci" "luci-app-bandix（前端）"
 clone_or_warn "https://github.com/sbwml/luci-app-quickfile.git"   "package/new/quickfile" "luci-app-quickfile"
-clone_or_warn "https://github.com/eamonxg/luci-theme-aurora.git"  "package/new/aurora"    "luci-theme-aurora"
+clone_or_warn "https://github.com/eamonxg/luci-theme-aurora.git"  "package/new/luci-theme-aurora"    "luci-theme-aurora"
 clone_or_warn "https://github.com/nikkinikki-org/OpenWrt-nikki.git" "package/new/nikki"    "luci-app-nikki"
 
 # 将默认主题从 bootstrap 改为 aurora
-if [ -d package/new/aurora ]; then
+if [ -d package/new/luci-theme-aurora ]; then
     sed -i 's|/luci-static/bootstrap|/luci-static/aurora|g' feeds/luci/modules/luci-base/root/etc/config/luci
     echo ">>> 默认主题已改为 luci-theme-aurora"
 fi
