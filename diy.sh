@@ -82,7 +82,7 @@ echo ">>> 安装 feeds..."
 ./scripts/feeds install -a
 
 # ============================================================
-# 第三方插件
+# 第三方插件（feeds install -a 之后添加，再注册进 feeds）
 # ============================================================
 
 mkdir -p package/new
@@ -128,5 +128,15 @@ if ! grep -qF "$KENZOK8_FEED" feeds.conf.default; then
 else
     echo ">>> kenzok8 feed 已存在，跳过"
 fi
+
+# ---- 将 package/new 注册为本地 feed ----
+echo ">>> 注册 package/new 为本地 feed..."
+NEW_FEED="src-link new package/new"
+if ! grep -qF "$NEW_FEED" feeds.conf.default; then
+    echo "$NEW_FEED" >> feeds.conf.default
+fi
+./scripts/feeds update new
+./scripts/feeds install -a -p new
+echo ">>> package/new 已注册并安装到 feeds"
 
 echo ">>> [diy.sh] 自定义配置完成"
