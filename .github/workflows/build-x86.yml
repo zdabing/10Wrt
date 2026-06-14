@@ -23,7 +23,7 @@ jobs:
 
     steps:
       - name: 检出配置仓库
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           path: config
 
@@ -48,7 +48,7 @@ jobs:
             ${{ env.IMMORTALWRT_REPO }} immortalwrt
 
       - name: 还原 dl 缓存
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: immortalwrt/dl
           key: dl-immortalwrt-x86
@@ -136,7 +136,7 @@ jobs:
 
       - name: 上传固件
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: 10Wrt-x86_64-${{ github.run_id }}
           path: |

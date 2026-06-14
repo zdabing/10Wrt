@@ -28,24 +28,25 @@
 
 #### Luci 插件
 
-| 插件 | 说明 |
-|---|---|
-| **luci-app-homeproxy** | HomeProxy 代理客户端 |
-| **luci-app-nikki** | Nikki 代理客户端 |
-| **luci-app-mosdns** | MosDNS DNS 处理/分流 |
-| **luci-app-oaf** | 应用过滤 |
-| **luci-app-ddns** | 动态域名解析 |
-| **luci-app-upnp** | UPnP IGD / NAT-PMP |
-| **luci-app-3cat** | 3Cat 工具 |
-| **luci-app-bandix** | 带宽监控 |
-| **luci-app-onliner** | 在线设备列表 |
-| **luci-app-wol** | 网络唤醒 |
-| **luci-app-quickfile** | 文件管理器 |
-| **luci-app-ttyd** | 网页终端 |
-| **luci-app-firewall** | 防火墙管理 |
-| **luci-app-status** | 状态监控 |
-| **luci-app-opkg** | 软件包管理 |
-| **luci-theme-aurora** | Aurora 主题（默认） |
+| 插件 | 说明 | 来源 |
+|---|---|---|
+| **luci-app-homeproxy** | HomeProxy 代理客户端 | [immortalwrt/homeproxy](https://github.com/immortalwrt/homeproxy) |
+| **luci-app-clashoo** | Clashoo 双内核代理（mihomo + sing-box） | [kenzok8/openwrt-clashoo](https://github.com/kenzok8/openwrt-clashoo) |
+| **luci-app-nikki** | Nikki 代理客户端（mihomo） | [nikkinikki-org/OpenWrt-nikki](https://github.com/nikkinikki-org/OpenWrt-nikki) |
+| **luci-app-mosdns** | MosDNS DNS 处理/分流 | [sbwml/luci-app-mosdns](https://github.com/sbwml/luci-app-mosdns) |
+| **luci-app-oaf** | 应用过滤 | |
+| **luci-app-ddns** | 动态域名解析 | |
+| **luci-app-upnp** | UPnP IGD / NAT-PMP | |
+| **luci-app-3cat** | 3Cat 工具 | |
+| **luci-app-bandix** | 带宽监控 | [timsaya/luci-app-bandix](https://github.com/timsaya/luci-app-bandix) |
+| **luci-app-onliner** | 在线设备列表 | |
+| **luci-app-wol** | 网络唤醒 | |
+| **luci-app-quickfile** | 文件管理器 | [sbwml/luci-app-quickfile](https://github.com/sbwml/luci-app-quickfile) |
+| **luci-app-ttyd** | 网页终端 | |
+| **luci-app-firewall** | 防火墙管理 | |
+| **luci-app-status** | 状态监控 | |
+| **luci-app-opkg** | 软件包管理 | |
+| **luci-theme-aurora** | Aurora 主题（默认） | [eamonxg/luci-theme-aurora](https://github.com/eamonxg/luci-theme-aurora) |
 
 #### 网络工具
 
@@ -152,8 +153,11 @@ dd if=immortalwrt-*-x86-64-generic-ext4-combined-efi.img of=/dev/sdX bs=4M statu
 
 - [ImmortalWrt](https://github.com/immortalwrt/immortalwrt)
 - [xuanranran/OpenWrt_RockChip](https://github.com/xuanranran/OpenWrt_RockChip) — 参考项目
-- [kenzok8/openwrt-clashoo](https://github.com/kenzok8/openwrt-clashoo)
+- [kenzok8/openwrt-clashoo](https://github.com/kenzok8/openwrt-clashoo) — Clashoo 双内核代理（mihomo + sing-box）
+- [nikkinikki-org/OpenWrt-nikki](https://github.com/nikkinikki-org/OpenWrt-nikki) — Nikki 代理客户端
 - [sbwml](https://github.com/sbwml) — 多个插件包
+- [timsaya/luci-app-bandix](https://github.com/timsaya/luci-app-bandix) — 带宽监控
+- [eamonxg/luci-theme-aurora](https://github.com/eamonxg/luci-theme-aurora) — Aurora 主题
 - [P3TERX/Actions-OpenWrt](https://github.com/P3TERX/Actions-OpenWrt)
 - [SuLingGG/OpenWrt-Rpi](https://github.com/SuLingGG/OpenWrt-Rpi)
 
