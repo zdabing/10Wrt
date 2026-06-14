@@ -99,6 +99,9 @@ sed -i 's/cheaper = 1/cheaper = 2/g' feeds/packages/net/uwsgi/files-luci-support
 sed -i 's/option timeout 30/option timeout 60/g' package/system/rpcd/files/rpcd.config 2>/dev/null || true
 sed -i 's#20) \* 1000#60) \* 1000#g' feeds/luci/modules/luci-base/htdocs/luci-static/resources/rpc.js 2>/dev/null || true
 
+# ---- 移除官方 v2ray-geodata（与 mosdns 版本冲突）----
+rm -rf feeds/packages/net/v2ray-geodata 2>/dev/null || true
+
 # ---- 安装 feeds ----
 echo ">>> 安装 feeds..."
 ./scripts/feeds install -a
@@ -110,8 +113,10 @@ echo ">>> 安装 feeds..."
 mkdir -p package/new
 
 clone_or_warn() {
-    local repo="$1" dst="$2" name="$3"
-    if git clone --depth 1 "$repo" "$dst" 2>/dev/null; then
+    local repo="$1" dst="$2" name="$3" branch="$4"
+    local branch_opt=""
+    [ -n "$branch" ] && branch_opt="-b $branch"
+    if git clone --depth 1 $branch_opt "$repo" "$dst" 2>/dev/null; then
         echo ">>> 已添加 $name"
     else
         echo "!!! 警告：$name 克隆失败，已跳过"
@@ -132,6 +137,13 @@ clone_or_warn "https://github.com/timsaya/luci-app-bandix.git"    "package/new/b
 clone_or_warn "https://github.com/sbwml/luci-app-quickfile.git"   "package/new/quickfile" "luci-app-quickfile"
 clone_or_warn "https://github.com/eamonxg/luci-theme-aurora.git"  "package/new/luci-theme-aurora"    "luci-theme-aurora"
 clone_or_warn "https://github.com/nikkinikki-org/OpenWrt-nikki.git" "package/new/nikki"    "luci-app-nikki"
+
+# ---- MosDNS v5 ----
+echo ">>> 添加 MosDNS v5..."
+find ./ | grep Makefile | grep v2ray-geodata | xargs rm -f 2>/dev/null || true
+find ./ | grep Makefile | grep mosdns | xargs rm -f 2>/dev/null || true
+clone_or_warn "https://github.com/sbwml/luci-app-mosdns.git" "package/new/mosdns" "MosDNS v5" "v5"
+clone_or_warn "https://github.com/sbwml/v2ray-geodata.git"         "package/new/v2ray-geodata" "v2ray-geodata"
 
 # 将默认主题从 bootstrap 改为 aurora
 if [ -d package/new/luci-theme-aurora ]; then
