@@ -131,7 +131,8 @@ fi
 
 # ---- 将 package/new 注册为本地 feed ----
 echo ">>> 注册 package/new 为本地 feed..."
-NEW_FEED="src-link new package/new"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+NEW_FEED="src-link new ${SCRIPT_DIR}/package/new"
 if ! grep -qF "$NEW_FEED" feeds.conf.default; then
     echo "$NEW_FEED" >> feeds.conf.default
 fi
