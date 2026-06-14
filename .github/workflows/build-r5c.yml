@@ -54,10 +54,6 @@ jobs:
           key: dl-immortalwrt-r5c
           restore-keys: dl-immortalwrt-
 
-      - name: 复制种子配置
-        run: |
-          cp config/configs/r5c.seed immortalwrt/.config
-
       - name: 复制 files 覆盖层
         run: |
           if [ -d config/files ]; then
@@ -70,6 +66,10 @@ jobs:
           chmod +x immortalwrt/diy.sh
           cd immortalwrt
           ./diy.sh
+
+      - name: 复制种子配置
+        run: |
+          cp config/configs/r5c.seed immortalwrt/.config
 
       - name: 展开配置
         run: |
