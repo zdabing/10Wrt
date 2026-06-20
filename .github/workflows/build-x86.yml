@@ -81,7 +81,7 @@ jobs:
       - name: 验证设备配置
         run: |
           cd immortalwrt
-          if ! grep -q "CONFIG_TARGET_x86_64_Generic=y" .config; then
+          if ! grep -q "CONFIG_TARGET_x86_64_DEVICE_generic=y" .config; then
             echo "错误：x86/64 设备未在 .config 中选中！"
             grep 'CONFIG_TARGET.*DEVICE_\|CONFIG_TARGET_x86' .config || echo "(无)"
             exit 1

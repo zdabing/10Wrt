@@ -4,7 +4,7 @@
 # 目标平台
 CONFIG_TARGET_x86=y
 CONFIG_TARGET_x86_64=y
-CONFIG_TARGET_x86_64_Generic=y
+CONFIG_TARGET_x86_64_DEVICE_generic=y
 
 # 固件格式 - 同时生成 ext4 和 squashfs
 CONFIG_TARGET_ROOTFS_EXT4FS=y
