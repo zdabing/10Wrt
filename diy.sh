@@ -137,6 +137,7 @@ clone_or_warn "https://github.com/timsaya/luci-app-bandix.git"    "package/new/b
 clone_or_warn "https://github.com/sbwml/luci-app-quickfile.git"   "package/new/quickfile" "luci-app-quickfile"
 clone_or_warn "https://github.com/eamonxg/luci-theme-aurora.git"  "package/new/luci-theme-aurora"    "luci-theme-aurora"
 clone_or_warn "https://github.com/nikkinikki-org/OpenWrt-nikki.git" "package/new/nikki"    "luci-app-nikki"
+clone_or_warn "https://github.com/QiuSimons/luci-app-daed.git"     "package/new/luci-app-daed" "luci-app-daed"
 
 # ---- MosDNS v5 ----
 echo ">>> 添加 MosDNS v5..."

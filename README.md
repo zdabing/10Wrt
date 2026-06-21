@@ -33,6 +33,7 @@
 | **luci-app-homeproxy** | HomeProxy 代理客户端 | [immortalwrt/homeproxy](https://github.com/immortalwrt/homeproxy) |
 | **luci-app-clashoo** | Clashoo 双内核代理（mihomo + sing-box） | [kenzok8/openwrt-clashoo](https://github.com/kenzok8/openwrt-clashoo) |
 | **luci-app-nikki** | Nikki 代理客户端（mihomo） | [nikkinikki-org/OpenWrt-nikki](https://github.com/nikkinikki-org/OpenWrt-nikki) |
+| **luci-app-daed** | daed 代理客户端（eBPF，需 BTF） | [QiuSimons/luci-app-daed](https://github.com/QiuSimons/luci-app-daed) |
 | **luci-app-mosdns** | MosDNS DNS 处理/分流 | [sbwml/luci-app-mosdns](https://github.com/sbwml/luci-app-mosdns) |
 | **luci-app-oaf** | 应用过滤 | |
 | **luci-app-ddns** | 动态域名解析 | |

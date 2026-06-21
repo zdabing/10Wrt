@@ -17,6 +17,43 @@ uci set luci.diag.ping='www.baidu.com'
 uci set luci.diag.route='www.baidu.com'
 uci commit luci
 
+# ---- IPv6 配置（PPPoE + DHCPv6 前缀委派）----
+# 配置 wan_6 为 DHCPv6 客户端
+uci set network.wan_6='interface'
+uci set network.wan_6.proto='dhcpv6'
+uci set network.wan_6.device='@wan'
+uci set network.wan_6.reqaddress='try'
+uci set network.wan_6.reqprefix='auto'
+uci commit network
+
+# LAN 启用 DHCPv6 服务器和 RA
+uci set dhcp.lan.dhcpv6='server'
+uci set dhcp.lan.ra='server'
+uci set dhcp.lan.ra_flags='managed-config other-config'
+uci commit dhcp
+
+# 启用 IPv6 NAT（NAT66）
+uci set firewall.@zone[1].masq6='1'
+uci commit firewall
+
+# 重启网络和 DHCP
+/etc/init.d/network restart
+/etc/init.d/dhcp restart
+
+# ---- 禁用 ttyd CPD（避免误报 No internet）----
+uci set ttyd.@ttyd[0].cpd_check='/dev/null'
+uci commit ttyd
+
+# ---- favicon.ico：nginx 返回 204 避免 404 ----
+mkdir -p /www
+cat > /etc/nginx/conf.d/favicon.locations <<'EOCONF'
+location = /favicon.ico {
+    access_log off;
+    log_not_found off;
+    return 204;
+}
+EOCONF
+
 # nginx：删除 _redirect2ssl 强制跳转，_lan 只监听 80 端口（HTTP）
 uci set nginx.global.uci_enable='true'
 uci del nginx._lan 2>/dev/null

@@ -91,6 +91,8 @@ CONFIG_PACKAGE_vmlinux-btf=y
 | `CONFIG_PACKAGE_kmod-fast-classifier=y` — 快速分类器 | ✅ 已启用 |
 | `CONFIG_PACKAGE_nat6=y` — IPv6 NAT | ✅ 已启用 |
 | GCC 16 + binutils 2.46 | ✅ 已启用 |
+| BTF/BPF 支持（`CONFIG_KERNEL_DEBUG_INFO_BTF=y` 等） | ✅ 已启用 |
+| `luci-app-daed` — daed 代理客户端（eBPF） | ✅ 已启用 |
 
 ## 尚未搬入（按性价比排序）
 
@@ -98,14 +100,12 @@ CONFIG_PACKAGE_vmlinux-btf=y
 |---|---|---|
 | ⭐⭐⭐ | `CONFIG_KERNEL_CPUSETS=y` — CPU 亲和性 | RockChip |
 | ⭐⭐ | `CONFIG_ALL_KMODS=y` — 编译所有内核模块 | YAOF |
-| ⭐⭐ | BTF/BPF 支持 (`CONFIG_BPF_TOOLCHAIN_HOST=y` 等) | RockChip |
 
 ### 需额外工作
 
 | 改动 | 工作量 |
 |---|---|
 | SFE + Fast Classifier kmod | 需 patch 内核（从 YAOF 搬） |
-| BTF/BPF 支持 | 改 config + 编译时间 +30% |
 | natflow | 需 patch |
 | Rockchip NPU / Video | 需 kernel config 调整 |
 
@@ -114,6 +114,5 @@ CONFIG_PACKAGE_vmlinux-btf=y
 ## 当前 10Wrt vs 两个参考项目的最大差距
 
 1. **没有 SFE/快速转发** — 路由性能差一截（已有 fast-classifier，但缺 shortcut-fe 内核 patch）
-2. **没有 BTF** — 用不了 DAE/DAED 等新代理
-3. **没有 LRNG** — 随机数性能不如 YAOF
-4. **没有 natflow** — 硬件加速流卸载缺失
+2. **没有 LRNG** — 随机数性能不如 YAOF
+3. **没有 natflow** — 硬件加速流卸载缺失
