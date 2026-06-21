@@ -15,6 +15,7 @@ tmp/
 .reasonix/
 reasonix.toml
 .codegraph/
+.mimocode/
 
 # 系统文件
 .DS_Store
