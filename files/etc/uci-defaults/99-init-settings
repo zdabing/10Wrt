@@ -12,37 +12,10 @@ uci set system.@system[0].zonename='Asia/Shanghai'
 uci commit system
 
 # Luci 诊断目标改为国内站点
-uci set luci.diag.dns='www.baidu.com'
-uci set luci.diag.ping='www.baidu.com'
-uci set luci.diag.route='www.baidu.com'
+uci set luci.diag.dns='www.doubao.com'
+uci set luci.diag.ping='www.doubao.com'
+uci set luci.diag.route='www.doubao.com'
 uci commit luci
-
-# ---- IPv6 配置（PPPoE + DHCPv6 前缀委派）----
-# 配置 wan_6 为 DHCPv6 客户端
-uci set network.wan_6='interface'
-uci set network.wan_6.proto='dhcpv6'
-uci set network.wan_6.device='@wan'
-uci set network.wan_6.reqaddress='try'
-uci set network.wan_6.reqprefix='auto'
-uci commit network
-
-# LAN 启用 DHCPv6 服务器和 RA
-uci set dhcp.lan.dhcpv6='server'
-uci set dhcp.lan.ra='server'
-uci set dhcp.lan.ra_flags='managed-config other-config'
-uci commit dhcp
-
-# 启用 IPv6 NAT（NAT66）
-uci set firewall.@zone[1].masq6='1'
-uci commit firewall
-
-# 重启网络和 DHCP
-/etc/init.d/network restart
-/etc/init.d/dhcp restart
-
-# ---- 禁用 ttyd CPD（避免误报 No internet）----
-uci set ttyd.@ttyd[0].cpd_check='/dev/null'
-uci commit ttyd
 
 # ---- favicon.ico：nginx 返回 204 避免 404 ----
 mkdir -p /www
