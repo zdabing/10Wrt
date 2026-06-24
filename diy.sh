@@ -163,17 +163,6 @@ else
     echo ">>> kenzok8 feed 已存在，跳过"
 fi
 
-# ---- luci-app-xray feed ----
-XRAY_FEED="src-git-full luci_app_xray https://github.com/yichya/luci-app-xray.git"
-if ! grep -qF "$XRAY_FEED" feeds.conf.default; then
-    echo "$XRAY_FEED" >> feeds.conf.default
-    ./scripts/feeds update luci_app_xray
-    ./scripts/feeds install -a -p luci_app_xray
-    echo ">>> 已添加 yichya/luci-app-xray 软件源"
-else
-    echo ">>> luci-app-xray feed 已存在，跳过"
-fi
-
 # ---- 将 package/new 注册为本地 feed ----
 echo ">>> 注册 package/new 为本地 feed..."
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
