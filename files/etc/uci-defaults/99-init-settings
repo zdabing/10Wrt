@@ -31,14 +31,37 @@ EOCONF
 uci set nginx.global.uci_enable='true'
 uci del nginx._lan 2>/dev/null
 uci del nginx._redirect2ssl 2>/dev/null
+
+# 精准添加并配置 _lan server
 uci add nginx server
-uci rename nginx.@server[0]='_lan'
+uci rename nginx.@server[-1]='_lan'
 uci set nginx._lan.server_name='_lan'
 uci add_list nginx._lan.listen='80 default_server'
 uci add_list nginx._lan.listen='[::]:80 default_server'
 uci add_list nginx._lan.include='conf.d/*.locations'
 uci set nginx._lan.access_log='off; # logd openwrt'
 uci commit nginx
-service nginx restart
+
+# 使用 OpenWrt 标准路径重启并启用 Nginx
+/etc/init.d/nginx enable
+/etc/init.d/nginx restart
+
+# ---- TCP MSS 钳制（PPPoE MTU 1492 -> MSS 1452）----
+# 动态寻找名为 wan 的区域，防止 zone[1] 索引错位
+wan_zone=$(uci show firewall | grep "\.name='wan'" | cut -d'.' -f2 | cut -d'=' -f1 | head -n 1)
+if [ -n "$wan_zone" ]; then
+    uci set firewall.${wan_zone}.mtu_fix='1'
+else
+    uci set firewall.@zone[1].mtu_fix='1'
+fi
+uci commit firewall
+/etc/init.d/fw4 restart
+
+# ---- 禁用 LAN 口 IPv6 分配（内网设备不走 v6 撞墙）----
+uci set dhcp.lan.ra='disabled'
+uci set dhcp.lan.dhcpv6='disabled'
+uci set dhcp.lan.ndp='disabled'
+uci commit dhcp
+/etc/init.d/odhcpd restart
 
 exit 0
