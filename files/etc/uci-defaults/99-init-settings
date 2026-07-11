@@ -1,21 +1,35 @@
 #!/bin/sh
-# 首次启动自动配置：开启 Packet Steering（多队列网卡软中断均衡）
-uci -q get network.globals.packet_steering > /dev/null || {
-    uci set network.globals='globals'
-    uci set network.globals.packet_steering=1
-    uci commit network
-}
+# 首次启动自动配置（执行一次后由系统标记自删）
+# 只做幂等的 uci 设置，不主动 restart 网络/防火墙服务，
+# 避免开机早期 restart 与 netifd/wan 拨号产生时序竞争（导致升级后首次无网络）。
+# 服务刷新交给 OpenWrt 后续正常启动流程接管。
 
-# 时区设为 Asia/Shanghai
+# ---- Packet Steering（多队列网卡软中断均衡）----
+uci -q get network.globals.packet_steering >/dev/null || \
+uci set network.globals.packet_steering='1'
+
+# ---- 时区设为 Asia/Shanghai ----
 uci set system.@system[0].timezone='CST-8'
 uci set system.@system[0].zonename='Asia/Shanghai'
-uci commit system
 
-# Luci 诊断目标改为国内站点
+# ---- LuCI 诊断目标改为国内站点 ----
 uci set luci.diag.dns='www.doubao.com'
 uci set luci.diag.ping='www.doubao.com'
 uci set luci.diag.route='www.doubao.com'
-uci commit luci
+
+# ---- TCP MSS 钳制（PPPoE MTU 1492 -> MSS 1452）----
+# 动态定位 wan 防火墙区域，避免硬编码 zone 索引错位
+wan_idx=$(uci show firewall | grep "name='wan'" | cut -d'[' -f2 | cut -d']' -f1 | head -n1)
+if [ -n "$wan_idx" ]; then
+    uci set firewall.@zone[${wan_idx}].mtu_fix='1'
+else
+    uci set firewall.@zone[1].mtu_fix='1'
+fi
+
+# ---- 禁用 LAN 口 IPv6 分配（内网设备不走 v6 撞墙）----
+uci set dhcp.lan.ra='disabled'
+uci set dhcp.lan.dhcpv6='disabled'
+uci set dhcp.lan.ndp='disabled'
 
 # ---- favicon.ico：nginx 返回 204 避免 404 ----
 mkdir -p /www
@@ -27,12 +41,10 @@ location = /favicon.ico {
 }
 EOCONF
 
-# nginx：删除 _redirect2ssl 强制跳转，_lan 只监听 80 端口（HTTP）
+# ---- nginx：关闭强制 HTTPS 跳转，_lan 仅监听 80（HTTP）----
 uci set nginx.global.uci_enable='true'
 uci del nginx._lan 2>/dev/null
 uci del nginx._redirect2ssl 2>/dev/null
-
-# 精准添加并配置 _lan server
 uci add nginx server
 uci rename nginx.@server[-1]='_lan'
 uci set nginx._lan.server_name='_lan'
@@ -40,28 +52,8 @@ uci add_list nginx._lan.listen='80 default_server'
 uci add_list nginx._lan.listen='[::]:80 default_server'
 uci add_list nginx._lan.include='conf.d/*.locations'
 uci set nginx._lan.access_log='off; # logd openwrt'
-uci commit nginx
 
-# 使用 OpenWrt 标准路径重启并启用 Nginx
-/etc/init.d/nginx enable
-/etc/init.d/nginx restart
-
-# ---- TCP MSS 钳制（PPPoE MTU 1492 -> MSS 1452）----
-# 动态寻找名为 wan 的区域，防止 zone[1] 索引错位
-wan_zone=$(uci show firewall | grep "\.name='wan'" | cut -d'.' -f2 | cut -d'=' -f1 | head -n 1)
-if [ -n "$wan_zone" ]; then
-    uci set firewall.${wan_zone}.mtu_fix='1'
-else
-    uci set firewall.@zone[1].mtu_fix='1'
-fi
-uci commit firewall
-/etc/init.d/fw4 restart
-
-# ---- 禁用 LAN 口 IPv6 分配（内网设备不走 v6 撞墙）----
-uci set dhcp.lan.ra='disabled'
-uci set dhcp.lan.dhcpv6='disabled'
-uci set dhcp.lan.ndp='disabled'
-uci commit dhcp
-/etc/init.d/odhcpd restart
+# ---- 统一提交（不在脚本内 restart 任何服务）----
+uci commit
 
 exit 0
