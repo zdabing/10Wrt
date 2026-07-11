@@ -155,7 +155,32 @@ clone_or_warn "https://github.com/timsaya/luci-app-bandix.git"    "package/new/b
 clone_or_warn "https://github.com/sbwml/luci-app-quickfile.git"   "package/new/quickfile" "luci-app-quickfile"
 clone_or_warn "https://github.com/eamonxg/luci-theme-aurora.git"  "package/new/luci-theme-aurora"    "luci-theme-aurora"
 clone_or_warn "https://github.com/nikkinikki-org/OpenWrt-nikki.git" "package/new/nikki"    "luci-app-nikki"
-clone_or_warn "https://github.com/QiuSimons/luci-app-daed.git"     "package/new/luci-app-daed" "luci-app-daed"
+
+# ---- Mihomo 格式 geodata（来自 MetaCubeX/meta-rules-dat）----
+# 关键：Nikki 和 Clashoo 都基于 Mihomo 内核，需要 MetaCubeX 格式的 geodata！
+# 不能用 V2Ray 格式（/usr/share/v2ray/geosite.dat）混用，否则报：
+#   "list cn not found" / "proto: cannot parse invalid wire-format data"
+#
+# 各组件 geodata 分布：
+#   /usr/share/v2ray/geosite.dat  → V2Ray 格式（sbwml/v2ray-geodata）→ V2Ray/MosDNS
+#   /etc/nikki/run/GeoSite.dat    → Mihomo 格式（MetaCubeX）         → Nikki
+#   /etc/clashoo/GeoSite.dat      → Mihomo 格式（MetaCubeX）         → Clashoo
+#   /usr/share/daed/geosite.dat   → daed 自带                        → Daed
+#   HomeProxy(sing-box)           → .srs rule_set 远程下载           → 不用本地 geodata
+echo ">>> 下载 Mihomo 格式 geodata (MetaCubeX/meta-rules-dat)..."
+META_GEO_URL="https://github.com/MetaCubeX/meta-rules-dat/releases/latest/download"
+
+# Nikki 工作目录: /etc/nikki/run/
+mkdir -p files/etc/nikki/run
+wget -q --show-progress -O files/etc/nikki/run/GeoSite.dat "${META_GEO_URL}/geosite.dat" || echo "!!! 警告：Nikki GeoSite.dat 下载失败"
+wget -q --show-progress -O files/etc/nikki/run/GeoIP.dat   "${META_GEO_URL}/geoip.dat"   || echo "!!! 警告：Nikki GeoIP.dat 下载失败"
+echo ">>> Nikki geodata → files/etc/nikki/run/"
+
+# Clashoo 工作目录: /etc/clashoo/
+mkdir -p files/etc/clashoo
+wget -q --show-progress -O files/etc/clashoo/GeoSite.dat   "${META_GEO_URL}/geosite.dat" || echo "!!! 警告：Clashoo GeoSite.dat 下载失败"
+wget -q --show-progress -O files/etc/clashoo/GeoIP.dat     "${META_GEO_URL}/geoip.dat"   || echo "!!! 警告：Clashoo GeoIP.dat 下载失败"
+echo ">>> Clashoo geodata → files/etc/clashoo/"
 
 # ---- MosDNS v5 ----
 echo ">>> 添加 MosDNS v5..."
