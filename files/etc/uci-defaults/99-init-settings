@@ -53,6 +53,9 @@ uci add_list nginx._lan.listen='[::]:80 default_server'
 uci add_list nginx._lan.include='conf.d/*.locations'
 uci set nginx._lan.access_log='off; # logd openwrt'
 
+# ---- PPPoE：关闭 norelease，避免断线/升级后运营商侧旧会话残留导致 Limit Users / User Locked ----
+uci set network.wan.norelease='0'
+
 # ---- 统一提交（不在脚本内 restart 任何服务）----
 uci commit
 
