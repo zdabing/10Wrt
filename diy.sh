@@ -12,10 +12,26 @@ echo ">>> [diy.sh] 开始自定义配置..."
 sed -i 's/-Os/-O2/g' include/target.mk
 echo ">>> 编译优化级别：Os → O2"
 
-# ---- 移除 SNAPSHOT 标签 ----
-sed -i 's,-SNAPSHOT,,g' include/version.mk
-sed -i 's,-SNAPSHOT,,g' package/base-files/image-config.in
-echo ">>> 固件版本已移除 SNAPSHOT 标签"
+# ---- 在版本信息中附加 immortalwrt 源码提交日期 ----
+# 取当前 immortalwrt 仓库 HEAD 提交的日期（即这份代码基于的上游提交日）
+# 直接写入 base-files 的 openwrt_release / banner，不依赖 version.mk 模板，跨版本（含 26.x）通用
+BUILD_DATE=$(git show -s --format=%cs HEAD 2>/dev/null || date +%Y-%m-%d)
+RELEASE_FILE="package/base-files/files/etc/openwrt_release"
+if [ -f "$RELEASE_FILE" ]; then
+    if grep -q "^BUILD_DATE=" "$RELEASE_FILE"; then
+        sed -i "s/^BUILD_DATE=.*/BUILD_DATE='${BUILD_DATE}'/" "$RELEASE_FILE"
+    else
+        echo "BUILD_DATE='${BUILD_DATE}'" >> "$RELEASE_FILE"
+    fi
+    echo ">>> 构建日期已写入 openwrt_release: ${BUILD_DATE}"
+fi
+# 同时写入 SSH 登录 banner（底部一行）
+BANNER_FILE="package/base-files/files/etc/banner"
+if [ -f "$BANNER_FILE" ]; then
+    sed -i "/Build date:/d" "$BANNER_FILE"
+    echo "Build date: ${BUILD_DATE}" >> "$BANNER_FILE"
+    echo ">>> 构建日期已写入 banner"
+fi
 
 # ---- 关闭 CPU 漏洞缓解（路由器场景用不上，换性能）----
 sed -i 's,rootwait,rootwait mitigations=off pci=realloc,g' target/linux/rockchip/image/default.bootscript 2>/dev/null || true
