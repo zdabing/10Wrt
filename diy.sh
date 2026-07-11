@@ -25,10 +25,12 @@ if [ -f "$RELEASE_FILE" ]; then
     fi
     echo ">>> 构建日期已写入 openwrt_release: ${BUILD_DATE}"
 fi
-# 同时写入 SSH 登录 banner（底部一行）
+# 写入 SSH 登录 banner
 BANNER_FILE="package/base-files/files/etc/banner"
 if [ -f "$BANNER_FILE" ]; then
     sed -i "/Build date:/d" "$BANNER_FILE"
+    # 同时把编译信息追加到 banner 描述行（LuCI 概览页显示的就是这一行）
+    sed -i "s/ImmortalWrt [^ ]* [^,]*, [^ ]*/& (Build ${BUILD_DATE})/" "$BANNER_FILE"
     echo "Build date: ${BUILD_DATE}" >> "$BANNER_FILE"
     echo ">>> 构建日期已写入 banner"
 fi
