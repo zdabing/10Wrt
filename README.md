@@ -35,6 +35,7 @@
 | **luci-app-nikki** | Nikki 代理客户端（mihomo） | [nikkinikki-org/OpenWrt-nikki](https://github.com/nikkinikki-org/OpenWrt-nikki) |
 | **luci-app-daed** | daed 代理客户端（eBPF，需 BTF） | [QiuSimons/luci-app-daed](https://github.com/QiuSimons/luci-app-daed) |
 | **luci-app-mosdns** | MosDNS DNS 处理/分流 | [sbwml/luci-app-mosdns](https://github.com/sbwml/luci-app-mosdns) |
+| **luci-app-oxidns** | OxiDNS 高性能可编程 DNS 引擎（Rust） | [svenshi/luci-app-oxidns](https://github.com/svenshi/luci-app-oxidns) |
 | **luci-app-oaf** | 应用过滤 | |
 | **luci-app-ddns** | 动态域名解析 | |
 | **luci-app-upnp** | UPnP IGD / NAT-PMP | |
@@ -157,6 +158,7 @@ dd if=immortalwrt-*-x86-64-generic-ext4-combined-efi.img of=/dev/sdX bs=4M statu
 - [kenzok8/openwrt-clashoo](https://github.com/kenzok8/openwrt-clashoo) — Clashoo 双内核代理（mihomo + sing-box）
 - [nikkinikki-org/OpenWrt-nikki](https://github.com/nikkinikki-org/OpenWrt-nikki) — Nikki 代理客户端
 - [sbwml](https://github.com/sbwml) — 多个插件包
+- [svenshi/luci-app-oxidns](https://github.com/svenshi/luci-app-oxidns) — OxiDNS LuCI 管理界面
 - [timsaya/luci-app-bandix](https://github.com/timsaya/luci-app-bandix) — 带宽监控
 - [eamonxg/luci-theme-aurora](https://github.com/eamonxg/luci-theme-aurora) — Aurora 主题
 - [P3TERX/Actions-OpenWrt](https://github.com/P3TERX/Actions-OpenWrt)

@@ -153,6 +153,7 @@ elif [ -d "package/new/bandix-tmp" ]; then
 fi
 clone_or_warn "https://github.com/timsaya/luci-app-bandix.git"    "package/new/bandix-luci" "luci-app-bandix（前端）"
 clone_or_warn "https://github.com/sbwml/luci-app-quickfile.git"   "package/new/quickfile" "luci-app-quickfile"
+clone_or_warn "https://github.com/svenshi/luci-app-oxidns.git"    "package/new/luci-app-oxidns" "luci-app-oxidns"
 clone_or_warn "https://github.com/eamonxg/luci-theme-aurora.git"  "package/new/luci-theme-aurora"    "luci-theme-aurora"
 clone_or_warn "https://github.com/nikkinikki-org/OpenWrt-nikki.git" "package/new/nikki"    "luci-app-nikki"
 
