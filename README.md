@@ -46,7 +46,8 @@
 | **luci-app-firewall** | 防火墙管理 | |
 | **luci-app-status** | 状态监控 | |
 | **luci-app-opkg** | 软件包管理 | |
-| **luci-theme-goflow** | Goflow 现代化侧边栏主题（默认） | [CM-idea/luci-theme-goflow](https://github.com/CM-idea/luci-theme-goflow) |
+| **luci-theme-aurora** | Aurora 主题（默认） | [eamonxg/luci-theme-aurora](https://github.com/eamonxg/luci-theme-aurora) |
+| **luci-theme-goflow** | Goflow 现代化侧边栏主题（可选） | [CM-idea/luci-theme-goflow](https://github.com/CM-idea/luci-theme-goflow) |
 
 #### 网络工具
 
@@ -158,6 +159,7 @@ dd if=immortalwrt-*-x86-64-generic-ext4-combined-efi.img of=/dev/sdX bs=4M statu
 - [sbwml](https://github.com/sbwml) — 多个插件包
 - [svenshi/luci-app-oxidns](https://github.com/svenshi/luci-app-oxidns) — OxiDNS LuCI 管理界面
 - [timsaya/luci-app-bandix](https://github.com/timsaya/luci-app-bandix) — 带宽监控
+- [eamonxg/luci-theme-aurora](https://github.com/eamonxg/luci-theme-aurora) — Aurora 主题（默认）
 - [CM-idea/luci-theme-goflow](https://github.com/CM-idea/luci-theme-goflow) — Goflow 现代化侧边栏主题
 - [P3TERX/Actions-OpenWrt](https://github.com/P3TERX/Actions-OpenWrt)
 - [SuLingGG/OpenWrt-Rpi](https://github.com/SuLingGG/OpenWrt-Rpi)

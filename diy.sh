@@ -154,7 +154,7 @@ fi
 clone_or_warn "https://github.com/timsaya/luci-app-bandix.git"    "package/new/bandix-luci" "luci-app-bandix（前端）"
 clone_or_warn "https://github.com/sbwml/luci-app-quickfile.git"   "package/new/quickfile" "luci-app-quickfile"
 clone_or_warn "https://github.com/svenshi/luci-app-oxidns.git"    "package/new/luci-app-oxidns" "luci-app-oxidns"
-# clone_or_warn "https://github.com/eamonxg/luci-theme-aurora.git"  "package/new/luci-theme-aurora"    "luci-theme-aurora"  # 已注释：改用 goflow
+clone_or_warn "https://github.com/eamonxg/luci-theme-aurora.git"  "package/new/luci-theme-aurora"    "luci-theme-aurora"
 # ---- 克隆 goflow 主题 ----
 clone_or_warn "https://github.com/CM-idea/luci-theme-goflow.git" "package/new/luci-theme-goflow-tmp" "luci-theme-goflow"
 if [ -d "package/new/luci-theme-goflow-tmp/luci-theme-goflow" ]; then
@@ -197,10 +197,13 @@ find ./ | grep Makefile | grep mosdns | xargs rm -f 2>/dev/null || true
 clone_or_warn "https://github.com/sbwml/luci-app-mosdns.git" "package/new/mosdns" "MosDNS v5" "v5"
 clone_or_warn "https://github.com/sbwml/v2ray-geodata.git"         "package/new/v2ray-geodata" "v2ray-geodata"
 
-# 将默认主题从 bootstrap 改为 goflow
-if [ -d package/new/luci-theme-goflow ]; then
+# 将默认主题从 bootstrap 改为 aurora（goflow 同时提供，可在 LuCI 界面切换）
+if [ -d package/new/luci-theme-aurora ]; then
+    sed -i 's|/luci-static/bootstrap|/luci-static/aurora|g' feeds/luci/modules/luci-base/root/etc/config/luci
+    echo ">>> 默认主题已改为 luci-theme-aurora（可切换至 goflow）"
+elif [ -d package/new/luci-theme-goflow ]; then
     sed -i 's|/luci-static/bootstrap|/luci-static/goflow|g' feeds/luci/modules/luci-base/root/etc/config/luci
-    echo ">>> 默认主题已改为 luci-theme-goflow"
+    echo ">>> 默认主题已改为 luci-theme-goflow（aurora 不可用）"
 fi
 
 # ---- kenzok8 feed ----
