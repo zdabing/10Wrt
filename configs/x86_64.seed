@@ -1,7 +1,7 @@
 # ImmortalWrt x86/64 绉嶅瓙閰嶇疆
-# 绠＄悊鍦板潃: 10.0.0.1 (宸ヤ綔娴佷腑鐢?sed 淇�敼榛樿� IP)
+# 绠＄悊鍦板潃: 10.0.0.1 (宸ヤ綔娴佷腑鐢?sed 淇??敼榛樿?? IP)
 
-# 鐩�爣骞冲彴
+# 鐩??爣骞冲彴
 CONFIG_TARGET_x86=y
 CONFIG_TARGET_x86_64=y
 CONFIG_TARGET_x86_64_DEVICE_generic=y
@@ -23,13 +23,13 @@ CONFIG_BINUTILS_USE_VERSION_2_46=y
 CONFIG_USE_GC_SECTIONS=y
 CONFIG_USE_LTO=y
 
-# ---- 缂栬瘧/杩愯�鏃朵紭鍖?----
+# ---- 缂栬瘧/杩愯??鏃朵紭鍖?----
 CONFIG_ZLIB_OPTIMIZE_SPEED=y
 CONFIG_OPENSSL_OPTIMIZE_SPEED=y
 CONFIG_USE_APK=y
 CONFIG_PACKAGE_apk-openssl=y
 
-# 鍩虹�鍖?CONFIG_PACKAGE_base-files=y
+# 鍩虹??鍖?CONFIG_PACKAGE_base-files=y
 CONFIG_PACKAGE_busybox=y
 CONFIG_PACKAGE_dnsmasq-full=y
 CONFIG_PACKAGE_dnsmasq_full_nftset=y
@@ -84,7 +84,7 @@ CONFIG_PACKAGE_luci-app-bandix=y
 # CONFIG_PACKAGE_luci-app-nikki is not set
 CONFIG_PACKAGE_luci-app-clashoo=y
 CONFIG_PACKAGE_luci-i18n-clashoo-zh-cn=y
-CONFIG_PACKAGE_luci-app-ssclash=y
+CONFIG_PACKAGE_luci-app-miclash=y
 CONFIG_PACKAGE_luci-app-wol=y
 CONFIG_PACKAGE_luci-app-quickfile=y
 CONFIG_PACKAGE_luci-app-ttyd=y
@@ -101,7 +101,7 @@ CONFIG_PACKAGE_wget=y
 CONFIG_PACKAGE_ethtool=y
 CONFIG_PACKAGE_luci-app-3cat=y
 
-# DDNS 鑴氭湰锛堝�骞冲彴鏀�寔锛?CONFIG_PACKAGE_ddns-scripts=y
+# DDNS 鑴氭湰锛堝??骞冲彴鏀??寔锛?CONFIG_PACKAGE_ddns-scripts=y
 CONFIG_PACKAGE_ddns-scripts-aliyun=y
 CONFIG_PACKAGE_ddns-scripts-cloudflare=y
 CONFIG_PACKAGE_ddns-scripts-dnspod=y
@@ -126,7 +126,7 @@ CONFIG_PACKAGE_libblobmsg-json=y
 CONFIG_PACKAGE_lsblk=y
 CONFIG_PACKAGE_parted=y
 
-# 纾佺洏闀滃儚宸ュ叿锛堢敤浜?x86 鍚�姩锛?CONFIG_PACKAGE_grub2-bios-setup=y
+# 纾佺洏闀滃儚宸ュ叿锛堢敤浜?x86 鍚??姩锛?CONFIG_PACKAGE_grub2-bios-setup=y
 CONFIG_PACKAGE_kmod-ata-core=y
 CONFIG_PACKAGE_kmod-ata-ahci=y
 CONFIG_PACKAGE_kmod-nvme=y
