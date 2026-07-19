@@ -162,6 +162,13 @@ if [ -d "package/new/luci-theme-goflow-tmp/luci-theme-goflow" ]; then
     rm -rf package/new/luci-theme-goflow-tmp
     echo ">>> goflow 主题已展开到 package/new/luci-theme-goflow"
 fi
+# ---- 克隆 SSClash（luci-app-ssclash 在子目录中）----
+clone_or_warn "https://github.com/zerolabnet/SSClash.git" "package/new/ssclash-tmp" "luci-app-ssclash"
+if [ -d "package/new/ssclash-tmp/luci-app-ssclash" ]; then
+    mv package/new/ssclash-tmp/luci-app-ssclash package/new/luci-app-ssclash
+    rm -rf package/new/ssclash-tmp
+    echo ">>> luci-app-ssclash 已展开到 package/new/luci-app-ssclash"
+fi
 # clone_or_warn "https://github.com/nikkinikki-org/OpenWrt-nikki.git" "package/new/nikki"    "luci-app-nikki"  # 已注释：不再使用
 
 # ---- Mihomo 格式 geodata（来自 MetaCubeX/meta-rules-dat）----
