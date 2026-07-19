@@ -35,7 +35,6 @@ CONFIG_KERNEL_DEBUG_INFO_BTF=y
 CONFIG_PACKAGE_kmod-sched-bpf=y
 ```
 - DAE/DAED 等代理需要 BTF
-- 你种子里的 `luci-app-nikki` 可能也需要
 
 ### 4. natflow + DPDK
 ```
@@ -92,7 +91,6 @@ CONFIG_PACKAGE_vmlinux-btf=y
 | `CONFIG_PACKAGE_nat6=y` — IPv6 NAT | ✅ 已启用 |
 | GCC 16 + binutils 2.46 | ✅ 已启用 |
 | BTF/BPF 支持（`CONFIG_KERNEL_DEBUG_INFO_BTF=y` 等） | ✅ 已启用 |
-| `luci-app-daed` — daed 代理客户端（eBPF） | ✅ 已启用 |
 
 ## 尚未搬入（按性价比排序）
 
