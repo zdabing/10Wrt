@@ -1,0 +1,20 @@
+#!/bin/sh
+# WAN 接口稳定化脚本
+# 在 WAN 拨号后延迟刷新防火墙，确保转发规则完整加载。
+# 解决首次启动时 PPPoE 断连重拨导致的 nftables 规则不完整问题。
+
+[ "$INTERFACE" = "wan" ] || exit 0
+[ "$ACTION" = "ifup" ] || exit 0
+
+# 延迟等待接口和内核完全就绪，避免与 netifd 时序竞争
+sleep 5
+
+# 强制重启防火墙（reload 在某些场景下不刷新 flowtable）
+# 确保 LAN→WAN 转发规则、MSS 钳制、flow offload 全部生效
+logger -t "wan-fix" "WAN 已稳定，刷新防火墙规则..."
+/etc/init.d/firewall restart 2>/dev/null
+
+# 清理老旧 conntrack 条目（来自断连前的失效会话）
+[ -f /proc/net/nf_conntrack ] && echo f > /proc/net/nf_conntrack 2>/dev/null
+
+logger -t "wan-fix" "防火墙规则刷新完成"

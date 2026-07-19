@@ -28,12 +28,10 @@ else
     [ -n "$wan_idx" ] && uci set firewall.@zone[${wan_idx}].mtu_fix='1'
 fi
 
-# ---- 禁用 IPv6（LAN 不分发 + WAN 不获取），防止 wan_6 RS 失败拖垮 PPPoE ---- 
-# LAN: 内网设备不走 v6 撞墙；WAN: 避免 RS 失败触发 PPPoE 断连（升级后首次启动常见）
+# ---- 禁用 LAN 口 IPv6 分配（内网设备不走 v6 撞墙）----
 uci set dhcp.lan.ra='disabled'
 uci set dhcp.lan.dhcpv6='disabled'
 uci set dhcp.lan.ndp='disabled'
-uci set network.wan.ipv6='0'
 
 # ---- nginx 配置（仅当 nginx 已安装时生效）----
 if [ -x /etc/init.d/nginx ]; then
