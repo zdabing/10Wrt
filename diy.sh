@@ -155,13 +155,6 @@ clone_or_warn "https://github.com/timsaya/luci-app-bandix.git"    "package/new/b
 clone_or_warn "https://github.com/sbwml/luci-app-quickfile.git"   "package/new/quickfile" "luci-app-quickfile"
 clone_or_warn "https://github.com/svenshi/luci-app-oxidns.git"    "package/new/luci-app-oxidns" "luci-app-oxidns"
 clone_or_warn "https://github.com/eamonxg/luci-theme-aurora.git"  "package/new/luci-theme-aurora"    "luci-theme-aurora"
-# ---- 克隆 goflow 主题 ----
-clone_or_warn "https://github.com/CM-idea/luci-theme-goflow.git" "package/new/luci-theme-goflow-tmp" "luci-theme-goflow"
-if [ -d "package/new/luci-theme-goflow-tmp/luci-theme-goflow" ]; then
-    mv package/new/luci-theme-goflow-tmp/luci-theme-goflow package/new/luci-theme-goflow
-    rm -rf package/new/luci-theme-goflow-tmp
-    echo ">>> goflow 主题已展开到 package/new/luci-theme-goflow"
-fi
 # ---- 克隆 MiClash（luci-app-miclash 在子目录中）----
 clone_or_warn "https://github.com/ang3el7z/luci-app-miclash.git" "package/new/miclash-tmp" "luci-app-miclash"
 if [ -d "package/new/miclash-tmp/luci-app-miclash" ]; then
@@ -204,13 +197,10 @@ find ./ | grep Makefile | grep mosdns | xargs rm -f 2>/dev/null || true
 clone_or_warn "https://github.com/sbwml/luci-app-mosdns.git" "package/new/mosdns" "MosDNS v5" "v5"
 clone_or_warn "https://github.com/sbwml/v2ray-geodata.git"         "package/new/v2ray-geodata" "v2ray-geodata"
 
-# 将默认主题从 bootstrap 改为 aurora（goflow 同时提供，可在 LuCI 界面切换）
+# 将默认主题从 bootstrap 改为 aurora
 if [ -d package/new/luci-theme-aurora ]; then
     sed -i 's|/luci-static/bootstrap|/luci-static/aurora|g' feeds/luci/modules/luci-base/root/etc/config/luci
-    echo ">>> 默认主题已改为 luci-theme-aurora（可切换至 goflow）"
-elif [ -d package/new/luci-theme-goflow ]; then
-    sed -i 's|/luci-static/bootstrap|/luci-static/goflow|g' feeds/luci/modules/luci-base/root/etc/config/luci
-    echo ">>> 默认主题已改为 luci-theme-goflow（aurora 不可用）"
+    echo ">>> 默认主题已改为 luci-theme-aurora"
 fi
 
 # ---- kenzok8 feed ----
