@@ -129,3 +129,70 @@ ip link show eth1
 # 查看 pppoe 相关日志
 logread | grep -i "pppoe\|pppd" | tail -30
 ```
+
+---
+
+## 场景四：外网访问 NAS 仍被限速（nf_deaf 不生效）
+
+**背景：** 固件已内置 nf_deaf（绕过运营商 DPI 限速）。若外网访问 NAS 上行仍只有 5M 左右，按以下顺序排查。
+
+**⚠️ 前置一步：优先试 IPv6 直连**
+
+江苏联通等联通系宽带（V2EX [t/1210042](https://www.v2ex.com/t/1210042) 实测）：**WAN 口 IPv6 地址不受上行限速**，走 IPv6 直连是最可靠的绕过方案，且无需任何伪装模块。
+
+```bash
+# 1. 确认有公网 IPv6 地址
+ip -6 addr show br-lan | grep 'scope global'
+
+# 2. 用 IPv6 访问外部 NAS（假设其有 IPv6）
+ssh -6 user@<NAS-IPv6>
+# 或下载测速：curl -6 -o /dev/null <NAS-IPv6 下载链接>
+
+# 3. 外网访问家里 NAS：给 DDNS 配 AAAA 记录，或用 Tailscale 走 IPv6 组网
+#    实测 IPv6 能跑满上行，IPv4 仍是 5M
+```
+
+如果 NAS 只有 IPv4、必须走 IPv4，再继续下方步骤。
+
+#### 第 1 步：模块是否加载
+
+```bash
+lsmod | grep nf_deaf
+# 无输出 = 模块未加载，执行：modprobe nf_deaf
+```
+
+#### 第 2 步：打标规则是否生效
+
+```bash
+nft list chain inet fw4 nf_deaf_postrouting
+# 应看到：跳过私有地址 → ct mark 去重 → 公网 IPv4 TCP 大包打 0xDEA10103
+# 规则缺失 = /etc/nftables.d/10-nf-deaf.nft 未被 include，重启防火墙或检查文件
+```
+
+#### 第 3 步：确认注入包真的发出
+
+```bash
+# 在访问 NAS 的同时抓 WAN 口发包，应看到 TTL=3 的 http 包（Host: www.speedtest.cn）
+tcpdump -i wan -nn 'tcp port 80 and ip[8] == 3' -c 20
+# 无注入包：确认规则用 meta length gt 120（大包才触发）、连接未被排除
+```
+
+#### 第 4 步：切换注入特征（联通系 DPI 关键）
+
+上海联通实测：DPI 按 **HTTPS SNI** 匹配白名单（443/8080 + SNI 含 `speedtest` 解除限速），明文 HTTP `Host` 特征可能不被识别。切换为 TLS SNI 特征（SNI=`speedtest.cn`）：
+
+```bash
+echo -n '1603010044010000400303000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f00000413011302010000130000000f00000c7370656564746573742e636e' | xxd -r -p > /sys/kernel/debug/nf_deaf/buf
+```
+
+切换后重跑第 3 步抓包：注入包应变为 TTL=3 的 TLS ClientHello（`tcpdump -i wan -nn 'tcp[12:4] & 0x0fff == 0x1603'`）。若访问 NAS 本身是 HTTPS（带 SNI），也可直接给 NAS 的 TLS 证书配 `speedtest.cn` 备用 SAN，让真实流量自带白名单 SNI（对应 t/1210042 的 SNI 白名单机制）。
+
+#### 第 5 步：运营商策略不支持
+
+V2EX 社区反馈该方案在部分运营商/地区无效（DPI 策略不同）。确认无效可整体关闭：
+
+```bash
+rmmod nf_deaf
+```
+
+常见误判：外网访问走的是 **IPv6**（本固件 nf_deaf 默认只处理 IPv4），或流量被代理工具接管走了代理链路（排除代理节点 IP 后直连测试）。

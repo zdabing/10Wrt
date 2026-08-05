@@ -68,6 +68,58 @@
 - **TPROXY** 透明代理支持
 - **IPv6 NAT** 支持
 - **TUN** 虚拟网卡（VPN/代理需要）
+- **nf_deaf** — 绕过运营商 DPI 限速（默认启用，见下方说明）
+
+### nf_deaf：绕过运营商 DPI 限速
+
+**解决的问题**：运营商对非白名单出向 TCP 流量做 DPI 限速（典型现象：外网访问 NAS 上行只有 5M，而 speedtest.cn 测速上行能跑满——测速站点在白名单内）。江苏联通等联通系宽带是重灾区（详见 V2EX [t/1210042](https://www.v2ex.com/t/1210042)）。
+
+**原理**：nf_deaf 内核模块在 TCP 连接早期抢先注入一个伪装成测速请求的包，TTL=3 仅到达运营商 DPI、TCP 校验和故意错误远端收不到。DPI 误判该连接为测速流量后不再限速。来源：[kmb21y66/nf_deaf](https://github.com/kmb21y66/nf_deaf)（[kob/nf_deaf-openwrt](https://github.com/kob/nf_deaf-openwrt) 打包）。
+
+**默认行为**：对所有公网 IPv4 出向 TCP 大包生效，每个连接只注入一次（连接标记去重），私有/保留地址自动跳过。IPv6 不参与。
+
+**Mark 说明**（规则见 `files/etc/nftables.d/10-nf-deaf.nft`）：mark `0xDEA10103` = Magic `0xDEA` + 错误校验和(bit16) + 延迟 1 jiffy(bit8) + TTL=3(bit0-7)。
+
+**注入特征两种可选**（运行时切换，无需重刷固件）：
+- 明文 HTTP `Host` 特征（默认）：`GET / HTTP/1.1 Host: www.speedtest.cn`，适合移动/按 Host 匹配的 DPI（V2EX [t/1118730](https://www.v2ex.com/t/1118730)）
+- TLS SNI 特征：完整伪造的 TLS ClientHello，SNI=`speedtest.cn`，适合联通系 DPI（HTTPS 按 SNI 匹配白名单，见下文 t/1210042）
+
+**验证是否生效**：
+```bash
+lsmod | grep nf_deaf                          # 模块已加载
+nft list chain inet fw4 nf_deaf_postrouting   # 打标规则存在
+# 抓包确认握手后出现 TTL=3 的注入包：
+tcpdump -i wan -nn 'tcp port 80 and ip[8] == 3' -c 20
+```
+
+**自定义**：
+- 排除某个 IP（如代理节点）：在 `/etc/nftables.d/10-nf-deaf.nft` 的 `ip daddr {...} return` 行前加 `ip daddr <IP> return`
+- 切换注入特征（写入 `/sys/kernel/debug/nf_deaf/buf`）：
+  - 明文 HTTP `Host` 特征：
+    ```bash
+    printf 'GET / HTTP/1.1\r\nHost: www.speedtest.cn\r\n\r\n' > /sys/kernel/debug/nf_deaf/buf
+    ```
+  - TLS SNI 特征（联通系 DPI 适用，SNI=`speedtest.cn`）：
+    ```bash
+    echo -n '1603010044010000400303000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f00000413011302010000130000000f00000c7370656564746573742e636e' | xxd -r -p > /sys/kernel/debug/nf_deaf/buf
+    ```
+- 整体关闭：`rmmod nf_deaf`（`modprobe nf_deaf` 重新开启）
+
+---
+
+### 已知的绕过方案对比（江苏联通实测参考）
+
+来源：V2EX [t/1210042](https://www.v2ex.com/t/1210042)（上海联通，江苏联通同属联通系 DPI）
+
+| 方案 | 效果 | 说明 |
+|---|---|---|
+| **IPv6 直连** ⭐ | **不限速** | WAN 口 IPv6 地址不受限。外网访问 NAS 走 IPv6（DDNS AAAA 记录 / Tailscale）即可跑满上行，无需任何伪装 |
+| TLS SNI 白名单 | 443/8080 端口 + SNI 含 `speedtest` 可绕过 | 对应上方 nf_deaf 的 SNI 特征注入 |
+| OpenVPN / 裸 VLESS | 未被限速 | 协议特征不在 DPI 限速集内，走这类隧道可绕开 |
+| WireGuard / VMESS-AES | 被限到 5M | 特征命中 DPI 限速集，无效 |
+| fakehttp / fakesip | 已失效 | 社区反馈当前版本不适用 |
+
+**结论**：有公网 IPv6 时优先走 IPv6 直连（零开销、最可靠）；nf_deaf 作为 IPv4 场景的兜底方案，联通系 DPI 建议用上方 TLS SNI 特征。
 
 #### 系统工具
 
