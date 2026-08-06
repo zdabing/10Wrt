@@ -90,6 +90,13 @@ jobs:
             exit 1
           fi
           echo "设备配置验证通过：friendlyarm_nanopi-r5c"
+          # nf_deaf 内核模块必须在配置中选中（KernelPackage/nf_deaf → kmod-nf_deaf）
+          if ! grep -q "CONFIG_PACKAGE_kmod-nf_deaf=y" .config; then
+            echo "错误：kmod-nf_deaf 未在 .config 中选中！"
+            grep 'CONFIG_PACKAGE.*nf.deaf' .config || echo "(无)"
+            exit 1
+          fi
+          echo "nf_deaf 模块配置验证通过：kmod-nf_deaf"
 
       - name: 编译固件
         run: |
