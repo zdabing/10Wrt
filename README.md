@@ -76,7 +76,9 @@
 
 **原理**：nf_deaf 内核模块在 TCP 连接早期抢先注入一个伪装成测速请求的包，TTL=3 仅到达运营商 DPI、TCP 校验和故意错误远端收不到。DPI 误判该连接为测速流量后不再限速。来源：[kmb21y66/nf_deaf](https://github.com/kmb21y66/nf_deaf)（[kob/nf_deaf-openwrt](https://github.com/kob/nf_deaf-openwrt) 打包）。
 
-**默认行为**：对所有公网 IPv4 出向 TCP 大包生效，每个连接只注入一次（连接标记去重），私有/保留地址自动跳过。IPv6 不参与。
+**默认行为**：对所有公网 IPv4 出向 TCP 大包生效，同一连接每个数据段持续注入（无连接级去重），私有/保留地址自动跳过。IPv6 不参与。
+
+**⚠️ 已知问题（v29 已修复）**：早期打标规则用 `ct mark set 0xDEA10103 meta mark set 0xDEA10103`（先 ct mark 再 packet mark）实现每连接只注入一次的去重。实测在 nftables 1.x / Linux 6.12 下，同一条规则里 `ct mark set` 会导致 `meta mark set` 失效——注入完全不触发（流量过链、WAN 口无 TTL=3 包）。已移除 `ct mark set` 改为仅 `meta mark set`：同一连接每个数据段注入一次（每 ~1500 字节数据包附加 104 字节伪装包，约 7% 出向开销），对 DPI 反而持续维持"测速流量"外观。
 
 **Mark 说明**（规则见 `files/etc/nftables.d/10-nf-deaf.nft`）：mark `0xDEA10103` = Magic `0xDEA` + 错误校验和(bit16) + 延迟 1 jiffy(bit8) + TTL=3(bit0-7)。
 

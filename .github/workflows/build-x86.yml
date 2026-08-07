@@ -97,6 +97,13 @@ jobs:
             exit 1
           fi
           echo "nf_deaf 模块配置验证通过：kmod-nf_deaf"
+          # iperf3（测速工具）必须在配置中选中，避免编译期被 IGNORE_ERRORS=1 静默跳过
+          if ! grep -q "CONFIG_PACKAGE_iperf3=y" .config; then
+            echo "错误：iperf3 未在 .config 中选中！"
+            grep 'CONFIG_PACKAGE.*iperf3' .config || echo "(无)"
+            exit 1
+          fi
+          echo "iperf3 配置验证通过"
 
       - name: 编译固件
         run: |

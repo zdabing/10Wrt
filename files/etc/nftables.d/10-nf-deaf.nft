@@ -27,10 +27,14 @@ chain nf_deaf_postrouting {
               192.88.99.0/24, 192.168.0.0/16, 198.18.0.0/15, 198.51.100.0/24,
               203.0.113.0/24, 224.0.0.0/4, 240.0.0.0/4} return
 
-    # 已标记的连接不再重复注入（避免每个包都触发一次）
-    ct mark 0xDEA10103 return
-
-    # 其余公网 IPv4 TCP 大包（握手后第一个数据包）：标记连接 + 标记包
+    # 其余公网 IPv4 TCP 大包：打 packet mark 触发注入。
     # 只处理 IPv4（ip protocol tcp）；IPv6 走 policy accept，不参与
-    ip protocol tcp meta length gt 120 ct mark set 0xDEA10103 meta mark set 0xDEA10103 return
+    #
+    # 注意：不要加 ct mark set / ct mark 去重！
+    # 实测（nftables 1.x + Linux 6.12）同一条规则里先 ct mark set 再 meta mark set，
+    # 会导致 meta mark 未生效、注入完全不触发（流量过链但 WAN 口无 TTL=3 包）。
+    # 去掉 ct mark set 后注入正常；代价是同一连接每个数据段都会注入一次
+    # （每 ~1500 字节数据包附加 104 字节伪装包，约 7% 出向开销），
+    # 对 DPI 反而持续维持"测速流量"外观。
+    ip protocol tcp meta length gt 120 meta mark set 0xDEA10103 return
 }

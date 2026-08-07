@@ -165,8 +165,10 @@ lsmod | grep nf_deaf
 
 ```bash
 nft list chain inet fw4 nf_deaf_postrouting
-# 应看到：跳过私有地址 → ct mark 去重 → 公网 IPv4 TCP 大包打 0xDEA10103
+# 应看到：跳过私有地址 → 公网 IPv4 TCP 大包打 0xDEA10103（无 ct mark 去重）
 # 规则缺失 = /etc/nftables.d/10-nf-deaf.nft 未被 include，重启防火墙或检查文件
+# ⚠️ 不要改回带 ct mark set 的写法：实测 ct mark set + meta mark set 同规则会导致
+#    packet mark 失效、注入不触发（见 README「已知问题」，v29 起已移除）
 ```
 
 #### 第 3 步：确认注入包真的发出
@@ -196,3 +198,62 @@ rmmod nf_deaf
 ```
 
 常见误判：外网访问走的是 **IPv6**（本固件 nf_deaf 默认只处理 IPv4），或流量被代理工具接管走了代理链路（排除代理节点 IP 后直连测试）。
+
+---
+
+## 场景五：nf_deaf 注入正常但限速不掉（实测排查记录 2026-08）
+
+**背景：** 广西电信家宽，外网访问家里 NAS 上行被限 ~5M，speedtest.cn 上行能跑满。nf_deaf 规则修复后注入包持续产生（TTL=3，验证通过），但**限速纹丝不动**。以下为完整排查结论，避免后人重蹈。
+
+### 结论（按证据强度排序）
+
+| 证据 | 结论 |
+|---|---|
+| 外网设备 iperf3 `-R` 单连接稳定 5M | 上行被限 5M |
+| 外网设备 iperf3 `-R -P 10` 十并发**总和仍 5M**（多数连接全程 0） | ❌ 不是"限连接数"（否则并发能堆上去） |
+| iperf3 单连接 30 秒 **Retr 449 次** | 超速包被直接丢弃 + TCP 重传 = **令牌桶带宽整形（rate policing）** 特征，不是"识别后放行/丢弃"的 DPI |
+| 域名含 `speedtest` 的真实 HTTPS 访问 NAS 仍 5M | ❌ DPI **不看 SNI/Host** |
+| IPv6 访问同样被限 | 全栈限速，非 IPv4 专属 |
+| 注入包（SNI=speedtest.cn / 百度网盘上传请求）目的端口 = 外网设备随机端口 | nf_deaf 注入包**复制真实连接端口**，永远不是白名单端口 443/8080 |
+
+**判定模型：** 运营商对"**白名单之外的目的 IP**"的出站流量做整体带宽整形。speedtest.cn 能跑满只是因为该目标 IP 在白名单内。
+
+### 为什么 nf_deaf 对此线路无效（原理性）
+
+nf_deaf 伪装的是 **SNI/Host**，但：
+1. 真实流量目的 IP 是外网设备（永不在白名单），伪装包改变不了这一点
+2. 注入包目的端口复制真实连接（随机高位端口），不可能命中 443/8080 白名单端口
+3. 整形（丢弃+重传）与"识别内容后限速"不同，注入包内容再逼真也不影响整形器
+
+**判据（30 秒判断 nf_deaf 对你是否有用）：** 外网设备 `iperf3 -c <WAN_IP> -t 30 -R -P 10`。若并发总和与单连接一样 → 整形限速，nf_deaf 无效；若并发明显更高 → 连接数限制，nf_deaf 无效但可考虑 FakeHTTP。
+
+### 验证 nf_deaf 注入机制是否正常（已修复）
+
+对照实验（同一环境唯一变量）：
+
+| 规则 | 注入包 |
+|---|---|
+| `ct mark set 0xDEA10103 meta mark set 0xDEA10103`（旧） | ❌ 0 个（ct mark 使 packet mark 失效，Linux 6.12/nftables 1.x 实测） |
+| `meta mark set 0xDEA10103`（当前，v29 起） | ✅ 每个数据段持续注入 TTL=3 包 |
+
+```bash
+# 现场验证注入（iperf3 测速时同时抓包）：
+timeout 25 tcpdump -i pppoe-wan -nn -c 20 'ip[8] == 3'
+# 预期：源端口 5201/37073 的 length 73（SNI 特征）或 104/872（HTTP 特征）TTL=3 包
+
+# 写入自定义 payload（OpenWrt 无 xxd，用 sed+printf）：
+printf '%b' "$(echo -n '<hex>' | sed 's/../\x&/g')" > /sys/kernel/debug/nf_deaf/buf
+```
+
+### 可行出路
+
+1. **VPS 隧道（唯一确定性方案）**：外网设备 → VPS:443 → 家里主动出站连 VPS。运营商对 OpenVPN/裸 VLESS 实测不限制，且该方向是出站、目的 IP 可控（VPS），正适合 nf_deaf 类工具。
+2. **FakeHTTP（社区验证，适合"纯 host/SNI 模式无效"的线路）**：`MikeWang000000/FakeHTTP` v0.9.18 有 arm64 版。用 tcpdump 抓取**真实测速/网盘上传请求**保存为 bin，`./fakehttp -b xxx.bin -i pppoe-wan`。前提：确认目标（如百度网盘）本身在白名单内（真实上传能跑满），否则 payload 无意义。
+3. **查套餐上行带宽**：若套餐上行本来就是 5M（iperf3 测出的就是带宽上限），任何伪装方案均无效，只能找运营商升级。
+
+### 常见坑（本次踩过）
+
+- OpenWrt 无 `xxd`/`od`：切换 payload 用 `printf '%b' "$(echo -n '<hex>' | sed 's/../\x&/g')"`
+- nft 输入用 `gt` 不是 `>`（`>` 只是输出渲染）
+- PPPoE 拨号出口接口是 `pppoe-wan`，不是 `eth1`
+- `tcpdump 'ip[8] == 3'` 抓的是 IPv4 TTL=3 注入包；tcpdump 用 `timeout 25`（10 秒太短，背景注入 0.05 秒就能抓满）
