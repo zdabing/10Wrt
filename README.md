@@ -35,27 +35,23 @@
 | **luci-app-miclash** | MiClash Clash 代理客户端 | [ang3el7z/luci-app-miclash](https://github.com/ang3el7z/luci-app-miclash) |
 | **luci-app-mosdns** | MosDNS DNS 处理/分流 | [sbwml/luci-app-mosdns](https://github.com/sbwml/luci-app-mosdns) |
 | **luci-app-oxidns** | OxiDNS 高性能可编程 DNS 引擎（Rust） | [svenshi/luci-app-oxidns](https://github.com/svenshi/luci-app-oxidns) |
-| **luci-app-oaf** | 应用过滤 | |
+| **luci-app-fakehttp** | NFQUEUE 伪装 HTTP 绕过 DPI 限速 | [killadm/luci-app-fakehttp](https://github.com/killadm/luci-app-fakehttp) |
 | **luci-app-ddns** | 动态域名解析 | |
 | **luci-app-upnp** | UPnP IGD / NAT-PMP | |
 | **luci-app-3cat** | 3Cat 工具 | |
 | **luci-app-bandix** | 带宽监控 | [timsaya/luci-app-bandix](https://github.com/timsaya/luci-app-bandix) |
-| **luci-app-onliner** | 在线设备列表 | |
 | **luci-app-wol** | 网络唤醒 | |
 | **luci-app-quickfile** | 文件管理器 | [sbwml/luci-app-quickfile](https://github.com/sbwml/luci-app-quickfile) |
 | **luci-app-ttyd** | 网页终端 | |
 | **luci-app-firewall** | 防火墙管理 | |
-| **luci-app-status** | 状态监控 | |
-| **luci-app-opkg** | 软件包管理 | |
 | **luci-theme-aurora** | Aurora 主题（默认） | [eamonxg/luci-theme-aurora](https://github.com/eamonxg/luci-theme-aurora) |
 
 #### 网络工具
 
 - `dnsmasq-full` (含 ipset 支持)
 - `firewall4` (nftables)
-- `iptables` / `ip6tables`
 - `curl` / `wget` / `bind-dig`
-- `ip-full` / `iperf3` / `tcpdump` / `traceroute`
+- `ip-full` / `iperf3` / `tcpdump` / `traceroute` / `ethtool` / `irqbalance`
 
 #### DDNS 支持
 
@@ -66,7 +62,6 @@
 - **FullCone NAT** — 游戏/P2P 优化
 - **BBR** 拥塞控制算法
 - **TPROXY** 透明代理支持
-- **IPv6 NAT** 支持
 - **TUN** 虚拟网卡（VPN/代理需要）
 - **nf_deaf** — 绕过运营商 DPI 限速（默认启用，见下方说明）
 
@@ -125,11 +120,11 @@ tcpdump -i wan -nn 'tcp port 80 and ip[8] == 3' -c 20
 
 #### 系统工具
 
-- `bash` / `vim` / `jq` / `htop` / `nano`
-- GNU coreutils + procps-ng（完整版工具链）
+- `bash` / `vim` / `jq` / `htop`
 - `openssh-sftp-server`
 - `zram-swap`（内存压缩交换）
 - `ca-certificates`（HTTPS 证书）
+- `blockdev` / `fdisk` / `lsblk`（磁盘工具，x86 额外含 `parted`）
 
 ### 首次启动自动配置
 

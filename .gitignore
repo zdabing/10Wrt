@@ -16,6 +16,10 @@ tmp/
 reasonix.toml
 .codegraph/
 .mimocode/
+.zcode/
+
+# 个人配置（Clash 等，勿入库）
+1.yaml
 
 # 系统文件
 .DS_Store
