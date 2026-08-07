@@ -20,8 +20,6 @@ jobs:
     env:
       IMMORTALWRT_REPO: https://github.com/immortalwrt/immortalwrt.git
       IMMORTALWRT_VERSION: ${{ inputs.version || 'openwrt-25.12' }}
-      # FakeHTTP 目标架构（diy.sh 按此下载 x86_64 二进制集成进固件）
-      FAKEHTTP_ARCH: x86_64
 
     steps:
       - name: 检出配置仓库
@@ -106,6 +104,13 @@ jobs:
             exit 1
           fi
           echo "iperf3 配置验证通过"
+          # FakeHTTP（NFQUEUE 伪装 HTTP）必须在配置中选中
+          if ! grep -q "CONFIG_PACKAGE_fakehttp=y" .config; then
+            echo "错误：fakehttp 未在 .config 中选中！"
+            grep 'CONFIG_PACKAGE.*fakehttp' .config || echo "(无)"
+            exit 1
+          fi
+          echo "fakehttp 配置验证通过"
 
       - name: 编译固件
         run: |
