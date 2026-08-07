@@ -236,4 +236,22 @@ fi
 ./scripts/feeds install -a -p new
 echo ">>> package/new 已注册并安装到 feeds"
 
+# ---- FakeHTTP（NFQUEUE 伪装 HTTP 绕过 DPI 限速）----
+# 按目标架构下载官方 release 二进制到固件 files/usr/bin/，刷机即可用。
+# 需配合 NFQUEUE 内核模块（seed 已加 kmod-nfnetlink-queue / kmod-nf-queue）。
+# 用法示例：fakehttp -a -s -b /etc/fakehttp/xxx.bin -h www.speedtest.cn -t 10
+if [ -n "$FAKEHTTP_ARCH" ]; then
+    echo ">>> 集成 FakeHTTP (${FAKEHTTP_ARCH})..."
+    mkdir -p files/usr/bin
+    wget -q -O /tmp/fakehttp.tar.gz "https://github.com/MikeWang000000/FakeHTTP/releases/download/0.9.18/fakehttp-linux-${FAKEHTTP_ARCH}.tar.gz" \
+        && tar -xzf /tmp/fakehttp.tar.gz -C /tmp \
+        && cp -f /tmp/fakehttp files/usr/bin/fakehttp \
+        && chmod +x files/usr/bin/fakehttp \
+        && rm -f /tmp/fakehttp.tar.gz \
+        && echo ">>> FakeHTTP 已集成到 /usr/bin/fakehttp" \
+        || echo "!!! 警告：FakeHTTP 下载失败（不影响其他构建）"
+else
+    echo ">>> 未设置 FAKEHTTP_ARCH，跳过 FakeHTTP 集成"
+fi
+
 echo ">>> [diy.sh] 自定义配置完成"

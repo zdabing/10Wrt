@@ -20,6 +20,8 @@ jobs:
     env:
       IMMORTALWRT_REPO: https://github.com/immortalwrt/immortalwrt.git
       IMMORTALWRT_VERSION: ${{ inputs.version || 'openwrt-25.12' }}
+      # FakeHTTP 目标架构（diy.sh 按此下载 x86_64 二进制集成进固件）
+      FAKEHTTP_ARCH: x86_64
 
     steps:
       - name: 检出配置仓库
