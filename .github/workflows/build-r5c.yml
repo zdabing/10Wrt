@@ -29,8 +29,19 @@ jobs:
 
       - name: 清理磁盘空间
         run: |
+          # 释放 GitHub 托管 Runner 预装的大体积无用文件，避免编译中途磁盘耗尽
+          # （从零编译工具链+内核+全量 Go 包需 25~40G，初始仅 ~20G 可用，曾因此失败）
+          # 注意：不删 /opt/hostedtoolcache —— actions/cache 等 Node 20+ 复合 action 依赖它
           sudo apt clean
-          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/share/boost
+          sudo apt-get -y autoremove --purge >/dev/null 2>&1 || true
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /usr/local/lib/android    # Android SDK（~10GB+）
+          sudo rm -rf /opt/ghc
+          sudo rm -rf /usr/local/share/boost
+          sudo rm -rf /usr/share/swift          # ~5GB
+          sudo rm -rf /usr/share/powershell
+          sudo rm -rf /usr/lib/mono
+          sudo rm -rf /usr/local/go             # 构建用自建 go-cross，不需要系统 Go
           df -h
 
       - name: 安装编译依赖
@@ -203,5 +214,25 @@ jobs:
             --notes "### 管理地址: http://10.0.0.1" \
             --latest \
             --repo ${{ github.repository }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: 清理旧 Release/Tag（每设备系列仅保留最新 7 个）
+        run: |
+          # 每次构建成功后自动清理：r5c / x86_64 各保留最新 7 个 Release，
+          # 更旧的 Release 与其 git tag 一并删除（--cleanup-tag）。
+          # 若构建失败则本步骤不执行，不会误删。
+          for PREFIX in r5c x86_64; do
+            echo "=== 清理前缀 ${PREFIX}（保留最新 7 个）==="
+            gh api "repos/${{ github.repository }}/releases?per_page=100" \
+              --jq 'sort_by(.created_at) | reverse | .[].tag_name' 2>/dev/null \
+              | grep -E "^${PREFIX}-" | tail -n +8 | while read -r TAG; do
+                echo "删除旧 Release/Tag: ${TAG}"
+                gh release delete "$TAG" --yes --cleanup-tag \
+                  --repo ${{ github.repository }} || \
+                  echo "警告：删除 ${TAG} 失败，已跳过"
+              done
+          done
+          echo "清理完成"
         env:
           GH_TOKEN: ${{ github.token }}
