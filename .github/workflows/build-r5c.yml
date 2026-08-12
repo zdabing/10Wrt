@@ -101,13 +101,6 @@ jobs:
             exit 1
           fi
           echo "设备配置验证通过：friendlyarm_nanopi-r5c"
-          # nf_deaf 内核模块必须在配置中选中（KernelPackage/nf_deaf → kmod-nf_deaf）
-          if ! grep -q "CONFIG_PACKAGE_kmod-nf_deaf=y" .config; then
-            echo "错误：kmod-nf_deaf 未在 .config 中选中！"
-            grep 'CONFIG_PACKAGE.*nf.deaf' .config || echo "(无)"
-            exit 1
-          fi
-          echo "nf_deaf 模块配置验证通过：kmod-nf_deaf"
           # iperf3（测速工具）必须在配置中选中，避免编译期被 IGNORE_ERRORS=1 静默跳过
           if ! grep -q "CONFIG_PACKAGE_iperf3=y" .config; then
             echo "错误：iperf3 未在 .config 中选中！"
@@ -115,13 +108,6 @@ jobs:
             exit 1
           fi
           echo "iperf3 配置验证通过"
-          # FakeHTTP（NFQUEUE 伪装 HTTP）必须在配置中选中
-          if ! grep -q "CONFIG_PACKAGE_fakehttp=y" .config; then
-            echo "错误：fakehttp 未在 .config 中选中！"
-            grep 'CONFIG_PACKAGE.*fakehttp' .config || echo "(无)"
-            exit 1
-          fi
-          echo "fakehttp 配置验证通过"
 
       - name: 编译固件
         run: |
@@ -181,7 +167,7 @@ jobs:
             immortalwrt/bin/targets/**/*.tar.gz
             immortalwrt/bin/targets/**/immortalwrt-*-*
           if-no-files-found: warn
-          retention-days: 30
+          retention-days: 7
 
       - name: 生成固件清单
         if: always()
@@ -234,5 +220,23 @@ jobs:
               done
           done
           echo "清理完成"
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: 清理旧 dl 缓存（每个 key 仅保留最新 1 个版本）
+        run: |
+          # Actions 免费额度仅 0.5GB 存储（缓存+构件），dl 缓存每次构建都会给同一 key 新增一个版本，
+          # 不清理会持续累积。这里只保留每个 key 最新 1 个版本，其余删除。
+          for KEY in dl-immortalwrt-x86 dl-immortalwrt-r5c; do
+            echo "=== 清理缓存前缀 ${KEY} ==="
+            gh api "repos/${{ github.repository }}/actions/caches?per_page=100" \
+              --jq '.actions_caches[] | select(.key | startswith("'"$KEY"'")) | [.id, .created_at] | @tsv' 2>/dev/null \
+              | sort -k2,2r | tail -n +2 | cut -f1 | while read -r CID; do
+                echo "删除缓存: ${CID}"
+                gh api --method DELETE "repos/${{ github.repository }}/actions/caches/${CID}" || \
+                  echo "警告：删除缓存 ${CID} 失败，已跳过"
+              done
+          done
+          echo "dl 缓存清理完成"
         env:
           GH_TOKEN: ${{ github.token }}

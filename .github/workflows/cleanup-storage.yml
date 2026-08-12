@@ -1,0 +1,46 @@
+name: 清理 Actions 存储（缓存/构件）
+
+on:
+  schedule:
+    # 每周日 03:00 (UTC) 自动清理，防止 Actions 存储超配额（免费 0.5GB）
+    - cron: '0 3 * * 0'
+  workflow_dispatch:
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 清理 dl 缓存（每个 key 仅保留最新 1 个版本）
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          for KEY in dl-immortalwrt-x86 dl-immortalwrt-r5c; do
+            echo "=== 清理缓存前缀 ${KEY} ==="
+            gh api "repos/${{ github.repository }}/actions/caches?per_page=100" \
+              --jq '.actions_caches[] | select(.key | startswith("'"$KEY"'")) | [.id, .created_at] | @tsv' 2>/dev/null \
+              | sort -k2,2r | tail -n +2 | cut -f1 | while read -r CID; do
+                echo "删除缓存: ${CID}"
+                gh api --method DELETE "repos/${{ github.repository }}/actions/caches/${CID}" || \
+                  echo "警告：删除缓存 ${CID} 失败，已跳过"
+              done
+          done
+          echo "dl 缓存清理完成"
+
+      - name: 清理超过 7 天的构建构件
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # 构件的 retention-days 到期后会自动删除，这里额外兜底清理仍占用空间的旧构件
+          NOW=$(date +%s)
+          gh api "repos/${{ github.repository }}/actions/artifacts?per_page=100" \
+            --jq '.artifacts[] | [.id, .name, .created_at, .expired] | @tsv' 2>/dev/null \
+            | while read -r ID NAME CREATED EXPIRED; do
+              [ "$EXPIRED" = "true" ] && continue
+              AGE=$(( (NOW - $(date -d "$CREATED" +%s)) / 86400 ))
+              if [ "$AGE" -ge 7 ]; then
+                echo "删除构件: ${NAME}（${AGE} 天前）"
+                gh api --method DELETE "repos/${{ github.repository }}/actions/artifacts/${ID}" || \
+                  echo "警告：删除构件 ${ID} 失败，已跳过"
+              fi
+            done
+          echo "构件清理完成"
