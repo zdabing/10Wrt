@@ -162,17 +162,6 @@ if [ -d "package/new/miclash-tmp/luci-app-miclash" ]; then
     rm -rf package/new/miclash-tmp
     echo ">>> luci-app-miclash 已展开到 package/new/luci-app-miclash"
 fi
-# ---- nf_deaf（绕过运营商 DPI 限速：抢占注入测速伪装包）----
-clone_or_warn "https://github.com/kob/nf_deaf-openwrt.git" "package/new/nf_deaf" "nf_deaf（OpenWrt 打包）"
-# kob 打包固定的上游是旧版 FTP payload（USER ftpuser），对测速无效。
-# 改用 kmb21y66 最新提交：带 speedtest 测速 payload、零拷贝、修复校验和与 TCP 头部。
-NF_DEAF_MAKEFILE="package/new/nf_deaf/Makefile"
-if [ -f "$NF_DEAF_MAKEFILE" ]; then
-    sed -i 's|^PKG_SOURCE_VERSION:=.*|PKG_SOURCE_VERSION:=cf346a3c270e5eb6d31b1d0c110efaf7a8b9193e|' "$NF_DEAF_MAKEFILE"
-    sed -i 's|^PKG_SOURCE_DATE:=.*|PKG_SOURCE_DATE:=2026-01-23|' "$NF_DEAF_MAKEFILE"
-    sed -i 's|^PKG_VERSION:=.*|PKG_VERSION:=1.2|' "$NF_DEAF_MAKEFILE"
-    echo ">>> nf_deaf 上游已固定到最新版（speedtest payload）"
-fi
 # clone_or_warn "https://github.com/nikkinikki-org/OpenWrt-nikki.git" "package/new/nikki"    "luci-app-nikki"  # 已注释：不再使用
 
 # ---- Mihomo 格式 geodata（来自 MetaCubeX/meta-rules-dat）----
@@ -235,19 +224,5 @@ fi
 ./scripts/feeds update new
 ./scripts/feeds install -a -p new
 echo ">>> package/new 已注册并安装到 feeds"
-
-# ---- FakeHTTP feed（NFQUEUE 伪装 HTTP 绕过 DPI 限速）----
-# killadm/luci-app-fakehttp：完整 feed，含 fakehttp 源码编译包 + LuCI 界面
-# + procd 服务脚本 + UCI 配置。依赖自动拉取 kmod-nfnetlink-queue / kmod-nft-queue。
-# seed 里选中 CONFIG_PACKAGE_fakehttp / CONFIG_PACKAGE_luci-app-fakehttp 即可。
-FAKEHTTP_FEED="src-git fakehttp https://github.com/killadm/luci-app-fakehttp.git"
-if ! grep -qF "$FAKEHTTP_FEED" feeds.conf.default; then
-    echo "$FAKEHTTP_FEED" >> feeds.conf.default
-    ./scripts/feeds update fakehttp
-    ./scripts/feeds install -a -p fakehttp
-    echo ">>> 已添加 killadm/luci-app-fakehttp 软件源"
-else
-    echo ">>> fakehttp feed 已存在，跳过"
-fi
 
 echo ">>> [diy.sh] 自定义配置完成"
