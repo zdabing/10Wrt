@@ -117,9 +117,6 @@ sed -i 's/cheaper = 1/cheaper = 2/g' feeds/packages/net/uwsgi/files-luci-support
 sed -i 's/option timeout 30/option timeout 60/g' package/system/rpcd/files/rpcd.config 2>/dev/null || true
 sed -i 's#20) \* 1000#60) \* 1000#g' feeds/luci/modules/luci-base/htdocs/luci-static/resources/rpc.js 2>/dev/null || true
 
-# ---- 移除官方 v2ray-geodata（与 mosdns 版本冲突）----
-rm -rf feeds/packages/net/v2ray-geodata 2>/dev/null || true
-
 # ---- 安装 feeds ----
 echo ">>> 安装 feeds..."
 ./scripts/feeds install -a
@@ -141,18 +138,7 @@ clone_or_warn() {
     fi
 }
 
-clone_or_warn "https://github.com/timsaya/openwrt-bandix.git"     "package/new/bandix-tmp" "bandix 后端"
-# openwrt-bandix 仓库嵌套了 openwrt-bandix/ 子目录，需要展开
-if [ -d "package/new/bandix-tmp/openwrt-bandix" ]; then
-    mkdir -p package/new/bandix
-    cp -rf package/new/bandix-tmp/openwrt-bandix/. package/new/bandix/
-    rm -rf package/new/bandix-tmp
-    echo ">>> bandix 后端目录已展开"
-elif [ -d "package/new/bandix-tmp" ]; then
-    mv package/new/bandix-tmp package/new/bandix
-fi
-clone_or_warn "https://github.com/timsaya/luci-app-bandix.git"    "package/new/bandix-luci" "luci-app-bandix（前端）"
-clone_or_warn "https://github.com/sbwml/luci-app-quickfile.git"   "package/new/quickfile" "luci-app-quickfile"
+clone_or_warn "https://github.com/timsaya/luci-app-quickfile.git"   "package/new/quickfile" "luci-app-quickfile"
 clone_or_warn "https://github.com/svenshi/luci-app-oxidns.git"    "package/new/luci-app-oxidns" "luci-app-oxidns"
 clone_or_warn "https://github.com/eamonxg/luci-theme-aurora.git"  "package/new/luci-theme-aurora"    "luci-theme-aurora"
 # ---- 克隆 MiClash（luci-app-miclash 在子目录中）----
@@ -202,13 +188,6 @@ META_GEO_URL="https://github.com/MetaCubeX/meta-rules-dat/releases/latest/downlo
 # wget -q --show-progress -O files/etc/clashoo/GeoSite.dat   "${META_GEO_URL}/geosite.dat" || echo "!!! 警告：Clashoo GeoSite.dat 下载失败"
 # wget -q --show-progress -O files/etc/clashoo/GeoIP.dat     "${META_GEO_URL}/geoip.dat"   || echo "!!! 警告：Clashoo GeoIP.dat 下载失败"
 # echo ">>> Clashoo geodata → files/etc/clashoo/"
-
-# ---- MosDNS v5 ----
-echo ">>> 添加 MosDNS v5..."
-find ./ | grep Makefile | grep v2ray-geodata | xargs rm -f 2>/dev/null || true
-find ./ | grep Makefile | grep mosdns | xargs rm -f 2>/dev/null || true
-clone_or_warn "https://github.com/sbwml/luci-app-mosdns.git" "package/new/mosdns" "MosDNS v5" "v5"
-clone_or_warn "https://github.com/sbwml/v2ray-geodata.git"         "package/new/v2ray-geodata" "v2ray-geodata"
 
 # 将默认主题从 bootstrap 改为 aurora
 if [ -d package/new/luci-theme-aurora ]; then
