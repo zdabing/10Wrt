@@ -41,6 +41,9 @@
 | **luci-app-bandix** | 带宽监控 | [timsaya/luci-app-bandix](https://github.com/timsaya/luci-app-bandix) |
 | **luci-app-wol** | 网络唤醒 | |
 | **luci-app-quickfile** | 文件管理器 | [sbwml/luci-app-quickfile](https://github.com/sbwml/luci-app-quickfile) |
+| **luci-app-fwx-dashboard** | fwx 实时流量/应用统计看板 | [fanchmwrt/fanchmwrt-packages](https://github.com/fanchmwrt/fanchmwrt-packages) |
+| **luci-app-fwx-appfilter** | fwx 应用识别/管控（特征库） | [fanchmwrt/fanchmwrt-packages](https://github.com/fanchmwrt/fanchmwrt-packages) |
+| **luci-app-fwx-session-stat** | fwx 会话/流量统计 | [fanchmwrt/fanchmwrt-packages](https://github.com/fanchmwrt/fanchmwrt-packages) |
 | **luci-app-ttyd** | 网页终端 | |
 | **luci-app-firewall** | 防火墙管理 | |
 | **luci-theme-aurora** | Aurora 主题（默认） | [eamonxg/luci-theme-aurora](https://github.com/eamonxg/luci-theme-aurora) |
@@ -62,6 +65,12 @@
 - **BBR** 拥塞控制算法
 - **TPROXY** 透明代理支持
 - **TUN** 虚拟网卡（VPN/代理需要）
+
+#### 流量识别（fwx，来自 fanchmwrt）
+
+- 基于 fanchmwrt 的 fwx 内核模块 + fwxd 守护进程，提供**实时流量看板、应用识别（应用防火墙）、会话统计**（Dashboard / AppFilter / Session-Stat）
+- 预装应用特征库（微信/抖音/王者荣耀/原神等 200+ 应用），可通过 **luci-app-fwx-feature** 在线升级特征
+- ⚠️ **版权声明**：应用特征库 feature.cfg 版权归 destan19/fanchmwrt，个人免费使用、**禁止商用**；fwx 后端（kmod-fwx/fwxd）与 LuCI 前端为 GPL-2.0 / Apache-2.0
 
 #### 系统工具
 

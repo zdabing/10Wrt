@@ -79,6 +79,16 @@ CONFIG_PACKAGE_luci-app-wol=y
 CONFIG_PACKAGE_luci-app-quickfile=y
 CONFIG_PACKAGE_luci-app-ttyd=y
 
+# fwx 实时流量/应用识别（fanchmwrt：kmod-fwx + fwxd + LuCI 前端）
+CONFIG_PACKAGE_kmod-fwx=y
+CONFIG_PACKAGE_libfwx_common=y
+CONFIG_PACKAGE_fwxd=y
+CONFIG_PACKAGE_luci-app-fwx-resources=y
+CONFIG_PACKAGE_luci-app-fwx-appfilter=y
+CONFIG_PACKAGE_luci-app-fwx-dashboard=y
+CONFIG_PACKAGE_luci-app-fwx-session-stat=y
+CONFIG_PACKAGE_luci-app-fwx-feature=y
+
 # 网络工具
 CONFIG_PACKAGE_bind-dig=y
 CONFIG_PACKAGE_curl=y

@@ -108,6 +108,18 @@ jobs:
             exit 1
           fi
           echo "iperf3 配置验证通过"
+          # fwx 内核模块与守护进程（fanchmwrt 实时流量/应用识别）必须在配置中选中
+          if ! grep -q "CONFIG_PACKAGE_kmod-fwx=y" .config; then
+            echo "错误：kmod-fwx 未在 .config 中选中！"
+            grep 'CONFIG_PACKAGE.*fwx' .config || echo "(无)"
+            exit 1
+          fi
+          if ! grep -q "CONFIG_PACKAGE_fwxd=y" .config; then
+            echo "错误：fwxd 未在 .config 中选中！"
+            grep 'CONFIG_PACKAGE.*fwxd' .config || echo "(无)"
+            exit 1
+          fi
+          echo "fwx（kmod-fwx/fwxd）配置验证通过"
 
       - name: 编译固件
         run: |
