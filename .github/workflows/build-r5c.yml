@@ -18,8 +18,9 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      IMMORTALWRT_REPO: https://github.com/immortalwrt/immortalwrt.git
-      IMMORTALWRT_VERSION: ${{ inputs.version || 'openwrt-25.12' }}
+      # 构建底子：fanchmwrt 完整源码（OpenWrt 主线 fork，kernel 6.12，自带 fwx/fcm）
+      IMMORTALWRT_REPO: https://github.com/fanchmwrt/fanchmwrt.git
+      IMMORTALWRT_VERSION: ${{ inputs.version || 'fanchmwrt-25.12.4' }}
 
     steps:
       - name: 检出配置仓库
@@ -177,7 +178,7 @@ jobs:
             immortalwrt/bin/targets/**/*.img
             immortalwrt/bin/targets/**/*.bin
             immortalwrt/bin/targets/**/*.tar.gz
-            immortalwrt/bin/targets/**/immortalwrt-*-*
+            immortalwrt/bin/targets/**/openwrt-*-*
           if-no-files-found: warn
           retention-days: 7
 
