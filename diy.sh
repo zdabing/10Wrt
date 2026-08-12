@@ -65,20 +65,7 @@ echo ">>> 更新 feeds..."
 # 替换优化版软件包（在 feeds install 之前）
 # ============================================================
 
-# ---- 1. Golang 升级到 26.x ----
-echo ">>> 替换 golang 为 26.x..."
-GOLANG_BACKUP=$(mktemp -d)
-cp -rf feeds/packages/lang/golang "$GOLANG_BACKUP/" 2>/dev/null || true
-rm -rf feeds/packages/lang/golang
-if git clone --depth 1 https://github.com/sbwml/packages_lang_golang -b 26.x feeds/packages/lang/golang 2>/dev/null; then
-    echo ">>> golang 已升级到 26.x"
-else
-    echo "!!! 警告：golang 26.x 拉取失败，恢复原始版本"
-    cp -rf "$GOLANG_BACKUP/golang" feeds/packages/lang/ 2>/dev/null || true
-fi
-rm -rf "$GOLANG_BACKUP"
-
-# ---- 2. Node.js 替换为预编译版 ----
+# ---- Node.js 替换为预编译版 ----
 echo ">>> 替换 Node.js 为预编译版..."
 NODE_BACKUP=$(mktemp -d)
 cp -rf feeds/packages/lang/node "$NODE_BACKUP/" 2>/dev/null || true
