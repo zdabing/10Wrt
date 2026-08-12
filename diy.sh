@@ -141,13 +141,6 @@ clone_or_warn() {
 clone_or_warn "https://github.com/timsaya/luci-app-quickfile.git"   "package/new/quickfile" "luci-app-quickfile"
 clone_or_warn "https://github.com/svenshi/luci-app-oxidns.git"    "package/new/luci-app-oxidns" "luci-app-oxidns"
 clone_or_warn "https://github.com/eamonxg/luci-theme-aurora.git"  "package/new/luci-theme-aurora"    "luci-theme-aurora"
-# ---- 克隆 MiClash（luci-app-miclash 在子目录中）----
-clone_or_warn "https://github.com/ang3el7z/luci-app-miclash.git" "package/new/miclash-tmp" "luci-app-miclash"
-if [ -d "package/new/miclash-tmp/luci-app-miclash" ]; then
-    mv package/new/miclash-tmp/luci-app-miclash package/new/luci-app-miclash
-    rm -rf package/new/miclash-tmp
-    echo ">>> luci-app-miclash 已展开到 package/new/luci-app-miclash"
-fi
 # ---- fwx 内核模块+守护进程（fanchmwrt，实时流量/应用识别 Dashboard）----
 # fanchmwrt 主仓库是完整 OpenWrt 源码树，只取 package/fcm（kmod-fwx / fwxd / libfwx_common）。
 # 固定 fanchmwrt-25.12.4 分支（kernel 6.12，与 ImmortalWrt 25.12 一致）。
@@ -169,11 +162,9 @@ fi
 #   "list cn not found" / "proto: cannot parse invalid wire-format data"
 #
 # 各组件 geodata 分布：
-#   /usr/share/v2ray/geosite.dat  → V2Ray 格式（sbwml/v2ray-geodata）→ V2Ray/MosDNS
 #   /etc/nikki/run/GeoSite.dat    → Mihomo 格式（MetaCubeX）         → Nikki  # 已注释
 #   /etc/clashoo/GeoSite.dat      → Mihomo 格式（MetaCubeX）         → Clashoo
 #   /usr/share/daed/geosite.dat   → daed 自带                        → Daed  # 已注释
-#   HomeProxy(sing-box)           → .srs rule_set 远程下载           → 不用本地 geodata
 echo ">>> 下载 Mihomo 格式 geodata (MetaCubeX/meta-rules-dat)..."
 META_GEO_URL="https://github.com/MetaCubeX/meta-rules-dat/releases/latest/download"
 
