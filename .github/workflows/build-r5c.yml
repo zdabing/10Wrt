@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'ImmortalWrt 版本分支'
+        description: 'fanchmwrt 底子版本分支'
         required: false
-        default: 'openwrt-25.12'
+        default: 'fanchmwrt-25.12.4'
         type: string
 
 concurrency:
