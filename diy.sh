@@ -136,6 +136,17 @@ clone_or_warn "https://github.com/fanchmwrt/fanchmwrt.git" "package/new/fcm-tmp"
 if [ -d "package/new/fcm-tmp/package/fcm" ]; then
     mkdir -p package/new/fcm
     cp -rf package/new/fcm-tmp/package/fcm/. package/new/fcm/
+    # kmod-fwx 依赖 fanchmwrt 底子的内核补丁：给 struct nf_conn 增加 fwx_data 字段，
+    # 否则在 ImmortalWrt 内核编译报 'struct nf_conn has no member named fwx_data'。
+    # 把补丁装进内核 hack-6.12 目录，随内核编译自动应用。
+    FWX_KERNEL_PATCH="package/new/fcm-tmp/target/linux/generic/hack-6.12/950-fwx-nf-conn-struct-user-hook.patch"
+    if [ -f "$FWX_KERNEL_PATCH" ]; then
+        mkdir -p target/linux/generic/hack-6.12
+        cp "$FWX_KERNEL_PATCH" target/linux/generic/hack-6.12/
+        echo ">>> 已安装 fwx 内核补丁（nf_conn.fwx_data）"
+    else
+        echo "!!! 警告：fwx 内核补丁未找到，kmod-fwx 编译可能失败"
+    fi
     rm -rf package/new/fcm-tmp
     echo ">>> fcm（fwx 内核模块+守护进程）已展开到 package/new/fcm"
 else
