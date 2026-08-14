@@ -57,6 +57,10 @@ echo ">>> CPU 空闲调度器已设为 TEO"
 sed -i 's/192.168.1.1/10.0.0.1/g' package/base-files/files/bin/config_generate
 echo ">>> 默认 LAN 地址已改为 10.0.0.1"
 
+# ---- 清空 root 密码（空密码，首次登录自行设置）----
+sed -i 's/^root:[^:]*:/root::/' package/base-files/files/etc/shadow 2>/dev/null || true
+echo ">>> root 密码已清空（空密码登录后请自行设置）"
+
 # ---- 更新 feeds ----
 echo ">>> 更新 feeds..."
 ./scripts/feeds update -a
