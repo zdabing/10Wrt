@@ -30,10 +30,7 @@
 
 | 插件 | 说明 | 来源 |
 |---|---|---|
-| **luci-app-homeproxy** | HomeProxy 代理客户端 | [immortalwrt/homeproxy](https://github.com/immortalwrt/homeproxy) |
 | **luci-app-clashoo** | Clashoo 双内核代理（mihomo + sing-box） | [kenzok8/openwrt-clashoo](https://github.com/kenzok8/openwrt-clashoo) |
-| **luci-app-miclash** | MiClash Clash 代理客户端 | [ang3el7z/luci-app-miclash](https://github.com/ang3el7z/luci-app-miclash) |
-| **luci-app-mosdns** | MosDNS DNS 处理/分流 | [sbwml/luci-app-mosdns](https://github.com/sbwml/luci-app-mosdns) |
 | **luci-app-oxidns** | OxiDNS 高性能可编程 DNS 引擎（Rust） | [svenshi/luci-app-oxidns](https://github.com/svenshi/luci-app-oxidns) |
 | **luci-app-ddns** | 动态域名解析 | |
 | **luci-app-upnp** | UPnP IGD / NAT-PMP | |
@@ -149,7 +146,6 @@ dd if=immortalwrt-*-x86-64-generic-ext4-combined-efi.img of=/dev/sdX bs=4M statu
 - [ImmortalWrt](https://github.com/immortalwrt/immortalwrt)
 - [xuanranran/OpenWrt_RockChip](https://github.com/xuanranran/OpenWrt_RockChip) — 参考项目
 - [kenzok8/openwrt-clashoo](https://github.com/kenzok8/openwrt-clashoo) — Clashoo 双内核代理（mihomo + sing-box）
-- [ang3el7z/luci-app-miclash](https://github.com/ang3el7z/luci-app-miclash) — MiClash Clash 代理客户端
 - [nikkinikki-org/OpenWrt-nikki](https://github.com/nikkinikki-org/OpenWrt-nikki) — Nikki 代理客户端
 - [sbwml](https://github.com/sbwml) — 多个插件包
 - [svenshi/luci-app-oxidns](https://github.com/svenshi/luci-app-oxidns) — OxiDNS LuCI 管理界面
