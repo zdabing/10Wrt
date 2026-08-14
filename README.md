@@ -42,7 +42,7 @@
 | **luci-app-fwx-\*（全家桶 11 个）** | 上网管控 / 行为记录 / 用户管理 / 系统设置 / App 中心 | [fanchmwrt/fanchmwrt-packages](https://github.com/fanchmwrt/fanchmwrt-packages) |
 | **luci-app-ttyd** | 网页终端 | |
 | **luci-app-firewall** | 防火墙管理 | |
-| **luci-theme-aurora** | Aurora 主题（默认） | [eamonxg/luci-theme-aurora](https://github.com/eamonxg/luci-theme-aurora) |
+| **luci-theme-fanchmwrt** | fanchmwrt 主题（默认） | 底子自带 |
 
 #### 网络工具
 
@@ -157,7 +157,6 @@ dd if=immortalwrt-*-x86-64-generic-ext4-combined-efi.img of=/dev/sdX bs=4M statu
 - [nikkinikki-org/OpenWrt-nikki](https://github.com/nikkinikki-org/OpenWrt-nikki) — Nikki 代理客户端
 - [sbwml](https://github.com/sbwml) — 多个插件包
 - [svenshi/luci-app-oxidns](https://github.com/svenshi/luci-app-oxidns) — OxiDNS LuCI 管理界面
-- [eamonxg/luci-theme-aurora](https://github.com/eamonxg/luci-theme-aurora) — Aurora 主题（默认）
 - [P3TERX/Actions-OpenWrt](https://github.com/P3TERX/Actions-OpenWrt)
 - [SuLingGG/OpenWrt-Rpi](https://github.com/SuLingGG/OpenWrt-Rpi)
 

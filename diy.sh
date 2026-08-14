@@ -127,7 +127,6 @@ clone_or_warn() {
 
 clone_or_warn "https://github.com/timsaya/luci-app-quickfile.git"   "package/new/quickfile" "luci-app-quickfile"
 clone_or_warn "https://github.com/svenshi/luci-app-oxidns.git"    "package/new/luci-app-oxidns" "luci-app-oxidns"
-clone_or_warn "https://github.com/eamonxg/luci-theme-aurora.git"  "package/new/luci-theme-aurora"    "luci-theme-aurora"
 # clone_or_warn "https://github.com/nikkinikki-org/OpenWrt-nikki.git" "package/new/nikki"    "luci-app-nikki"  # 已注释：不再使用
 
 # ---- Mihomo 格式 geodata（来自 MetaCubeX/meta-rules-dat）----
@@ -154,10 +153,10 @@ META_GEO_URL="https://github.com/MetaCubeX/meta-rules-dat/releases/latest/downlo
 # wget -q --show-progress -O files/etc/clashoo/GeoIP.dat     "${META_GEO_URL}/geoip.dat"   || echo "!!! 警告：Clashoo GeoIP.dat 下载失败"
 # echo ">>> Clashoo geodata → files/etc/clashoo/"
 
-# 将默认主题从 bootstrap 改为 aurora
-if [ -d package/new/luci-theme-aurora ]; then
-    sed -i 's|/luci-static/bootstrap|/luci-static/aurora|g' feeds/luci/modules/luci-base/root/etc/config/luci
-    echo ">>> 默认主题已改为 luci-theme-aurora"
+# 将默认主题从 bootstrap 改为 fanchmwrt（底子自带 package/fcm/luci-theme-fanchmwrt）
+if [ -d package/fcm/luci-theme-fanchmwrt ]; then
+    sed -i 's|/luci-static/bootstrap|/luci-static/fanchmwrt|g' feeds/luci/modules/luci-base/root/etc/config/luci
+    echo ">>> 默认主题已改为 luci-theme-fanchmwrt"
 fi
 
 # ---- kenzok8 feed ----
