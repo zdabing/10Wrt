@@ -118,7 +118,7 @@ sed -i 's/option timeout 30/option timeout 60/g' package/system/rpcd/files/rpcd.
 sed -i 's#20) \* 1000#60) \* 1000#g' feeds/luci/modules/luci-base/htdocs/luci-static/resources/rpc.js 2>/dev/null || true
 
 # ---- 移除官方 v2ray-geodata（与 mosdns 版本冲突）----
-rm -rf feeds/packages/net/v2ray-geodata 2>/dev/null || true
+#rm -rf feeds/packages/net/v2ray-geodata 2>/dev/null || true
 
 # ---- 安装 feeds ----
 echo ">>> 安装 feeds..."
@@ -156,12 +156,12 @@ clone_or_warn "https://github.com/sbwml/luci-app-quickfile.git"   "package/new/q
 clone_or_warn "https://github.com/svenshi/luci-app-oxidns.git"    "package/new/luci-app-oxidns" "luci-app-oxidns"
 clone_or_warn "https://github.com/eamonxg/luci-theme-aurora.git"  "package/new/luci-theme-aurora"    "luci-theme-aurora"
 # ---- 克隆 MiClash（luci-app-miclash 在子目录中）----
-clone_or_warn "https://github.com/ang3el7z/luci-app-miclash.git" "package/new/miclash-tmp" "luci-app-miclash"
-if [ -d "package/new/miclash-tmp/luci-app-miclash" ]; then
-    mv package/new/miclash-tmp/luci-app-miclash package/new/luci-app-miclash
-    rm -rf package/new/miclash-tmp
-    echo ">>> luci-app-miclash 已展开到 package/new/luci-app-miclash"
-fi
+#clone_or_warn "https://github.com/ang3el7z/luci-app-miclash.git" "package/new/miclash-tmp" "luci-app-miclash"
+#if [ -d "package/new/miclash-tmp/luci-app-miclash" ]; then
+#    mv package/new/miclash-tmp/luci-app-miclash package/new/luci-app-miclash
+#    rm -rf package/new/miclash-tmp
+#    echo ">>> luci-app-miclash 已展开到 package/new/luci-app-miclash"
+#fi
 # clone_or_warn "https://github.com/nikkinikki-org/OpenWrt-nikki.git" "package/new/nikki"    "luci-app-nikki"  # 已注释：不再使用
 
 # ---- Mihomo 格式 geodata（来自 MetaCubeX/meta-rules-dat）----
@@ -191,11 +191,11 @@ META_GEO_URL="https://github.com/MetaCubeX/meta-rules-dat/releases/latest/downlo
 # echo ">>> Clashoo geodata → files/etc/clashoo/"
 
 # ---- MosDNS v5 ----
-echo ">>> 添加 MosDNS v5..."
-find ./ | grep Makefile | grep v2ray-geodata | xargs rm -f 2>/dev/null || true
-find ./ | grep Makefile | grep mosdns | xargs rm -f 2>/dev/null || true
-clone_or_warn "https://github.com/sbwml/luci-app-mosdns.git" "package/new/mosdns" "MosDNS v5" "v5"
-clone_or_warn "https://github.com/sbwml/v2ray-geodata.git"         "package/new/v2ray-geodata" "v2ray-geodata"
+#echo ">>> 添加 MosDNS v5..."
+#find ./ | grep Makefile | grep v2ray-geodata | xargs rm -f 2>/dev/null || true
+#find ./ | grep Makefile | grep mosdns | xargs rm -f 2>/dev/null || true
+#clone_or_warn "https://github.com/sbwml/luci-app-mosdns.git" "package/new/mosdns" "MosDNS v5" "v5"
+#clone_or_warn "https://github.com/sbwml/v2ray-geodata.git"         "package/new/v2ray-geodata" "v2ray-geodata"
 
 # 将默认主题从 bootstrap 改为 aurora
 if [ -d package/new/luci-theme-aurora ]; then
