@@ -127,7 +127,7 @@ clone_or_warn() {
 
 clone_or_warn "https://github.com/timsaya/luci-app-quickfile.git"   "package/new/quickfile" "luci-app-quickfile"
 clone_or_warn "https://github.com/svenshi/luci-app-oxidns.git"    "package/new/luci-app-oxidns" "luci-app-oxidns"
-clone_or_warn "https://github.com/eamonxg/luci-theme-aurora.git"  "package/new/luci-theme-aurora"    "luci-theme-aurora"
+clone_or_warn "https://github.com/zzsj0928/luci-theme-liquid.git" "package/new/luci-theme-liquid" "luci-theme-liquid"
 # ---- fwx 内核模块+守护进程（fanchmwrt，实时流量/应用识别 Dashboard）----
 # fanchmwrt 主仓库是完整 OpenWrt 源码树，只取 package/fcm（kmod-fwx / fwxd / libfwx_common）。
 # 固定 fanchmwrt-25.12.4 分支（kernel 6.12，与 ImmortalWrt 25.12 一致）。
@@ -178,10 +178,10 @@ META_GEO_URL="https://github.com/MetaCubeX/meta-rules-dat/releases/latest/downlo
 # wget -q --show-progress -O files/etc/clashoo/GeoIP.dat     "${META_GEO_URL}/geoip.dat"   || echo "!!! 警告：Clashoo GeoIP.dat 下载失败"
 # echo ">>> Clashoo geodata → files/etc/clashoo/"
 
-# 将默认主题从 bootstrap 改为 aurora
-if [ -d package/new/luci-theme-aurora ]; then
-    sed -i 's|/luci-static/bootstrap|/luci-static/aurora|g' feeds/luci/modules/luci-base/root/etc/config/luci
-    echo ">>> 默认主题已改为 luci-theme-aurora"
+# 将默认主题从 bootstrap 改为 liquid
+if [ -d package/new/luci-theme-liquid ]; then
+    sed -i 's|/luci-static/bootstrap|/luci-static/liquid|g' feeds/luci/modules/luci-base/root/etc/config/luci
+    echo ">>> 默认主题已改为 luci-theme-liquid"
 fi
 
 # ---- kenzok8 feed ----
@@ -195,9 +195,10 @@ else
     echo ">>> kenzok8 feed 已存在，跳过"
 fi
 
-# ---- fanchmwrt feed（fwx LuCI 前端：dashboard/appfilter/session-stat 等）----
-# 后端（kmod-fwx/fwxd）由上方 package/new/fcm 提供；本 feed 提供 14 个 luci-app-fwx-*。
+# ---- fanchmwrt feed（fwx LuCI 前端：dashboard/appfilter/session-stat/feature）----
+# 后端（kmod-fwx/fwxd）由上方 package/new/fcm 提供；本 feed 提供 4 个 luci-app-fwx-*。
 # 特征库 feature.cfg 版权归 destan19/fanchmwrt（个人免费、禁商用）。
+# 注：fwx 扩展全家桶（macfilter/record/user/network/system/dashboard-setting/app-center 等）已移除。
 FANCHMWRT_FEED="src-git fanchmwrt https://github.com/fanchmwrt/fanchmwrt-packages.git"
 if ! grep -qF "$FANCHMWRT_FEED" feeds.conf.default; then
     echo "$FANCHMWRT_FEED" >> feeds.conf.default

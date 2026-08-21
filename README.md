@@ -40,10 +40,9 @@
 | **luci-app-fwx-dashboard** | fwx 实时流量/应用统计看板 | [fanchmwrt/fanchmwrt-packages](https://github.com/fanchmwrt/fanchmwrt-packages) |
 | **luci-app-fwx-appfilter** | fwx 应用识别/管控（特征库） | [fanchmwrt/fanchmwrt-packages](https://github.com/fanchmwrt/fanchmwrt-packages) |
 | **luci-app-fwx-session-stat** | fwx 会话/流量统计 | [fanchmwrt/fanchmwrt-packages](https://github.com/fanchmwrt/fanchmwrt-packages) |
-| **luci-app-fwx-\*（全家桶 11 个）** | 上网管控 / 行为记录 / 用户管理 / 系统设置 / App 中心 | [fanchmwrt/fanchmwrt-packages](https://github.com/fanchmwrt/fanchmwrt-packages) |
 | **luci-app-ttyd** | 网页终端 | |
 | **luci-app-firewall** | 防火墙管理 | |
-| **luci-theme-aurora** | Aurora 主题（默认） | [eamonxg/luci-theme-aurora](https://github.com/eamonxg/luci-theme-aurora) |
+| **luci-theme-liquid** | Liquid 主题（默认） | [zzsj0928/luci-theme-liquid](https://github.com/zzsj0928/luci-theme-liquid) |
 
 #### 网络工具
 
@@ -65,7 +64,7 @@
 
 #### 流量识别（fwx，来自 fanchmwrt）
 
-- 基于 fanchmwrt 的 fwx 内核模块 + fwxd 守护进程，提供**实时流量看板、应用识别（应用防火墙）、会话统计**，并**内置 fwx 全家桶**：上网管控（MAC 过滤/黑名单）、上网行为记录（含白名单/用户记录）、用户管理、系统与网络设置、看板自定义、App 中心
+- 基于 fanchmwrt 的 fwx 内核模块 + fwxd 守护进程，提供**实时流量看板、应用识别（应用防火墙）、会话统计**（fwx 扩展全家桶——上网管控 / 行为记录 / 用户管理 / App 中心等已移除）
 - 预装应用特征库（微信/抖音/王者荣耀/原神等 200+ 应用），可通过 **luci-app-fwx-feature** 在线升级特征
 - ⚠️ **版权声明**：应用特征库 feature.cfg 版权归 destan19/fanchmwrt，个人免费使用、**禁止商用**；fwx 后端（kmod-fwx/fwxd）与 LuCI 前端为 GPL-2.0 / Apache-2.0
 
@@ -158,7 +157,7 @@ dd if=immortalwrt-*-x86-64-generic-ext4-combined-efi.img of=/dev/sdX bs=4M statu
 - [nikkinikki-org/OpenWrt-nikki](https://github.com/nikkinikki-org/OpenWrt-nikki) — Nikki 代理客户端
 - [sbwml](https://github.com/sbwml) — 多个插件包
 - [svenshi/luci-app-oxidns](https://github.com/svenshi/luci-app-oxidns) — OxiDNS LuCI 管理界面
-- [eamonxg/luci-theme-aurora](https://github.com/eamonxg/luci-theme-aurora) — Aurora 主题（默认）
+- [zzsj0928/luci-theme-liquid](https://github.com/zzsj0928/luci-theme-liquid) — Liquid 主题（默认）
 - [P3TERX/Actions-OpenWrt](https://github.com/P3TERX/Actions-OpenWrt)
 - [SuLingGG/OpenWrt-Rpi](https://github.com/SuLingGG/OpenWrt-Rpi)
 
