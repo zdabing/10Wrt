@@ -159,6 +159,11 @@ META_GEO_URL="https://github.com/MetaCubeX/meta-rules-dat/releases/latest/downlo
 # echo ">>> Clashoo geodata → files/etc/clashoo/"
 
 # 将默认主题从 bootstrap 改为 liquid
+# fanchmwrt 底子在 include/target.mk 的 DEFAULT_PACKAGES 里强制包含 luci-theme-fanchmwrt，
+# 且该包自带 uci-defaults 会在固件首启把默认主题强制设回 /luci-static/fanchmwrt，
+# 覆盖上面的 sed 替换。这里移除该包的强制包含，并删除其首启脚本。
+awk '!/luci-theme-fanchmwrt/' include/target.mk > include/target.mk.tmp && mv include/target.mk.tmp include/target.mk
+rm -f package/fcm/luci-theme-fanchmwrt/root/etc/uci-defaults/31_luci-theme-fanchmwrt
 if [ -d package/new/luci-theme-liquid ]; then
     sed -i 's|/luci-static/bootstrap|/luci-static/liquid|g' feeds/luci/modules/luci-base/root/etc/config/luci
     echo ">>> 默认主题已改为 luci-theme-liquid"
