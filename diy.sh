@@ -65,20 +65,7 @@ echo ">>> 更新 feeds..."
 # 替换优化版软件包（在 feeds install 之前）
 # ============================================================
 
-# ---- 1. Golang 升级到 26.x ----
-echo ">>> 替换 golang 为 26.x..."
-GOLANG_BACKUP=$(mktemp -d)
-cp -rf feeds/packages/lang/golang "$GOLANG_BACKUP/" 2>/dev/null || true
-rm -rf feeds/packages/lang/golang
-if git clone --depth 1 https://github.com/sbwml/packages_lang_golang -b 26.x feeds/packages/lang/golang 2>/dev/null; then
-    echo ">>> golang 已升级到 26.x"
-else
-    echo "!!! 警告：golang 26.x 拉取失败，恢复原始版本"
-    cp -rf "$GOLANG_BACKUP/golang" feeds/packages/lang/ 2>/dev/null || true
-fi
-rm -rf "$GOLANG_BACKUP"
-
-# ---- 2. Node.js 替换为预编译版 ----
+# ---- Node.js 替换为预编译版 ----
 echo ">>> 替换 Node.js 为预编译版..."
 NODE_BACKUP=$(mktemp -d)
 cp -rf feeds/packages/lang/node "$NODE_BACKUP/" 2>/dev/null || true
@@ -117,9 +104,6 @@ sed -i 's/cheaper = 1/cheaper = 2/g' feeds/packages/net/uwsgi/files-luci-support
 sed -i 's/option timeout 30/option timeout 60/g' package/system/rpcd/files/rpcd.config 2>/dev/null || true
 sed -i 's#20) \* 1000#60) \* 1000#g' feeds/luci/modules/luci-base/htdocs/luci-static/resources/rpc.js 2>/dev/null || true
 
-# ---- 移除官方 v2ray-geodata（与 mosdns 版本冲突）----
-#rm -rf feeds/packages/net/v2ray-geodata 2>/dev/null || true
-
 # ---- 安装 feeds ----
 echo ">>> 安装 feeds..."
 ./scripts/feeds install -a
@@ -155,13 +139,6 @@ clone_or_warn "https://github.com/timsaya/luci-app-bandix.git"    "package/new/b
 clone_or_warn "https://github.com/sbwml/luci-app-quickfile.git"   "package/new/quickfile" "luci-app-quickfile"
 clone_or_warn "https://github.com/svenshi/luci-app-oxidns.git"    "package/new/luci-app-oxidns" "luci-app-oxidns"
 clone_or_warn "https://github.com/zzsj0928/luci-theme-liquid.git" "package/new/luci-theme-liquid" "luci-theme-liquid"
-# ---- 克隆 MiClash（luci-app-miclash 在子目录中）----
-#clone_or_warn "https://github.com/ang3el7z/luci-app-miclash.git" "package/new/miclash-tmp" "luci-app-miclash"
-#if [ -d "package/new/miclash-tmp/luci-app-miclash" ]; then
-#    mv package/new/miclash-tmp/luci-app-miclash package/new/luci-app-miclash
-#    rm -rf package/new/miclash-tmp
-#    echo ">>> luci-app-miclash 已展开到 package/new/luci-app-miclash"
-#fi
 # clone_or_warn "https://github.com/nikkinikki-org/OpenWrt-nikki.git" "package/new/nikki"    "luci-app-nikki"  # 已注释：不再使用
 
 # ---- Mihomo 格式 geodata（来自 MetaCubeX/meta-rules-dat）----
@@ -170,11 +147,9 @@ clone_or_warn "https://github.com/zzsj0928/luci-theme-liquid.git" "package/new/l
 #   "list cn not found" / "proto: cannot parse invalid wire-format data"
 #
 # 各组件 geodata 分布：
-#   /usr/share/v2ray/geosite.dat  → V2Ray 格式（sbwml/v2ray-geodata）→ V2Ray/MosDNS
 #   /etc/nikki/run/GeoSite.dat    → Mihomo 格式（MetaCubeX）         → Nikki  # 已注释
 #   /etc/clashoo/GeoSite.dat      → Mihomo 格式（MetaCubeX）         → Clashoo
 #   /usr/share/daed/geosite.dat   → daed 自带                        → Daed  # 已注释
-#   HomeProxy(sing-box)           → .srs rule_set 远程下载           → 不用本地 geodata
 echo ">>> 下载 Mihomo 格式 geodata (MetaCubeX/meta-rules-dat)..."
 META_GEO_URL="https://github.com/MetaCubeX/meta-rules-dat/releases/latest/download"
 
@@ -189,13 +164,6 @@ META_GEO_URL="https://github.com/MetaCubeX/meta-rules-dat/releases/latest/downlo
 # wget -q --show-progress -O files/etc/clashoo/GeoSite.dat   "${META_GEO_URL}/geosite.dat" || echo "!!! 警告：Clashoo GeoSite.dat 下载失败"
 # wget -q --show-progress -O files/etc/clashoo/GeoIP.dat     "${META_GEO_URL}/geoip.dat"   || echo "!!! 警告：Clashoo GeoIP.dat 下载失败"
 # echo ">>> Clashoo geodata → files/etc/clashoo/"
-
-# ---- MosDNS v5 ----
-#echo ">>> 添加 MosDNS v5..."
-#find ./ | grep Makefile | grep v2ray-geodata | xargs rm -f 2>/dev/null || true
-#find ./ | grep Makefile | grep mosdns | xargs rm -f 2>/dev/null || true
-#clone_or_warn "https://github.com/sbwml/luci-app-mosdns.git" "package/new/mosdns" "MosDNS v5" "v5"
-#clone_or_warn "https://github.com/sbwml/v2ray-geodata.git"         "package/new/v2ray-geodata" "v2ray-geodata"
 
 # 将默认主题从 bootstrap 改为 liquid
 if [ -d package/new/luci-theme-liquid ]; then
