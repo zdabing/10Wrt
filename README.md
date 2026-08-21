@@ -42,7 +42,7 @@
 | **luci-app-fwx-\*（全家桶 11 个）** | 上网管控 / 行为记录 / 用户管理 / 系统设置 / App 中心 | [fanchmwrt/fanchmwrt-packages](https://github.com/fanchmwrt/fanchmwrt-packages) |
 | **luci-app-ttyd** | 网页终端 | |
 | **luci-app-firewall** | 防火墙管理 | |
-| **luci-theme-fanchmwrt** | fanchmwrt 主题（默认） | 底子自带 |
+| **luci-theme-liquid** | Liquid 主题（默认） | [zzsj0928/luci-theme-liquid](https://github.com/zzsj0928/luci-theme-liquid) |
 
 #### 网络工具
 
