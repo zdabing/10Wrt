@@ -154,7 +154,7 @@ fi
 clone_or_warn "https://github.com/timsaya/luci-app-bandix.git"    "package/new/bandix-luci" "luci-app-bandix（前端）"
 clone_or_warn "https://github.com/sbwml/luci-app-quickfile.git"   "package/new/quickfile" "luci-app-quickfile"
 clone_or_warn "https://github.com/svenshi/luci-app-oxidns.git"    "package/new/luci-app-oxidns" "luci-app-oxidns"
-clone_or_warn "https://github.com/eamonxg/luci-theme-aurora.git"  "package/new/luci-theme-aurora"    "luci-theme-aurora"
+clone_or_warn "https://github.com/zzsj0928/luci-theme-liquid.git" "package/new/luci-theme-liquid" "luci-theme-liquid"
 # ---- 克隆 MiClash（luci-app-miclash 在子目录中）----
 #clone_or_warn "https://github.com/ang3el7z/luci-app-miclash.git" "package/new/miclash-tmp" "luci-app-miclash"
 #if [ -d "package/new/miclash-tmp/luci-app-miclash" ]; then
@@ -197,10 +197,10 @@ META_GEO_URL="https://github.com/MetaCubeX/meta-rules-dat/releases/latest/downlo
 #clone_or_warn "https://github.com/sbwml/luci-app-mosdns.git" "package/new/mosdns" "MosDNS v5" "v5"
 #clone_or_warn "https://github.com/sbwml/v2ray-geodata.git"         "package/new/v2ray-geodata" "v2ray-geodata"
 
-# 将默认主题从 bootstrap 改为 aurora
-if [ -d package/new/luci-theme-aurora ]; then
-    sed -i 's|/luci-static/bootstrap|/luci-static/aurora|g' feeds/luci/modules/luci-base/root/etc/config/luci
-    echo ">>> 默认主题已改为 luci-theme-aurora"
+# 将默认主题从 bootstrap 改为 liquid
+if [ -d package/new/luci-theme-liquid ]; then
+    sed -i 's|/luci-static/bootstrap|/luci-static/liquid|g' feeds/luci/modules/luci-base/root/etc/config/luci
+    echo ">>> 默认主题已改为 luci-theme-liquid"
 fi
 
 # ---- kenzok8 feed ----
