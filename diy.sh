@@ -125,6 +125,17 @@ clone_or_warn() {
     fi
 }
 
+clone_or_warn "https://github.com/timsaya/openwrt-bandix.git"     "package/new/bandix-tmp" "bandix 后端"
+# openwrt-bandix 仓库嵌套了 openwrt-bandix/ 子目录，需要展开
+if [ -d "package/new/bandix-tmp/openwrt-bandix" ]; then
+    mkdir -p package/new/bandix
+    cp -rf package/new/bandix-tmp/openwrt-bandix/. package/new/bandix/
+    rm -rf package/new/bandix-tmp
+    echo ">>> bandix 后端目录已展开"
+elif [ -d "package/new/bandix-tmp" ]; then
+    mv package/new/bandix-tmp package/new/bandix
+fi
+clone_or_warn "https://github.com/timsaya/luci-app-bandix.git"    "package/new/bandix-luci" "luci-app-bandix（前端）"
 clone_or_warn "https://github.com/timsaya/luci-app-quickfile.git"   "package/new/quickfile" "luci-app-quickfile"
 clone_or_warn "https://github.com/svenshi/luci-app-oxidns.git"    "package/new/luci-app-oxidns" "luci-app-oxidns"
 clone_or_warn "https://github.com/zzsj0928/luci-theme-liquid.git" "package/new/luci-theme-liquid" "luci-theme-liquid"
