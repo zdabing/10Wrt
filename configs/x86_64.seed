@@ -79,6 +79,9 @@ CONFIG_PACKAGE_luci-i18n-clashoo-zh-cn=y
 CONFIG_PACKAGE_luci-app-wol=y
 CONFIG_PACKAGE_luci-app-quickfile=y
 CONFIG_PACKAGE_luci-app-ttyd=y
+CONFIG_PACKAGE_luci-i18n-ttyd-zh-cn=y
+CONFIG_PACKAGE_luci-app-socat=y
+CONFIG_PACKAGE_luci-i18n-socat-zh-cn=y
 
 # fwx 实时流量/应用识别（fanchmwrt：kmod-fwx + fwxd + LuCI 前端）
 CONFIG_PACKAGE_kmod-fwx=y
