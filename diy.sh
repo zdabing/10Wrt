@@ -184,6 +184,17 @@ if [ -d package/new/luci-theme-liquid ]; then
     echo ">>> 默认主题已改为 luci-theme-liquid"
 fi
 
+# 默认语言固定为简体中文（官方 OpenWrt 默认 auto/英文，需配合 seed 里勾选的中文包）
+LUCI_CFG="feeds/luci/modules/luci-base/root/etc/config/luci"
+if [ -f "$LUCI_CFG" ]; then
+    if grep -q 'option lang' "$LUCI_CFG"; then
+        sed -i 's/^\([[:space:]]*option lang \).*/\1zh_cn/' "$LUCI_CFG"
+    else
+        sed -i '/^config core/a\\toption lang zh_cn' "$LUCI_CFG"
+    fi
+    echo ">>> LuCI 默认语言已设为 zh_cn"
+fi
+
 # ---- kenzok8 feed ----
 KENZOK8_FEED="src-git kenzok8 https://github.com/kenzok8/openwrt-clashoo.git"
 if ! grep -qF "$KENZOK8_FEED" feeds.conf.default; then
