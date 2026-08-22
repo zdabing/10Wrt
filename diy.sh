@@ -139,6 +139,8 @@ clone_or_warn "https://github.com/timsaya/luci-app-bandix.git"    "package/new/b
 clone_or_warn "https://github.com/timsaya/luci-app-quickfile.git"   "package/new/quickfile" "luci-app-quickfile"
 clone_or_warn "https://github.com/svenshi/luci-app-oxidns.git"    "package/new/luci-app-oxidns" "luci-app-oxidns"
 clone_or_warn "https://github.com/zzsj0928/luci-theme-liquid.git" "package/new/luci-theme-liquid" "luci-theme-liquid"
+clone_or_warn "https://github.com/eamonxg/luci-theme-aurora.git" "package/new/luci-theme-aurora" "luci-theme-aurora"
+clone_or_warn "https://github.com/eamonxg/luci-app-aurora-config.git" "package/new/luci-app-aurora-config" "luci-app-aurora-config"
 # ---- fwx 内核模块+守护进程（fanchmwrt，实时流量/应用识别 Dashboard）----
 # fanchmwrt 主仓库是完整 OpenWrt 源码树，只取 package/fcm（kmod-fwx / fwxd / libfwx_common）。
 # 固定 fanchmwrt-25.12.4 分支（kernel 6.12，与 OpenWrt 25.12 一致）。
@@ -189,8 +191,12 @@ META_GEO_URL="https://github.com/MetaCubeX/meta-rules-dat/releases/latest/downlo
 # wget -q --show-progress -O files/etc/clashoo/GeoIP.dat     "${META_GEO_URL}/geoip.dat"   || echo "!!! 警告：Clashoo GeoIP.dat 下载失败"
 # echo ">>> Clashoo geodata → files/etc/clashoo/"
 
-# 将默认主题从 bootstrap 改为 liquid
-if [ -d package/new/luci-theme-liquid ]; then
+# 将默认主题改为 aurora（luci-theme-aurora 优先，克隆失败则回退 liquid）
+if [ -d package/new/luci-theme-aurora ]; then
+    sed -i 's|/luci-static/bootstrap|/luci-static/aurora|g' feeds/luci/modules/luci-base/root/etc/config/luci
+    sed -i 's|/luci-static/liquid|/luci-static/aurora|g' feeds/luci/modules/luci-base/root/etc/config/luci
+    echo ">>> 默认主题已改为 luci-theme-aurora"
+elif [ -d package/new/luci-theme-liquid ]; then
     sed -i 's|/luci-static/bootstrap|/luci-static/liquid|g' feeds/luci/modules/luci-base/root/etc/config/luci
     echo ">>> 默认主题已改为 luci-theme-liquid"
 fi
