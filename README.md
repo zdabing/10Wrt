@@ -1,9 +1,9 @@
-# 10Wrt — ImmortalWrt 固件云编译
+# 10Wrt — OpenWrt 固件云编译
 
 [![Build x86/64](https://github.com/zdabing/10Wrt/actions/workflows/build-x86.yml/badge.svg)](https://github.com/zdabing/10Wrt/actions/workflows/build-x86.yml)
 [![Build R5C](https://github.com/zdabing/10Wrt/actions/workflows/build-r5c.yml/badge.svg)](https://github.com/zdabing/10Wrt/actions/workflows/build-r5c.yml)
 
-基于 [ImmortalWrt](https://github.com/immortalwrt/immortalwrt) 源码，使用 GitHub Actions 自动编译 x86/64 和 NanoPi R5C 固件。
+基于 [OpenWrt](https://github.com/openwrt/openwrt) 源码，使用 GitHub Actions 自动编译 x86/64 和 NanoPi R5C 固件。
 
 管理地址: **http://10.0.0.1**
 
@@ -116,10 +116,10 @@ git push
 
 ```bash
 # 解压
-gunzip immortalwrt-*-x86-64-generic-ext4-combined-efi.img.gz
+gunzip openwrt-*-x86-64-generic-ext4-combined-efi.img.gz
 
 # 写入 U 盘或硬盘（替换 /dev/sdX 为实际设备）
-dd if=immortalwrt-*-x86-64-generic-ext4-combined-efi.img of=/dev/sdX bs=4M status=progress
+dd if=openwrt-*-x86-64-generic-ext4-combined-efi.img of=/dev/sdX bs=4M status=progress
 ```
 
 ### NanoPi R5C 刷机
@@ -151,7 +151,7 @@ dd if=immortalwrt-*-x86-64-generic-ext4-combined-efi.img of=/dev/sdX bs=4M statu
 
 ## 致谢
 
-- [ImmortalWrt](https://github.com/immortalwrt/immortalwrt)
+- [OpenWrt](https://github.com/openwrt/openwrt)
 - [xuanranran/OpenWrt_RockChip](https://github.com/xuanranran/OpenWrt_RockChip) — 参考项目
 - [kenzok8/openwrt-clashoo](https://github.com/kenzok8/openwrt-clashoo) — Clashoo 双内核代理（mihomo + sing-box）
 - [nikkinikki-org/OpenWrt-nikki](https://github.com/nikkinikki-org/OpenWrt-nikki) — Nikki 代理客户端

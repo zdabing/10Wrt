@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'ImmortalWrt 版本分支'
+        description: 'OpenWrt 版本分支'
         required: false
         default: 'openwrt-25.12'
         type: string
@@ -18,8 +18,8 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      IMMORTALWRT_REPO: https://github.com/immortalwrt/immortalwrt.git
-      IMMORTALWRT_VERSION: ${{ inputs.version || 'openwrt-25.12' }}
+      OPENWRT_REPO: https://github.com/openwrt/openwrt.git
+      OPENWRT_VERSION: ${{ inputs.version || 'openwrt-25.12' }}
 
     steps:
       - name: 检出配置仓库
@@ -56,45 +56,45 @@ jobs:
           # pnpm（luci-app-daed 前端构建需要）
           sudo npm install -g pnpm
 
-      - name: 检出 ImmortalWrt 源码
+      - name: 检出 OpenWrt 源码
         run: |
-          git clone --depth=1 -b ${{ env.IMMORTALWRT_VERSION }} \
-            ${{ env.IMMORTALWRT_REPO }} immortalwrt
+          git clone --depth=1 -b ${{ env.OPENWRT_VERSION }} \
+            ${{ env.OPENWRT_REPO }} openwrt
 
       - name: 还原 dl 缓存
         uses: actions/cache@v5
         with:
-          path: immortalwrt/dl
-          key: dl-immortalwrt-x86
-          restore-keys: dl-immortalwrt-
+          path: openwrt/dl
+          key: dl-openwrt-x86
+          restore-keys: dl-openwrt-
 
       - name: 复制 files 覆盖层
         run: |
           if [ -d config/files ]; then
-            cp -rv config/files immortalwrt/
+            cp -rv config/files openwrt/
           fi
 
       - name: 执行 diy.sh 自定义脚本
         run: |
-          cp config/diy.sh immortalwrt/
-          chmod +x immortalwrt/diy.sh
-          cd immortalwrt
+          cp config/diy.sh openwrt/
+          chmod +x openwrt/diy.sh
+          cd openwrt
           ./diy.sh
 
       - name: 复制种子配置
         run: |
-          cp config/configs/x86_64.seed immortalwrt/.config
+          cp config/configs/x86_64.seed openwrt/.config
 
       - name: 展开配置
         run: |
-          cd immortalwrt
+          cd openwrt
           make defconfig
           echo "=== 关键配置项 ==="
           grep -E '^(CONFIG_TARGET|CONFIG_PACKAGE_luci)' .config | sort
 
       - name: 验证设备配置
         run: |
-          cd immortalwrt
+          cd openwrt
           if ! grep -q "CONFIG_TARGET_x86_64_DEVICE_generic=y" .config; then
             echo "错误：x86/64 设备未在 .config 中选中！"
             grep 'CONFIG_TARGET.*DEVICE_\|CONFIG_TARGET_x86' .config || echo "(无)"
@@ -123,7 +123,7 @@ jobs:
 
       - name: 编译固件
         run: |
-          cd immortalwrt
+          cd openwrt
           set -o pipefail
 
           echo "=== 第一步：编译工具链 (tools) ==="
@@ -162,10 +162,10 @@ jobs:
         if: always()
         run: |
           echo "=== bin/targets 目录结构 ==="
-          find immortalwrt/bin/targets -type f 2>/dev/null | head -50 || echo "(空)"
+          find openwrt/bin/targets -type f 2>/dev/null | head -50 || echo "(空)"
           echo ""
           echo "=== build.log 最后 30 行 ==="
-          tail -30 immortalwrt/build.log 2>/dev/null || echo "(无 build.log)"
+          tail -30 openwrt/build.log 2>/dev/null || echo "(无 build.log)"
 
       - name: 上传固件
         if: always()
@@ -173,11 +173,11 @@ jobs:
         with:
           name: 10Wrt-x86_64-${{ github.run_id }}
           path: |
-            immortalwrt/bin/targets/**/*.img.gz
-            immortalwrt/bin/targets/**/*.img
-            immortalwrt/bin/targets/**/*.bin
-            immortalwrt/bin/targets/**/*.tar.gz
-            immortalwrt/bin/targets/**/immortalwrt-*-*
+            openwrt/bin/targets/**/*.img.gz
+            openwrt/bin/targets/**/*.img
+            openwrt/bin/targets/**/*.bin
+            openwrt/bin/targets/**/*.tar.gz
+            openwrt/bin/targets/**/openwrt-*-*
           if-no-files-found: warn
           retention-days: 7
 
@@ -186,9 +186,9 @@ jobs:
         run: |
           echo "## 10Wrt x86/64 编译结果" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          if [ -d immortalwrt/bin/targets ]; then
+          if [ -d openwrt/bin/targets ]; then
             echo "### 固件文件" >> $GITHUB_STEP_SUMMARY
-            find immortalwrt/bin/targets -type f \( \
+            find openwrt/bin/targets -type f \( \
               -name "*.img.gz" -o -name "*.img" -o -name "*.bin" -o -name "*.tar.gz" \) | \
               sort | sed 's/^/- /' >> $GITHUB_STEP_SUMMARY
           fi
@@ -200,7 +200,7 @@ jobs:
           shopt -s nullglob
           TAG="x86_64-$(TZ=Asia/Shanghai date +%Y.%m.%d)-${{ github.run_number }}"
           TITLE="10Wrt x86/64 — $(TZ=Asia/Shanghai date +%Y-%m-%d)"
-          FIRMWARE_DIR=$(find immortalwrt/bin/targets -mindepth 1 -type d -name "64" 2>/dev/null | head -1)
+          FIRMWARE_DIR=$(find openwrt/bin/targets -mindepth 1 -type d -name "64" 2>/dev/null | head -1)
           if [ -z "$FIRMWARE_DIR" ]; then
             echo "警告：未找到固件目录，跳过发布"
             exit 0
@@ -239,7 +239,7 @@ jobs:
         run: |
           # Actions 免费额度仅 0.5GB 存储（缓存+构件），dl 缓存每次构建都会给同一 key 新增一个版本，
           # 不清理会持续累积。这里只保留每个 key 最新 1 个版本，其余删除。
-          for KEY in dl-immortalwrt-x86 dl-immortalwrt-r5c; do
+          for KEY in dl-openwrt-x86 dl-openwrt-r5c; do
             echo "=== 清理缓存前缀 ${KEY} ==="
             gh api "repos/${{ github.repository }}/actions/caches?per_page=100" \
               --jq '.actions_caches[] | select(.key | startswith("'"$KEY"'")) | [.id, .created_at] | @tsv' 2>/dev/null \

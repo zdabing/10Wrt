@@ -1,6 +1,6 @@
 #!/bin/bash
 # ============================================================
-# diy.sh — ImmortalWrt 自定义配置脚本
+# diy.sh — OpenWrt 自定义配置脚本
 # 接管 feeds 更新/安装，替换优化版软件包，添加第三方插件
 # ============================================================
 
@@ -12,8 +12,8 @@ echo ">>> [diy.sh] 开始自定义配置..."
 sed -i 's/-Os/-O2/g' include/target.mk
 echo ">>> 编译优化级别：Os → O2"
 
-# ---- 在版本信息中附加 immortalwrt 源码提交日期 ----
-# 取当前 immortalwrt 仓库 HEAD 提交的日期（即这份代码基于的上游提交日）
+# ---- 在版本信息中附加 openwrt 源码提交日期 ----
+# 取当前 openwrt 仓库 HEAD 提交的日期（即这份代码基于的上游提交日）
 # 直接写入 base-files 的 openwrt_release / banner，不依赖 version.mk 模板，跨版本（含 26.x）通用
 BUILD_DATE=$(git show -s --format=%cs HEAD 2>/dev/null || date +%Y-%m-%d)
 RELEASE_FILE="package/base-files/files/etc/openwrt_release"
@@ -30,7 +30,7 @@ BANNER_FILE="package/base-files/files/etc/banner"
 if [ -f "$BANNER_FILE" ]; then
     sed -i "/Build date:/d" "$BANNER_FILE"
     # 同时把编译信息追加到 banner 描述行（LuCI 概览页显示的就是这一行）
-    sed -i "s/ImmortalWrt [^ ]* [^,]*, [^ ]*/& (Build ${BUILD_DATE})/" "$BANNER_FILE"
+    sed -i "s/OpenWrt [^ ]* [^,]*, [^ ]*/& (Build ${BUILD_DATE})/" "$BANNER_FILE"
     echo "Build date: ${BUILD_DATE}" >> "$BANNER_FILE"
     echo ">>> 构建日期已写入 banner"
 fi
@@ -130,14 +130,14 @@ clone_or_warn "https://github.com/svenshi/luci-app-oxidns.git"    "package/new/l
 clone_or_warn "https://github.com/zzsj0928/luci-theme-liquid.git" "package/new/luci-theme-liquid" "luci-theme-liquid"
 # ---- fwx 内核模块+守护进程（fanchmwrt，实时流量/应用识别 Dashboard）----
 # fanchmwrt 主仓库是完整 OpenWrt 源码树，只取 package/fcm（kmod-fwx / fwxd / libfwx_common）。
-# 固定 fanchmwrt-25.12.4 分支（kernel 6.12，与 ImmortalWrt 25.12 一致）。
+# 固定 fanchmwrt-25.12.4 分支（kernel 6.12，与 OpenWrt 25.12 一致）。
 # LuCI 前端在独立 feed（fanchmwrt/fanchmwrt-packages），见下方 feeds 区。
 clone_or_warn "https://github.com/fanchmwrt/fanchmwrt.git" "package/new/fcm-tmp" "fwx 后端（kmod-fwx/fwxd）" "fanchmwrt-25.12.4"
 if [ -d "package/new/fcm-tmp/package/fcm" ]; then
     mkdir -p package/new/fcm
     cp -rf package/new/fcm-tmp/package/fcm/. package/new/fcm/
     # kmod-fwx 依赖 fanchmwrt 底子的内核补丁：给 struct nf_conn 增加 fwx_data 字段，
-    # 否则在 ImmortalWrt 内核编译报 'struct nf_conn has no member named fwx_data'。
+    # 否则在 OpenWrt 内核编译报 'struct nf_conn has no member named fwx_data'。
     # 把补丁装进内核 hack-6.12 目录，随内核编译自动应用。
     FWX_KERNEL_PATCH="package/new/fcm-tmp/target/linux/generic/hack-6.12/950-fwx-nf-conn-struct-user-hook.patch"
     if [ -f "$FWX_KERNEL_PATCH" ]; then

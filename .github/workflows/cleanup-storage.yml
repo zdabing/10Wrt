@@ -14,7 +14,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          for KEY in dl-immortalwrt-x86 dl-immortalwrt-r5c; do
+          for KEY in dl-openwrt-x86 dl-openwrt-r5c; do
             echo "=== 清理缓存前缀 ${KEY} ==="
             gh api "repos/${{ github.repository }}/actions/caches?per_page=100" \
               --jq '.actions_caches[] | select(.key | startswith("'"$KEY"'")) | [.id, .created_at] | @tsv' 2>/dev/null \
