@@ -53,7 +53,7 @@ jobs:
             libssl-dev python3 python3-setuptools python3-pyelftools \
             rsync swig unzip wget zlib1g-dev \
             clang llvm nodejs npm
-          # pnpm（luci-app-daed 前端构建需要）
+          # 部分第三方 LuCI 前端构建需要 pnpm
           sudo npm install -g pnpm
 
       - name: 检出 OpenWrt 源码
@@ -101,25 +101,31 @@ jobs:
             exit 1
           fi
           echo "设备配置验证通过：x86/64 Generic"
-          # iperf3（测速工具）必须在配置中选中，避免编译期被 IGNORE_ERRORS=1 静默跳过
-          if ! grep -q "CONFIG_PACKAGE_iperf3=y" .config; then
-            echo "错误：iperf3 未在 .config 中选中！"
-            grep 'CONFIG_PACKAGE.*iperf3' .config || echo "(无)"
+          # LuCI 25.12 的语言包是隐藏项，直接写 CONFIG_PACKAGE_luci-i18n-* 会被
+          # make defconfig 丢弃。全局语言开关必须保留，并自动选中基础中文包。
+          if ! grep -q "^CONFIG_LUCI_LANG_zh_Hans=y$" .config; then
+            echo "错误：LuCI 简体中文全局开关未生效！"
+            grep 'CONFIG_LUCI_LANG' .config || echo "(无)"
             exit 1
           fi
-          echo "iperf3 配置验证通过"
-          # fwx 内核模块与守护进程（fanchmwrt 实时流量/应用识别）必须在配置中选中
-          if ! grep -q "CONFIG_PACKAGE_kmod-fwx=y" .config; then
-            echo "错误：kmod-fwx 未在 .config 中选中！"
-            grep 'CONFIG_PACKAGE.*fwx' .config || echo "(无)"
+          REQUIRED_I18N_CONFIGS=(
+            luci-i18n-base-zh-cn luci-i18n-ddns-zh-cn
+            luci-i18n-firewall-zh-cn luci-i18n-package-manager-zh-cn
+            luci-i18n-ttyd-zh-cn luci-i18n-upnp-zh-cn luci-i18n-wol-zh-cn
+          )
+          MISSING_I18N_CONFIGS=()
+          for PACKAGE in "${REQUIRED_I18N_CONFIGS[@]}"; do
+            grep -qxF "CONFIG_PACKAGE_${PACKAGE}=y" .config || MISSING_I18N_CONFIGS+=("$PACKAGE")
+          done
+          if (( ${#MISSING_I18N_CONFIGS[@]} > 0 )); then
+            echo "错误：以下 LuCI 中文语言包未被自动选中："
+            printf '  - %s\n' "${MISSING_I18N_CONFIGS[@]}"
             exit 1
           fi
-          if ! grep -q "CONFIG_PACKAGE_fwxd=y" .config; then
-            echo "错误：fwxd 未在 .config 中选中！"
-            grep 'CONFIG_PACKAGE.*fwxd' .config || echo "(无)"
-            exit 1
-          fi
-          echo "fwx（kmod-fwx/fwxd）配置验证通过"
+          echo "LuCI 简体中文配置验证通过：${#REQUIRED_I18N_CONFIGS[@]} 个语言包"
+          # 自动核对 seed 中所有显式选中的软件包，第三方源码缺失时立即失败。
+          SEED="../config/configs/x86_64.seed"
+          bash ../config/scripts/validate-seed-packages.sh "$SEED" .config
 
       - name: 编译固件
         run: |
@@ -129,21 +135,20 @@ jobs:
           echo "=== 第一步：编译工具链 (tools) ==="
           make tools/compile -j$(nproc) V=s 2>&1 | tee -a build.log || \
             make tools/compile -j$(nproc) V=s 2>&1 | tee -a build.log || \
-            make tools/compile -j1 IGNORE_ERRORS=1 V=s 2>&1 | tee -a build.log
+            make tools/compile -j1 V=s 2>&1 | tee -a build.log
 
           echo "=== 第二步：编译交叉工具链 (toolchain) ==="
           make toolchain/compile -j$(nproc) V=s 2>&1 | tee -a build.log || \
             make toolchain/compile -j$(nproc) V=s 2>&1 | tee -a build.log || \
-            make toolchain/compile -j1 IGNORE_ERRORS=1 V=s 2>&1 | tee -a build.log
+            make toolchain/compile -j1 V=s 2>&1 | tee -a build.log
 
           echo "=== 第三步：编译内核/目标 (target) ==="
           make target/compile -j$(nproc) V=s 2>&1 | tee -a build.log || \
-            make target/compile -j$(nproc) V=s IGNORE_ERRORS=1 2>&1 | tee -a build.log || \
-            make target/compile -j1 IGNORE_ERRORS=1 V=s 2>&1 | tee -a build.log
+            make target/compile -j1 V=s 2>&1 | tee -a build.log
 
           echo "=== 第四步：编译软件包 (package) ==="
-          make package/compile -j$(nproc) V=s IGNORE_ERRORS=1 2>&1 | tee -a build.log || \
-            make package/compile -j$(nproc) V=s IGNORE_ERRORS=1 2>&1 | tee -a build.log
+          make package/compile -j$(nproc) V=s 2>&1 | tee -a build.log || \
+            make package/compile -j1 V=s 2>&1 | tee -a build.log
 
           echo "=== 第五步：生成包索引 ==="
           make package/index V=s 2>&1 | tee -a build.log
@@ -158,6 +163,39 @@ jobs:
 
         timeout-minutes: 360
 
+      - name: 验证固件内关键软件包
+        run: |
+          PACKAGE_DB=$(find openwrt/build_dir -type f \( \
+            -path '*/root-*/lib/apk/db/installed' -o \
+            -path '*/root-*/usr/lib/opkg/status' \) -print -quit)
+          if [ -z "$PACKAGE_DB" ]; then
+            echo "错误：未找到固件根文件系统的软件包数据库"
+            exit 1
+          fi
+          REQUIRED_PACKAGES=(
+            luci-i18n-base-zh-cn luci-i18n-ddns-zh-cn
+            luci-i18n-firewall-zh-cn luci-i18n-package-manager-zh-cn
+            luci-i18n-ttyd-zh-cn luci-i18n-upnp-zh-cn luci-i18n-wol-zh-cn
+            luci-theme-aurora luci-app-aurora-config
+            luci-app-clashoo luci-i18n-clashoo-zh-cn luci-app-oxidns
+            luci-app-bandix luci-app-quickfile
+            kmod-fwx fwxd luci-app-fwx-appfilter luci-app-fwx-dashboard
+            luci-app-fwx-session-stat luci-app-fwx-feature iperf3
+          )
+          MISSING_PACKAGES=()
+          for PACKAGE in "${REQUIRED_PACKAGES[@]}"; do
+            if ! grep -qxF "P:${PACKAGE}" "$PACKAGE_DB" && \
+               ! grep -qxF "Package: ${PACKAGE}" "$PACKAGE_DB"; then
+              MISSING_PACKAGES+=("$PACKAGE")
+            fi
+          done
+          if (( ${#MISSING_PACKAGES[@]} > 0 )); then
+            echo "错误：固件中缺少以下关键软件包："
+            printf '  - %s\n' "${MISSING_PACKAGES[@]}"
+            exit 1
+          fi
+          echo "固件关键软件包验证通过：${#REQUIRED_PACKAGES[@]} 项"
+
       - name: 调试 - 列出构建输出
         if: always()
         run: |
@@ -168,7 +206,7 @@ jobs:
           tail -30 openwrt/build.log 2>/dev/null || echo "(无 build.log)"
 
       - name: 上传固件
-        if: always()
+        if: success()
         uses: actions/upload-artifact@v7
         with:
           name: 10Wrt-x86_64-${{ github.run_id }}

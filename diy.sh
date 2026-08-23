@@ -71,9 +71,9 @@ NODE_BACKUP=$(mktemp -d)
 cp -rf feeds/packages/lang/node "$NODE_BACKUP/" 2>/dev/null || true
 rm -rf feeds/packages/lang/node
 TMP_ADD=$(mktemp -d)
-git clone --depth 1 --filter=blob:none --sparse https://github.com/QiuSimons/OpenWrt-Add.git "$TMP_ADD" 2>/dev/null
-(cd "$TMP_ADD" && git sparse-checkout set feeds_packages_lang_node-prebuilt)
-if [ -d "$TMP_ADD/feeds_packages_lang_node-prebuilt" ]; then
+if git clone --depth 1 --filter=blob:none --sparse https://github.com/QiuSimons/OpenWrt-Add.git "$TMP_ADD" 2>/dev/null && \
+   (cd "$TMP_ADD" && git sparse-checkout set feeds_packages_lang_node-prebuilt) && \
+   [ -d "$TMP_ADD/feeds_packages_lang_node-prebuilt" ]; then
     cp -rf "$TMP_ADD/feeds_packages_lang_node-prebuilt" feeds/packages/lang/node
     echo ">>> Node.js 已替换为预编译版"
 else
@@ -87,7 +87,9 @@ echo ">>> Nginx / uwsgi 性能优化..."
 # Nginx
 sed -i "s/large_client_header_buffers 2 1k/large_client_header_buffers 4 32k/g" feeds/packages/net/nginx-util/files/uci.conf.template 2>/dev/null || true
 sed -i "s/client_max_body_size 128M/client_max_body_size 2048M/g" feeds/packages/net/nginx-util/files/uci.conf.template 2>/dev/null || true
-sed -i '/client_max_body_size/a\\tclient_body_buffer_size 8192M;' feeds/packages/net/nginx-util/files/uci.conf.template 2>/dev/null || true
+# 大请求超过缓冲区后写入临时文件，避免在内存有限的路由器上为上传分配数 GiB 内存。
+sed -i '/client_body_buffer_size/d' feeds/packages/net/nginx-util/files/uci.conf.template 2>/dev/null || true
+sed -i '/client_max_body_size/a\\tclient_body_buffer_size 512K;' feeds/packages/net/nginx-util/files/uci.conf.template 2>/dev/null || true
 sed -i '/client_max_body_size/a\\tserver_names_hash_bucket_size 128;' feeds/packages/net/nginx-util/files/uci.conf.template 2>/dev/null || true
 sed -i '/ubus_parallel_req/a\        ubus_script_timeout 600;' feeds/packages/net/nginx/files-luci-support/60_nginx-luci-support 2>/dev/null || true
 sed -ri "/luci-webui.socket/i\ \t\tuwsgi_send_timeout 600\;\n\t\tuwsgi_connect_timeout 600\;\n\t\tuwsgi_read_timeout 600\;" feeds/packages/net/nginx/files-luci-support/luci.locations 2>/dev/null || true
@@ -114,18 +116,20 @@ echo ">>> 安装 feeds..."
 
 mkdir -p package/new
 
-clone_or_warn() {
+clone_required() {
     local repo="$1" dst="$2" name="$3" branch="$4"
     local branch_opt=""
     [ -n "$branch" ] && branch_opt="-b $branch"
     if git clone --depth 1 $branch_opt "$repo" "$dst" 2>/dev/null; then
         echo ">>> 已添加 $name"
     else
-        echo "!!! 警告：$name 克隆失败，已跳过"
+        rm -rf "$dst"
+        echo "!!! 错误：必需软件源 $name 克隆失败"
+        return 1
     fi
 }
 
-clone_or_warn "https://github.com/timsaya/openwrt-bandix.git"     "package/new/bandix-tmp" "bandix 后端"
+clone_required "https://github.com/timsaya/openwrt-bandix.git"     "package/new/bandix-tmp" "bandix 后端"
 # openwrt-bandix 仓库嵌套了 openwrt-bandix/ 子目录，需要展开
 if [ -d "package/new/bandix-tmp/openwrt-bandix" ]; then
     mkdir -p package/new/bandix
@@ -135,17 +139,16 @@ if [ -d "package/new/bandix-tmp/openwrt-bandix" ]; then
 elif [ -d "package/new/bandix-tmp" ]; then
     mv package/new/bandix-tmp package/new/bandix
 fi
-clone_or_warn "https://github.com/timsaya/luci-app-bandix.git"    "package/new/bandix-luci" "luci-app-bandix（前端）"
-clone_or_warn "https://github.com/timsaya/luci-app-quickfile.git"   "package/new/quickfile" "luci-app-quickfile"
-clone_or_warn "https://github.com/svenshi/luci-app-oxidns.git"    "package/new/luci-app-oxidns" "luci-app-oxidns"
-clone_or_warn "https://github.com/zzsj0928/luci-theme-liquid.git" "package/new/luci-theme-liquid" "luci-theme-liquid"
-clone_or_warn "https://github.com/eamonxg/luci-theme-aurora.git" "package/new/luci-theme-aurora" "luci-theme-aurora"
-clone_or_warn "https://github.com/eamonxg/luci-app-aurora-config.git" "package/new/luci-app-aurora-config" "luci-app-aurora-config"
+clone_required "https://github.com/timsaya/luci-app-bandix.git" "package/new/bandix-luci" "luci-app-bandix（前端）"
+clone_required "https://github.com/sbwml/luci-app-quickfile.git" "package/new/quickfile" "luci-app-quickfile"
+clone_required "https://github.com/svenshi/luci-app-oxidns.git" "package/new/luci-app-oxidns" "luci-app-oxidns"
+clone_required "https://github.com/eamonxg/luci-theme-aurora.git" "package/new/luci-theme-aurora" "luci-theme-aurora"
+clone_required "https://github.com/eamonxg/luci-app-aurora-config.git" "package/new/luci-app-aurora-config" "luci-app-aurora-config"
 # ---- fwx 内核模块+守护进程（fanchmwrt，实时流量/应用识别 Dashboard）----
 # fanchmwrt 主仓库是完整 OpenWrt 源码树，只取 package/fcm（kmod-fwx / fwxd / libfwx_common）。
 # 固定 fanchmwrt-25.12.4 分支（kernel 6.12，与 OpenWrt 25.12 一致）。
 # LuCI 前端在独立 feed（fanchmwrt/fanchmwrt-packages），见下方 feeds 区。
-clone_or_warn "https://github.com/fanchmwrt/fanchmwrt.git" "package/new/fcm-tmp" "fwx 后端（kmod-fwx/fwxd）" "fanchmwrt-25.12.4"
+clone_required "https://github.com/fanchmwrt/fanchmwrt.git" "package/new/fcm-tmp" "fwx 后端（kmod-fwx/fwxd）" "fanchmwrt-25.12.4"
 if [ -d "package/new/fcm-tmp/package/fcm" ]; then
     mkdir -p package/new/fcm
     cp -rf package/new/fcm-tmp/package/fcm/. package/new/fcm/
@@ -165,7 +168,7 @@ if [ -d "package/new/fcm-tmp/package/fcm" ]; then
 else
     echo "!!! 警告：fcm 目录展开失败，已保留原始克隆"
 fi
-# clone_or_warn "https://github.com/nikkinikki-org/OpenWrt-nikki.git" "package/new/nikki"    "luci-app-nikki"  # 已注释：不再使用
+# clone_required "https://github.com/nikkinikki-org/OpenWrt-nikki.git" "package/new/nikki" "luci-app-nikki"  # 已注释：不再使用
 
 # ---- Mihomo 格式 geodata（来自 MetaCubeX/meta-rules-dat）----
 # 关键：Clashoo 基于 Mihomo 内核，需要 MetaCubeX 格式的 geodata！
@@ -191,17 +194,15 @@ META_GEO_URL="https://github.com/MetaCubeX/meta-rules-dat/releases/latest/downlo
 # wget -q --show-progress -O files/etc/clashoo/GeoIP.dat     "${META_GEO_URL}/geoip.dat"   || echo "!!! 警告：Clashoo GeoIP.dat 下载失败"
 # echo ">>> Clashoo geodata → files/etc/clashoo/"
 
-# 将默认主题改为 aurora（luci-theme-aurora 优先，克隆失败则回退 liquid）
+# 将默认主题改为 aurora（克隆失败则保留 OpenWrt 自带的 bootstrap）
 if [ -d package/new/luci-theme-aurora ]; then
     sed -i 's|/luci-static/bootstrap|/luci-static/aurora|g' feeds/luci/modules/luci-base/root/etc/config/luci
-    sed -i 's|/luci-static/liquid|/luci-static/aurora|g' feeds/luci/modules/luci-base/root/etc/config/luci
     echo ">>> 默认主题已改为 luci-theme-aurora"
-elif [ -d package/new/luci-theme-liquid ]; then
-    sed -i 's|/luci-static/bootstrap|/luci-static/liquid|g' feeds/luci/modules/luci-base/root/etc/config/luci
-    echo ">>> 默认主题已改为 luci-theme-liquid"
+else
+    echo "!!! 警告：Aurora 主题不可用，默认保留 luci-theme-bootstrap"
 fi
 
-# 默认语言固定为简体中文（官方 OpenWrt 默认 auto/英文，需配合 seed 里勾选的中文包）
+# 默认语言固定为简体中文（需配合 seed 里的 CONFIG_LUCI_LANG_zh_Hans 全局开关）
 LUCI_CFG="feeds/luci/modules/luci-base/root/etc/config/luci"
 if [ -f "$LUCI_CFG" ]; then
     if grep -q 'option lang' "$LUCI_CFG"; then
