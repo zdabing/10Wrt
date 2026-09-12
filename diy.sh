@@ -142,21 +142,31 @@ fi
 clone_required "https://github.com/timsaya/luci-app-bandix.git" "package/new/bandix-luci" "luci-app-bandix（前端）"
 clone_required "https://github.com/sbwml/luci-app-quickfile.git" "package/new/quickfile" "luci-app-quickfile"
 clone_required "https://github.com/svenshi/luci-app-oxidns.git" "package/new/luci-app-oxidns" "luci-app-oxidns"
-clone_required "https://github.com/Zakkaus/luci-theme-graphite.git" "package/new/luci-theme-graphite" "luci-theme-graphite"
-clone_required "https://github.com/Zakkaus/luci-app-graphite.git" "package/new/luci-app-graphite" "luci-app-graphite"
-# Graphite 的 Makefile 用相对路径 include ../../luci.mk，只有放在 LuCI feed 内才解析得到。
+clone_required "https://github.com/LianXia233/luci-theme-mint.git" "package/new/mint-tmp" "luci-theme-mint"
+# mint 仓库根目录是 theme/（主题）与 wallpaper/（壁纸设置）两个包目录，需展开为独立包
+if [ -d "package/new/mint-tmp/theme" ] && [ -d "package/new/mint-tmp/wallpaper" ]; then
+    mkdir -p package/new/luci-theme-mint package/new/luci-app-mint-wallpaper
+    cp -rf package/new/mint-tmp/theme/. package/new/luci-theme-mint/
+    cp -rf package/new/mint-tmp/wallpaper/. package/new/luci-app-mint-wallpaper/
+    rm -rf package/new/mint-tmp
+    echo ">>> mint 主题与壁纸设置包已展开"
+else
+    echo "!!! 错误：mint 仓库结构已变（未找到 theme/ 或 wallpaper/ 子目录）"
+    exit 1
+fi
+# Mint 的 Makefile 用相对路径 include ../../luci.mk，只有放在 LuCI feed 内才解析得到。
 # 本项目把第三方包放在 package/new（注册为 src-link feed），必须改成绝对路径，
 # 否则 include 找不到 luci.mk，编译在开始前就失败。
-for GRAPHITE_MK in package/new/luci-theme-graphite/Makefile package/new/luci-app-graphite/Makefile; do
-    if [ -f "$GRAPHITE_MK" ]; then
-        sed -i 's|include \.\./\.\./luci\.mk|include $(TOPDIR)/feeds/luci/luci.mk|' "$GRAPHITE_MK"
-        grep -qF 'include $(TOPDIR)/feeds/luci/luci.mk' "$GRAPHITE_MK" || {
-            echo "!!! 错误：$GRAPHITE_MK 的 luci.mk 引用修正失败（上游 Makefile 结构可能已变）"
+for MINT_MK in package/new/luci-theme-mint/Makefile package/new/luci-app-mint-wallpaper/Makefile; do
+    if [ -f "$MINT_MK" ]; then
+        sed -i 's|include \.\./\.\./luci\.mk|include $(TOPDIR)/feeds/luci/luci.mk|' "$MINT_MK"
+        grep -qF 'include $(TOPDIR)/feeds/luci/luci.mk' "$MINT_MK" || {
+            echo "!!! 错误：$MINT_MK 的 luci.mk 引用修正失败（上游 Makefile 结构可能已变）"
             exit 1
         }
     fi
 done
-echo ">>> Graphite 主题 Makefile 的 luci.mk 引用已修正为绝对路径"
+echo ">>> Mint 主题 Makefile 的 luci.mk 引用已修正为绝对路径"
 # ---- fwx 内核模块+守护进程（fanchmwrt，实时流量/应用识别 Dashboard）----
 # fanchmwrt 主仓库是完整 OpenWrt 源码树，只取 package/fcm（kmod-fwx / fwxd / libfwx_common）。
 # 固定 fanchmwrt-25.12.4 分支（kernel 6.12，与 OpenWrt 25.12 一致）。
@@ -207,12 +217,12 @@ META_GEO_URL="https://github.com/MetaCubeX/meta-rules-dat/releases/latest/downlo
 # wget -q --show-progress -O files/etc/clashoo/GeoIP.dat     "${META_GEO_URL}/geoip.dat"   || echo "!!! 警告：Clashoo GeoIP.dat 下载失败"
 # echo ">>> Clashoo geodata → files/etc/clashoo/"
 
-# 将默认主题改为 graphite（克隆失败则保留 OpenWrt 自带的 bootstrap）
-if [ -d package/new/luci-theme-graphite ]; then
-    sed -i 's|/luci-static/bootstrap|/luci-static/graphite|g' feeds/luci/modules/luci-base/root/etc/config/luci
-    echo ">>> 默认主题已改为 luci-theme-graphite"
+# 将默认主题改为 mint（克隆失败则保留 OpenWrt 自带的 bootstrap）
+if [ -d package/new/luci-theme-mint ]; then
+    sed -i 's|/luci-static/bootstrap|/luci-static/mint|g' feeds/luci/modules/luci-base/root/etc/config/luci
+    echo ">>> 默认主题已改为 luci-theme-mint"
 else
-    echo "!!! 警告：Graphite 主题不可用，默认保留 luci-theme-bootstrap"
+    echo "!!! 警告：Mint 主题不可用，默认保留 luci-theme-bootstrap"
 fi
 
 # 默认语言固定为简体中文（需配合 seed 里的 CONFIG_LUCI_LANG_zh_Hans 全局开关）

@@ -42,7 +42,8 @@
 | **luci-app-fwx-session-stat** | fwx 会话/流量统计 | [fanchmwrt/fanchmwrt-packages](https://github.com/fanchmwrt/fanchmwrt-packages) |
 | **luci-app-ttyd** | 网页终端 | |
 | **luci-app-firewall** | 防火墙管理 | |
-| **luci-theme-graphite** | Graphite 主题（默认）+ 外观设置 | [Zakkaus/luci-theme-graphite](https://github.com/Zakkaus/luci-theme-graphite) |
+| **luci-theme-mint** | Mint 主题（默认）：毛玻璃卡片 UI、明暗配色、总览仪表盘 | [LianXia233/luci-theme-mint](https://github.com/LianXia233/luci-theme-mint) |
+| **luci-app-mint-wallpaper** | Mint 壁纸设置（随机/自定义壁纸、服务端缓存） | [LianXia233/luci-theme-mint](https://github.com/LianXia233/luci-theme-mint) |
 
 #### 网络工具
 
@@ -158,7 +159,7 @@ dd if=openwrt-*-x86-64-generic-ext4-combined-efi.img of=/dev/sdX bs=4M status=pr
 - [sbwml](https://github.com/sbwml) — 多个插件包
 - [svenshi/luci-app-oxidns](https://github.com/svenshi/luci-app-oxidns) — OxiDNS LuCI 管理界面
 - [timsaya/luci-app-bandix](https://github.com/timsaya/luci-app-bandix) — 带宽监控
-- [Zakkaus/luci-theme-graphite](https://github.com/Zakkaus/luci-theme-graphite) — Graphite 主题（默认）
+- [LianXia233/luci-theme-mint](https://github.com/LianXia233/luci-theme-mint) — Mint 主题（默认）与壁纸设置
 - [P3TERX/Actions-OpenWrt](https://github.com/P3TERX/Actions-OpenWrt)
 - [SuLingGG/OpenWrt-Rpi](https://github.com/SuLingGG/OpenWrt-Rpi)
 
