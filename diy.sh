@@ -145,11 +145,18 @@ clone_required "https://github.com/svenshi/luci-app-oxidns.git" "package/new/luc
 clone_required "https://github.com/LianXia233/luci-theme-mint.git" "package/new/mint-tmp" "luci-theme-mint"
 # mint 仓库根目录是 theme/（主题）与 wallpaper/（壁纸设置）两个包目录，需展开为独立包
 if [ -d "package/new/mint-tmp/theme" ] && [ -d "package/new/mint-tmp/wallpaper" ]; then
+    # 上游 Makefile 把 PKG_VERSION/PKG_PO_VERSION 置空、由其 CI 注入版本号；
+    # 空值会短路 luci.mk 的 findrev 推导，导致翻译包 VERSION 为空而编译失败。
+    # 这里取 mint 仓库 HEAD 的提交日期+短哈希生成版本号（findrev 同款格式），
+    # 展开时写入两个 Makefile，等价于上游 CI 的注入动作。
+    MINT_HASH=$(git -C package/new/mint-tmp rev-parse --short=7 HEAD 2>/dev/null || echo "0000000")
+    MINT_SECS=$(git -C package/new/mint-tmp log -1 --format=%ct 2>/dev/null || echo "0")
+    MINT_VER="$(date -u -d "@${MINT_SECS}" '+%y.%j')~${MINT_HASH}"
     mkdir -p package/new/luci-theme-mint package/new/luci-app-mint-wallpaper
     cp -rf package/new/mint-tmp/theme/. package/new/luci-theme-mint/
     cp -rf package/new/mint-tmp/wallpaper/. package/new/luci-app-mint-wallpaper/
     rm -rf package/new/mint-tmp
-    echo ">>> mint 主题与壁纸设置包已展开"
+    echo ">>> mint 主题与壁纸设置包已展开（版本 ${MINT_VER}）"
 else
     echo "!!! 错误：mint 仓库结构已变（未找到 theme/ 或 wallpaper/ 子目录）"
     exit 1
@@ -164,9 +171,15 @@ for MINT_MK in package/new/luci-theme-mint/Makefile package/new/luci-app-mint-wa
             echo "!!! 错误：$MINT_MK 的 luci.mk 引用修正失败（上游 Makefile 结构可能已变）"
             exit 1
         }
+        # 注入版本号（上游留空交给其 CI 注入，见上方说明）
+        sed -i "s|^PKG_VERSION *?=\$|PKG_VERSION := ${MINT_VER}|; s|^PKG_PO_VERSION *?=\$|PKG_PO_VERSION := ${MINT_VER}|" "$MINT_MK"
+        grep -qF "PKG_VERSION := ${MINT_VER}" "$MINT_MK" && grep -qF "PKG_PO_VERSION := ${MINT_VER}" "$MINT_MK" || {
+            echo "!!! 错误：$MINT_MK 的版本号注入失败（上游 Makefile 结构可能已变）"
+            exit 1
+        }
     fi
 done
-echo ">>> Mint 主题 Makefile 的 luci.mk 引用已修正为绝对路径"
+echo ">>> Mint 主题 Makefile 的 luci.mk 引用已修正为绝对路径，版本号已注入"
 # ---- fwx 内核模块+守护进程（fanchmwrt，实时流量/应用识别 Dashboard）----
 # fanchmwrt 主仓库是完整 OpenWrt 源码树，只取 package/fcm（kmod-fwx / fwxd / libfwx_common）。
 # 固定 fanchmwrt-25.12.4 分支（kernel 6.12，与 OpenWrt 25.12 一致）。
