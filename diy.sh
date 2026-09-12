@@ -180,6 +180,27 @@ for MINT_MK in package/new/luci-theme-mint/Makefile package/new/luci-app-mint-wa
     fi
 done
 echo ">>> Mint 主题 Makefile 的 luci.mk 引用已修正为绝对路径，版本号已注入"
+# ---- Mint 模板 ucode 兼容补丁（openwrt-25.12 分支必需）----
+# 25.12 分支的 ucode（2026.01.16）不支持命名导出语法 export function name(){}：
+# 模块能编译但导出表为空，header.ut 的 import { getWallpapers } 报
+# "Module ... does not export 'getWallpapers'"，模板编译失败后 LuCI 静默
+# 回退 bootstrap，表现为"固件里有 mint 但主题不生效"。
+# 改成 export default + 默认导入写法（新旧 ucode 均支持，上游 main 同样可用）。
+# 上游若新增导出或改用其它语法，下方校验会失败退出。
+MINT_UC="package/new/luci-theme-mint/ucode/mint/wallpaper.uc"
+MINT_UT="package/new/luci-theme-mint/ucode/template/themes/mint/header.ut"
+sed -i 's|^export function getWallpapers() {|function getWallpapers() {|' "$MINT_UC"
+printf '\nexport default { getWallpapers: getWallpapers };\n' >> "$MINT_UC"
+sed -i 's|import { getWallpapers } from .luci.mint.wallpaper.;|import mintwp from "luci.mint.wallpaper";|' "$MINT_UT"
+sed -i 's|wallpaper = getWallpapers();|wallpaper = mintwp.getWallpapers();|' "$MINT_UT"
+grep -q '^function getWallpapers()' "$MINT_UC" && \
+  grep -q '^export default { getWallpapers: getWallpapers };' "$MINT_UC" && \
+  grep -qF 'import mintwp from "luci.mint.wallpaper"' "$MINT_UT" && \
+  grep -qF 'mintwp.getWallpapers()' "$MINT_UT" || {
+    echo "!!! 错误：Mint 模板 ucode 兼容补丁应用失败（上游结构可能已变）"
+    exit 1
+}
+echo ">>> Mint 模板 ucode 兼容补丁已应用（export default 风格）"
 # ---- fwx 内核模块+守护进程（fanchmwrt，实时流量/应用识别 Dashboard）----
 # fanchmwrt 主仓库是完整 OpenWrt 源码树，只取 package/fcm（kmod-fwx / fwxd / libfwx_common）。
 # 固定 fanchmwrt-25.12.4 分支（kernel 6.12，与 OpenWrt 25.12 一致）。
