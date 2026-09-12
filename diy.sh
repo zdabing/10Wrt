@@ -201,30 +201,6 @@ grep -q '^function getWallpapers()' "$MINT_UC" && \
     exit 1
 }
 echo ">>> Mint 模板 ucode 兼容补丁已应用（export default 风格）"
-# ---- fwx 内核模块+守护进程（fanchmwrt，实时流量/应用识别 Dashboard）----
-# fanchmwrt 主仓库是完整 OpenWrt 源码树，只取 package/fcm（kmod-fwx / fwxd / libfwx_common）。
-# 固定 fanchmwrt-25.12.4 分支（kernel 6.12，与 OpenWrt 25.12 一致）。
-# LuCI 前端在独立 feed（fanchmwrt/fanchmwrt-packages），见下方 feeds 区。
-clone_required "https://github.com/fanchmwrt/fanchmwrt.git" "package/new/fcm-tmp" "fwx 后端（kmod-fwx/fwxd）" "fanchmwrt-25.12.4"
-if [ -d "package/new/fcm-tmp/package/fcm" ]; then
-    mkdir -p package/new/fcm
-    cp -rf package/new/fcm-tmp/package/fcm/. package/new/fcm/
-    # kmod-fwx 依赖 fanchmwrt 底子的内核补丁：给 struct nf_conn 增加 fwx_data 字段，
-    # 否则在 OpenWrt 内核编译报 'struct nf_conn has no member named fwx_data'。
-    # 把补丁装进内核 hack-6.12 目录，随内核编译自动应用。
-    FWX_KERNEL_PATCH="package/new/fcm-tmp/target/linux/generic/hack-6.12/950-fwx-nf-conn-struct-user-hook.patch"
-    if [ -f "$FWX_KERNEL_PATCH" ]; then
-        mkdir -p target/linux/generic/hack-6.12
-        cp "$FWX_KERNEL_PATCH" target/linux/generic/hack-6.12/
-        echo ">>> 已安装 fwx 内核补丁（nf_conn.fwx_data）"
-    else
-        echo "!!! 警告：fwx 内核补丁未找到，kmod-fwx 编译可能失败"
-    fi
-    rm -rf package/new/fcm-tmp
-    echo ">>> fcm（fwx 内核模块+守护进程）已展开到 package/new/fcm"
-else
-    echo "!!! 警告：fcm 目录展开失败，已保留原始克隆"
-fi
 # clone_required "https://github.com/nikkinikki-org/OpenWrt-nikki.git" "package/new/nikki" "luci-app-nikki"  # 已注释：不再使用
 
 # ---- Mihomo 格式 geodata（来自 MetaCubeX/meta-rules-dat）----
@@ -279,20 +255,6 @@ if ! grep -qF "$KENZOK8_FEED" feeds.conf.default; then
     echo ">>> 已添加 kenzok8/openwrt-clashoo 软件源"
 else
     echo ">>> kenzok8 feed 已存在，跳过"
-fi
-
-# ---- fanchmwrt feed（fwx LuCI 前端：dashboard/appfilter/session-stat/feature）----
-# 后端（kmod-fwx/fwxd）由上方 package/new/fcm 提供；本 feed 提供 4 个 luci-app-fwx-*。
-# 特征库 feature.cfg 版权归 destan19/fanchmwrt（个人免费、禁商用）。
-# 注：fwx 扩展全家桶（macfilter/record/user/network/system/dashboard-setting/app-center 等）已移除。
-FANCHMWRT_FEED="src-git fanchmwrt https://github.com/fanchmwrt/fanchmwrt-packages.git"
-if ! grep -qF "$FANCHMWRT_FEED" feeds.conf.default; then
-    echo "$FANCHMWRT_FEED" >> feeds.conf.default
-    ./scripts/feeds update fanchmwrt
-    ./scripts/feeds install -a -p fanchmwrt
-    echo ">>> 已添加 fanchmwrt/fanchmwrt-packages 软件源"
-else
-    echo ">>> fanchmwrt feed 已存在，跳过"
 fi
 
 # ---- 将 package/new 注册为本地 feed ----

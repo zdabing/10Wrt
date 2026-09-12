@@ -6,7 +6,7 @@ on:
       version:
         description: 'OpenWrt 版本分支'
         required: false
-        default: 'openwrt-25.12'
+        default: 'main'
         type: string
 
 concurrency:
@@ -19,7 +19,7 @@ jobs:
 
     env:
       OPENWRT_REPO: https://github.com/openwrt/openwrt.git
-      OPENWRT_VERSION: ${{ inputs.version || 'openwrt-25.12' }}
+      OPENWRT_VERSION: ${{ inputs.version || 'main' }}
 
     steps:
       - name: 检出配置仓库
@@ -180,8 +180,7 @@ jobs:
             luci-i18n-mint-zh-cn luci-i18n-mint-wallpaper-zh-cn
             luci-app-clashoo luci-i18n-clashoo-zh-cn luci-app-oxidns
             luci-app-bandix luci-app-quickfile
-            kmod-fwx fwxd luci-app-fwx-appfilter luci-app-fwx-dashboard
-            luci-app-fwx-session-stat luci-app-fwx-feature iperf3
+            iperf3
           )
           MISSING_PACKAGES=()
           for PACKAGE in "${REQUIRED_PACKAGES[@]}"; do
