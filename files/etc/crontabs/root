@@ -1,0 +1,2 @@
+# 每 15 分钟体检小米 CDN 节点池（详见 /root/mijia-guard.sh）
+*/15 * * * * /root/mijia-guard.sh

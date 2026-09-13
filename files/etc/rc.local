@@ -1,0 +1,8 @@
+# Put your custom commands here that should be executed once
+# the init system has finished its tasks.
+# By default this file does nothing.
+
+# 小米 CDN 坏节点规避：开机首跑（脚本内部会等 WAN 就绪），之后由 cron 每 15 分钟接管
+/root/mijia-guard.sh >/dev/null 2>&1 &
+
+exit 0
