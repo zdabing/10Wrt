@@ -142,67 +142,10 @@ fi
 clone_required "https://github.com/timsaya/luci-app-bandix.git" "package/new/bandix-luci" "luci-app-bandix（前端）"
 clone_required "https://github.com/sbwml/luci-app-quickfile.git" "package/new/quickfile" "luci-app-quickfile"
 clone_required "https://github.com/svenshi/luci-app-oxidns.git" "package/new/luci-app-oxidns" "luci-app-oxidns"
-clone_required "https://github.com/LianXia233/luci-theme-mint.git" "package/new/mint-tmp" "luci-theme-mint"
-# mint 仓库根目录是 theme/（主题）与 wallpaper/（壁纸设置）两个包目录。
-# 只展开 theme/：luci-app-mint-wallpaper（壁纸设置页/rpcd 后端/随机壁纸 cron）不安装。
-# 主题模板渲染所需的 ucode 模块 luci.mint.wallpaper（只读）在主题包内，
-# 去掉 app 后主题照常工作，仅失去自定义壁纸入口（内置角色背景不受影响）。
-if [ -d "package/new/mint-tmp/theme" ]; then
-    # 上游 Makefile 把 PKG_VERSION/PKG_PO_VERSION 置空、由其 CI 注入版本号；
-    # 空值会短路 luci.mk 的 findrev 推导，导致翻译包 VERSION 为空而编译失败。
-    # 这里取 mint 仓库 HEAD 的提交日期+短哈希生成版本号（findrev 同款格式），
-    # 展开时写入 Makefile，等价于上游 CI 的注入动作。
-    MINT_HASH=$(git -C package/new/mint-tmp rev-parse --short=7 HEAD 2>/dev/null || echo "0000000")
-    MINT_SECS=$(git -C package/new/mint-tmp log -1 --format=%ct 2>/dev/null || echo "0")
-    MINT_VER="$(date -u -d "@${MINT_SECS}" '+%y.%j')~${MINT_HASH}"
-    mkdir -p package/new/luci-theme-mint
-    cp -rf package/new/mint-tmp/theme/. package/new/luci-theme-mint/
-    rm -rf package/new/mint-tmp
-    echo ">>> mint 主题已展开（版本 ${MINT_VER}，壁纸设置包不安装）"
-else
-    echo "!!! 错误：mint 仓库结构已变（未找到 theme/ 子目录）"
-    exit 1
-fi
-# Mint 的 Makefile 用相对路径 include ../../luci.mk，只有放在 LuCI feed 内才解析得到。
-# 本项目把第三方包放在 package/new（注册为 src-link feed），必须改成绝对路径，
-# 否则 include 找不到 luci.mk，编译在开始前就失败。
-for MINT_MK in package/new/luci-theme-mint/Makefile; do
-    if [ -f "$MINT_MK" ]; then
-        sed -i 's|include \.\./\.\./luci\.mk|include $(TOPDIR)/feeds/luci/luci.mk|' "$MINT_MK"
-        grep -qF 'include $(TOPDIR)/feeds/luci/luci.mk' "$MINT_MK" || {
-            echo "!!! 错误：$MINT_MK 的 luci.mk 引用修正失败（上游 Makefile 结构可能已变）"
-            exit 1
-        }
-        # 注入版本号（上游留空交给其 CI 注入，见上方说明）
-        sed -i "s|^PKG_VERSION *?=\$|PKG_VERSION := ${MINT_VER}|; s|^PKG_PO_VERSION *?=\$|PKG_PO_VERSION := ${MINT_VER}|" "$MINT_MK"
-        grep -qF "PKG_VERSION := ${MINT_VER}" "$MINT_MK" && grep -qF "PKG_PO_VERSION := ${MINT_VER}" "$MINT_MK" || {
-            echo "!!! 错误：$MINT_MK 的版本号注入失败（上游 Makefile 结构可能已变）"
-            exit 1
-        }
-    fi
-done
-echo ">>> Mint 主题 Makefile 的 luci.mk 引用已修正为绝对路径，版本号已注入"
-# ---- Mint 模板 ucode 兼容补丁（openwrt-25.12 分支必需）----
-# 25.12 分支的 ucode（2026.01.16）不支持命名导出语法 export function name(){}：
-# 模块能编译但导出表为空，header.ut 的 import { getWallpapers } 报
-# "Module ... does not export 'getWallpapers'"，模板编译失败后 LuCI 静默
-# 回退 bootstrap，表现为"固件里有 mint 但主题不生效"。
-# 改成 export default + 默认导入写法（新旧 ucode 均支持，上游 main 同样可用）。
-# 上游若新增导出或改用其它语法，下方校验会失败退出。
-MINT_UC="package/new/luci-theme-mint/ucode/mint/wallpaper.uc"
-MINT_UT="package/new/luci-theme-mint/ucode/template/themes/mint/header.ut"
-sed -i 's|^export function getWallpapers() {|function getWallpapers() {|' "$MINT_UC"
-printf '\nexport default { getWallpapers: getWallpapers };\n' >> "$MINT_UC"
-sed -i 's|import { getWallpapers } from .luci.mint.wallpaper.;|import mintwp from "luci.mint.wallpaper";|' "$MINT_UT"
-sed -i 's|wallpaper = getWallpapers();|wallpaper = mintwp.getWallpapers();|' "$MINT_UT"
-grep -q '^function getWallpapers()' "$MINT_UC" && \
-  grep -q '^export default { getWallpapers: getWallpapers };' "$MINT_UC" && \
-  grep -qF 'import mintwp from "luci.mint.wallpaper"' "$MINT_UT" && \
-  grep -qF 'mintwp.getWallpapers()' "$MINT_UT" || {
-    echo "!!! 错误：Mint 模板 ucode 兼容补丁应用失败（上游结构可能已变）"
-    exit 1
-}
-echo ">>> Mint 模板 ucode 兼容补丁已应用（export default 风格）"
+clone_required "https://github.com/CyL-Cly/luci-theme-round.git" "package/new/luci-theme-round" "luci-theme-round"
+# round 仓库根目录即包本体，Makefile 自包含（package.mk + PKGARCH:=all，版本号写死，
+# 中文翻译直接安装 theme.zh-cn.lmo、无 luci-i18n 子包），ucode 模板无命名导出语法，
+# 无需 mint 那样的展开/luci.mk 修正/ucode 兼容补丁，直接作为普通第三方包参与编译。
 # clone_required "https://github.com/nikkinikki-org/OpenWrt-nikki.git" "package/new/nikki" "luci-app-nikki"  # 已注释：不再使用
 
 # ---- Mihomo 格式 geodata（来自 MetaCubeX/meta-rules-dat）----
@@ -229,12 +172,12 @@ META_GEO_URL="https://github.com/MetaCubeX/meta-rules-dat/releases/latest/downlo
 # wget -q --show-progress -O files/etc/clashoo/GeoIP.dat     "${META_GEO_URL}/geoip.dat"   || echo "!!! 警告：Clashoo GeoIP.dat 下载失败"
 # echo ">>> Clashoo geodata → files/etc/clashoo/"
 
-# 将默认主题改为 mint（克隆失败则保留 OpenWrt 自带的 bootstrap）
-if [ -d package/new/luci-theme-mint ]; then
-    sed -i 's|/luci-static/bootstrap|/luci-static/mint|g' feeds/luci/modules/luci-base/root/etc/config/luci
-    echo ">>> 默认主题已改为 luci-theme-mint"
+# 将默认主题改为 round（克隆失败则保留 OpenWrt 自带的 bootstrap）
+if [ -d package/new/luci-theme-round ]; then
+    sed -i 's|/luci-static/bootstrap|/luci-static/round|g' feeds/luci/modules/luci-base/root/etc/config/luci
+    echo ">>> 默认主题已改为 luci-theme-round"
 else
-    echo "!!! 警告：Mint 主题不可用，默认保留 luci-theme-bootstrap"
+    echo "!!! 警告：Round 主题不可用，默认保留 luci-theme-bootstrap"
 fi
 
 # 默认语言固定为简体中文（需配合 seed 里的 CONFIG_LUCI_LANG_zh_Hans 全局开关）

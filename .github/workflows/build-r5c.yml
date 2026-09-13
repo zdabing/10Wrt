@@ -176,8 +176,7 @@ jobs:
             luci-i18n-base-zh-cn luci-i18n-ddns-zh-cn
             luci-i18n-firewall-zh-cn luci-i18n-package-manager-zh-cn
             luci-i18n-ttyd-zh-cn luci-i18n-upnp-zh-cn luci-i18n-wol-zh-cn
-            luci-theme-mint
-            luci-i18n-mint-zh-cn
+            luci-theme-round
             luci-app-clashoo luci-i18n-clashoo-zh-cn luci-app-oxidns
             luci-app-bandix luci-app-quickfile
             iperf3
