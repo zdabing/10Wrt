@@ -40,7 +40,6 @@
 | **luci-app-ttyd** | 网页终端 | |
 | **luci-app-firewall** | 防火墙管理 | |
 | **luci-theme-mint** | Mint 主题（默认）：毛玻璃卡片 UI、明暗配色、总览仪表盘 | [LianXia233/luci-theme-mint](https://github.com/LianXia233/luci-theme-mint) |
-| **luci-app-mint-wallpaper** | Mint 壁纸设置（随机/自定义壁纸、服务端缓存） | [LianXia233/luci-theme-mint](https://github.com/LianXia233/luci-theme-mint) |
 
 #### 网络工具
 

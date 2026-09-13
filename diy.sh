@@ -143,28 +143,30 @@ clone_required "https://github.com/timsaya/luci-app-bandix.git" "package/new/ban
 clone_required "https://github.com/sbwml/luci-app-quickfile.git" "package/new/quickfile" "luci-app-quickfile"
 clone_required "https://github.com/svenshi/luci-app-oxidns.git" "package/new/luci-app-oxidns" "luci-app-oxidns"
 clone_required "https://github.com/LianXia233/luci-theme-mint.git" "package/new/mint-tmp" "luci-theme-mint"
-# mint 仓库根目录是 theme/（主题）与 wallpaper/（壁纸设置）两个包目录，需展开为独立包
-if [ -d "package/new/mint-tmp/theme" ] && [ -d "package/new/mint-tmp/wallpaper" ]; then
+# mint 仓库根目录是 theme/（主题）与 wallpaper/（壁纸设置）两个包目录。
+# 只展开 theme/：luci-app-mint-wallpaper（壁纸设置页/rpcd 后端/随机壁纸 cron）不安装。
+# 主题模板渲染所需的 ucode 模块 luci.mint.wallpaper（只读）在主题包内，
+# 去掉 app 后主题照常工作，仅失去自定义壁纸入口（内置角色背景不受影响）。
+if [ -d "package/new/mint-tmp/theme" ]; then
     # 上游 Makefile 把 PKG_VERSION/PKG_PO_VERSION 置空、由其 CI 注入版本号；
     # 空值会短路 luci.mk 的 findrev 推导，导致翻译包 VERSION 为空而编译失败。
     # 这里取 mint 仓库 HEAD 的提交日期+短哈希生成版本号（findrev 同款格式），
-    # 展开时写入两个 Makefile，等价于上游 CI 的注入动作。
+    # 展开时写入 Makefile，等价于上游 CI 的注入动作。
     MINT_HASH=$(git -C package/new/mint-tmp rev-parse --short=7 HEAD 2>/dev/null || echo "0000000")
     MINT_SECS=$(git -C package/new/mint-tmp log -1 --format=%ct 2>/dev/null || echo "0")
     MINT_VER="$(date -u -d "@${MINT_SECS}" '+%y.%j')~${MINT_HASH}"
-    mkdir -p package/new/luci-theme-mint package/new/luci-app-mint-wallpaper
+    mkdir -p package/new/luci-theme-mint
     cp -rf package/new/mint-tmp/theme/. package/new/luci-theme-mint/
-    cp -rf package/new/mint-tmp/wallpaper/. package/new/luci-app-mint-wallpaper/
     rm -rf package/new/mint-tmp
-    echo ">>> mint 主题与壁纸设置包已展开（版本 ${MINT_VER}）"
+    echo ">>> mint 主题已展开（版本 ${MINT_VER}，壁纸设置包不安装）"
 else
-    echo "!!! 错误：mint 仓库结构已变（未找到 theme/ 或 wallpaper/ 子目录）"
+    echo "!!! 错误：mint 仓库结构已变（未找到 theme/ 子目录）"
     exit 1
 fi
 # Mint 的 Makefile 用相对路径 include ../../luci.mk，只有放在 LuCI feed 内才解析得到。
 # 本项目把第三方包放在 package/new（注册为 src-link feed），必须改成绝对路径，
 # 否则 include 找不到 luci.mk，编译在开始前就失败。
-for MINT_MK in package/new/luci-theme-mint/Makefile package/new/luci-app-mint-wallpaper/Makefile; do
+for MINT_MK in package/new/luci-theme-mint/Makefile; do
     if [ -f "$MINT_MK" ]; then
         sed -i 's|include \.\./\.\./luci\.mk|include $(TOPDIR)/feeds/luci/luci.mk|' "$MINT_MK"
         grep -qF 'include $(TOPDIR)/feeds/luci/luci.mk' "$MINT_MK" || {
