@@ -209,6 +209,7 @@ jobs:
           echo "固件目录: $FIRMWARE_DIR"
           ls -lh "$FIRMWARE_DIR"/
           gh release create "$TAG" $FIRMWARE_DIR/*.img.gz $FIRMWARE_DIR/*.img $FIRMWARE_DIR/*.tar.gz \
+            --target "$GITHUB_SHA" \
             --title "$TITLE" \
             --notes "### 管理地址: http://10.0.0.1" \
             --latest \
@@ -224,7 +225,7 @@ jobs:
           for PREFIX in r5c x86_64; do
             echo "=== 清理前缀 ${PREFIX}（保留最新 7 个）==="
             gh api "repos/${{ github.repository }}/releases?per_page=100" \
-              --jq 'sort_by(.created_at) | reverse | .[].tag_name' 2>/dev/null \
+              --jq 'sort_by(.published_at // .created_at) | reverse | .[].tag_name' 2>/dev/null \
               | grep -E "^${PREFIX}-" | tail -n +8 | while read -r TAG; do
                 echo "删除旧 Release/Tag: ${TAG}"
                 gh release delete "$TAG" --yes --cleanup-tag \
