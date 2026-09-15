@@ -180,6 +180,8 @@ jobs:
             luci-app-clashoo luci-i18n-clashoo-zh-cn luci-app-oxidns
             luci-app-bandix luci-app-quickfile
             iperf3
+            kmod-veth
+            kmod-nft-queue
           )
           MISSING_PACKAGES=()
           for PACKAGE in "${REQUIRED_PACKAGES[@]}"; do

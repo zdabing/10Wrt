@@ -58,6 +58,7 @@
 - **BBR** 拥塞控制算法
 - **TPROXY** 透明代理支持
 - **TUN** 虚拟网卡（VPN/代理需要）
+- **veth** / **nft-queue** / **nft-nat**（LAN 入口旁路自测、Open-Box 的 `auto_redirect` 需要）
 
 #### 系统工具
 
@@ -72,6 +73,62 @@
 - 开启 **Packet Steering**（多队列软中断均衡）
 - 时区设为 `Asia/Shanghai`
 - Luci 诊断地址改百度
+- 启动小米 CDN 坏节点规避（`/root/mijia-guard.sh`，之后每 15 分钟由 cron 接管）
+
+### 小米 CDN 坏节点规避
+
+小米 CDN 池里混有「80 端口静默丢弃 SYN」的节点，米家 App 拿到这种 IP 会卡在设备页。
+固件内置 `/root/mijia-guard.sh`，每 15 分钟体检一次节点池，做两件事：
+
+1. 把 `api.io.mi.com` / `ot.io.mi.com` 钉定到健康 IP（写 `/etc/hosts`，自愈更新）
+2. nft DNAT 兜底：LAN 发往坏节点 80 端口的连接改道到健康节点，
+   覆盖 App 走 HTTPDNS 绕过路由器 DNS 的情况
+
+注意 `10.0.0.1` 的管理地址不受影响；体检日志在 `/root/mijia-guard.log`。
+
+### 验证旁路是否真的生效
+
+旁路规则是 `iifname "br-lan"` 上的 prerouting DNAT，**只有从 LAN 口进来的包才会命中**，
+所以从路由器本机 `curl` 坏节点是验不出来的（本机流量走 OUTPUT，不经过 LAN 入口，命中计数永远是 0）。
+
+正确做法是让一台 LAN 侧机器发起请求，固件内置的 `/root/mijia-bypass-test.sh` 会自动完成这件事：
+用 veth + network namespace 造一台假 LAN 客户端挂进 `br-lan`，先跑对照组（直连健康节点，
+证明测试通路本身是通的），再拿坏节点做主探针，用规则计数增量 + HTTP 响应 + conntrack 三重取证。
+
+```sh
+/root/mijia-bypass-test.sh        # 退出码 0=命中 1=未命中 2=环境不具备(未测) 3=当前无坏节点
+/root/mijia-bypass-test.sh -v     # 附带原始证据
+/root/mijia-bypass-test.sh -m     # 只打印手工验证步骤（找台 LAN 里的 PC 自己 curl）
+```
+
+内核需要 `kmod-veth`（已并入 `configs/*.seed`）。缺它时脚本会报「未测」并列出手工步骤，
+**不会退回回环测试** —— 那条路径不经过 LAN 入口，测出来的"成功"是假阳性。
+
+### Open-Box（内置一键安装）
+
+[Open-Box](https://github.com/liandu2024/Open-Box) 是一体化透明代理面板：装完用浏览器就能配订阅、节点、
+分流、DNS 和防火墙，自带 sing-box 内核、Node 运行时和完整 GeoSite / GeoIP 数据，不用手写配置文件。
+
+完整包约 100MB，所以固件不预装，而是把上游 `v0.1.196` 的安装脚本固化进 `/root/open-box/`，
+内核侧依赖全部编进固件，刷完 SSH 一条命令就能装：
+
+```sh
+sh /root/open-box/install.sh --mirror   # 走镜像加速下载；直连 GitHub 顺畅就去掉 --mirror
+sh /root/open-box/update.sh             # 升级，保留订阅与配置
+sh /root/open-box/uninstall.sh          # 卸载
+```
+
+装完面板在 `http://<路由器IP>:2026`，首次访问设置管理密码。
+
+- 安装器的依赖自检会全过：`kmod-tun`、`kmod-nft-queue`、`kmod-nft-nat`（fw4 自带）、
+  `kmod-veth`、`ip-full`、CA 证书都已内置，不会再走 apk 补装
+- 安装脚本要求 `/opt` 所在分区有 **≥512MB 空闲**、内存 ≥512MB，
+  所以两个 seed 的 `CONFIG_TARGET_ROOTFS_PARTSIZE` 都是 1024
+- **别和已内置的 luci-app-clashoo 同时启用**：两者都要接管 DNS 和防火墙透明代理，会互相抢；
+  Open-Box 自带的冲突检测只认 openclash / nikki / passwall / homeproxy，认不出 clashoo
+- 固化的副本只用于首次安装；面板内的「检查更新」走的是上游 `update.sh`（也在 `/root/open-box/`）。
+  要跟上游同步脚本本体，重新拉一份覆盖这个目录即可：
+  `curl -fsSL https://raw.githubusercontent.com/liandu2024/Open-Box/main/scripts/install.sh -o files/root/open-box/install.sh`
 
 ---
 
@@ -127,7 +184,11 @@ dd if=openwrt-*-x86-64-generic-ext4-combined-efi.img of=/dev/sdX bs=4M status=pr
 │   ├── x86_64.seed                           # x86/64 种子配置
 │   └── r5c.seed                              # NanoPi R5C 种子配置
 ├── files/
-│   └── etc/uci-defaults/99-init-settings     # 首次启动脚本
+│   ├── etc/uci-defaults/99-init-settings     # 首次启动脚本
+│   └── root/
+│       ├── mijia-guard.sh                    # 小米 CDN 坏节点体检与规避
+│       ├── mijia-bypass-test.sh              # LAN 入口旁路自测
+│       └── open-box/                         # Open-Box 安装/升级/卸载脚本（上游 v0.1.196）
 ├── .github/workflows/build-r5c.yml           # R5C 工作流
 ├── .github/workflows/build-x86.yml           # x86/64 工作流
 ```

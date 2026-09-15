@@ -6,7 +6,9 @@ CONFIG_TARGET_x86_64_DEVICE_generic=y
 
 CONFIG_TARGET_ROOTFS_EXT4FS=y
 CONFIG_TARGET_ROOTFS_SQUASHFS=y
-CONFIG_TARGET_ROOTFS_PARTSIZE=512
+# 1024 而不是 512：Open-Box 装到 /opt，它的安装脚本会检查 /opt 所在分区有
+# ≥512MB 空闲，512MB 的根分区数学上不可能满足（固件本身就占掉一部分）
+CONFIG_TARGET_ROOTFS_PARTSIZE=1024
 
 # Kernel
 CONFIG_KERNEL_BUILD_DOMAIN="openwrt"
@@ -95,6 +97,13 @@ CONFIG_PACKAGE_ddns-scripts-services=y
 
 CONFIG_PACKAGE_kmod-tun=y
 CONFIG_PACKAGE_kmod-nft-tproxy=y
+# veth：/root/mijia-bypass-test.sh 靠它 + netns 造一台 LAN 侧客户端，
+# 没有它就只能从路由器本机发流量，走不到 br-lan 入口，旁路规则验不了
+# （Open-Box 的「模拟 LAN 终端」也吃这一项）
+CONFIG_PACKAGE_kmod-veth=y
+# Open-Box auto_redirect 的 queue 表达式；fw4 默认带的是 nft_redir（kmod-nft-nat），
+# 这个不带，缺了 sing-box 只能退到纯 tun 兼容模式
+CONFIG_PACKAGE_kmod-nft-queue=y
 
 CONFIG_PACKAGE_blockdev=y
 CONFIG_PACKAGE_fdisk=y
