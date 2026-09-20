@@ -38,6 +38,7 @@
 | **luci-app-wol** | 网络唤醒 | |
 | **luci-app-quickfile** | 文件管理器 | [sbwml/luci-app-quickfile](https://github.com/sbwml/luci-app-quickfile) |
 | **luci-app-ttyd** | 网页终端 | |
+| **luci-app-librespeed** | LibreSpeed 测速客户端：路由器主动测指定测速服务器，支持定时任务与历史记录（界面为英文，上游暂无中文翻译） | 官方 feed（luci + packages） |
 | **luci-app-firewall** | 防火墙管理 | |
 | **luci-theme-round** | Round 主题（默认）：圆角青色玻璃 UI、明暗切换、侧栏布局 | [CyL-Cly/luci-theme-round](https://github.com/CyL-Cly/luci-theme-round) |
 
@@ -47,6 +48,7 @@
 - `firewall4` (nftables)
 - `curl` / `wget` / `bind-dig`
 - `ip-full` / `iperf3` / `tcpdump` / `traceroute` / `ethtool` / `irqbalance`
+- `librespeed-cli`（Go 版命令行测速，luci-app-librespeed 的后端）
 
 #### DDNS 支持
 
