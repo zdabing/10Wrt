@@ -60,7 +60,7 @@
 - **BBR** 拥塞控制算法
 - **TPROXY** 透明代理支持
 - **TUN** 虚拟网卡（VPN/代理需要）
-- **veth** / **nft-queue** / **nft-nat**（LAN 入口旁路自测、Open-Box 的 `auto_redirect` 需要）
+- **veth** 虚拟网卡（LAN 入口旁路自测需要）
 
 #### 系统工具
 
@@ -105,32 +105,6 @@
 
 内核需要 `kmod-veth`（已并入 `configs/*.seed`）。缺它时脚本会报「未测」并列出手工步骤，
 **不会退回回环测试** —— 那条路径不经过 LAN 入口，测出来的"成功"是假阳性。
-
-### Open-Box（内置一键安装）
-
-[Open-Box](https://github.com/liandu2024/Open-Box) 是一体化透明代理面板：装完用浏览器就能配订阅、节点、
-分流、DNS 和防火墙，自带 sing-box 内核、Node 运行时和完整 GeoSite / GeoIP 数据，不用手写配置文件。
-
-完整包约 100MB，所以固件不预装，而是把上游 `v0.1.196` 的安装脚本固化进 `/root/open-box/`，
-内核侧依赖全部编进固件，刷完 SSH 一条命令就能装：
-
-```sh
-sh /root/open-box/install.sh --mirror   # 走镜像加速下载；直连 GitHub 顺畅就去掉 --mirror
-sh /root/open-box/update.sh             # 升级，保留订阅与配置
-sh /root/open-box/uninstall.sh          # 卸载
-```
-
-装完面板在 `http://<路由器IP>:2026`，首次访问设置管理密码。
-
-- 安装器的依赖自检会全过：`kmod-tun`、`kmod-nft-queue`、`kmod-nft-nat`（fw4 自带）、
-  `kmod-veth`、`ip-full`、CA 证书都已内置，不会再走 apk 补装
-- 安装脚本要求 `/opt` 所在分区有 **≥512MB 空闲**、内存 ≥512MB，
-  所以两个 seed 的 `CONFIG_TARGET_ROOTFS_PARTSIZE` 都是 1024
-- **别和已内置的 luci-app-clashoo 同时启用**：两者都要接管 DNS 和防火墙透明代理，会互相抢；
-  Open-Box 自带的冲突检测只认 openclash / nikki / passwall / homeproxy，认不出 clashoo
-- 固化的副本只用于首次安装；面板内的「检查更新」走的是上游 `update.sh`（也在 `/root/open-box/`）。
-  要跟上游同步脚本本体，重新拉一份覆盖这个目录即可：
-  `curl -fsSL https://raw.githubusercontent.com/liandu2024/Open-Box/main/scripts/install.sh -o files/root/open-box/install.sh`
 
 ---
 
@@ -189,8 +163,7 @@ dd if=openwrt-*-x86-64-generic-ext4-combined-efi.img of=/dev/sdX bs=4M status=pr
 │   ├── etc/uci-defaults/99-init-settings     # 首次启动脚本
 │   └── root/
 │       ├── mijia-guard.sh                    # 小米 CDN 坏节点体检与规避
-│       ├── mijia-bypass-test.sh              # LAN 入口旁路自测
-│       └── open-box/                         # Open-Box 安装/升级/卸载脚本（上游 v0.1.196）
+│       └── mijia-bypass-test.sh              # LAN 入口旁路自测
 ├── .github/workflows/build-r5c.yml           # R5C 工作流
 ├── .github/workflows/build-x86.yml           # x86/64 工作流
 ```

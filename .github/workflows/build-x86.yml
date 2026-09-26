@@ -182,7 +182,6 @@ jobs:
             luci-app-librespeed
             iperf3
             kmod-veth
-            kmod-nft-queue
           )
           MISSING_PACKAGES=()
           for PACKAGE in "${REQUIRED_PACKAGES[@]}"; do
