@@ -71,9 +71,11 @@ NODE_BACKUP=$(mktemp -d)
 cp -rf feeds/packages/lang/node "$NODE_BACKUP/" 2>/dev/null || true
 rm -rf feeds/packages/lang/node
 TMP_ADD=$(mktemp -d)
+NODE_PREBUILT_REV=""
 if git clone --depth 1 --filter=blob:none --sparse https://github.com/QiuSimons/OpenWrt-Add.git "$TMP_ADD" 2>/dev/null && \
    (cd "$TMP_ADD" && git sparse-checkout set feeds_packages_lang_node-prebuilt) && \
    [ -d "$TMP_ADD/feeds_packages_lang_node-prebuilt" ]; then
+    NODE_PREBUILT_REV=$(git -C "$TMP_ADD" rev-parse HEAD)
     cp -rf "$TMP_ADD/feeds_packages_lang_node-prebuilt" feeds/packages/lang/node
     echo ">>> Node.js 已替换为预编译版"
 else
@@ -115,12 +117,18 @@ echo ">>> 安装 feeds..."
 # ============================================================
 
 mkdir -p package/new
+SOURCE_REVISIONS_FILE="package/new/.source-revisions.tsv"
+: > "$SOURCE_REVISIONS_FILE"
+if [ -n "$NODE_PREBUILT_REV" ]; then
+    printf '%s\t%s\t%s\n' 'node-prebuilt' 'https://github.com/QiuSimons/OpenWrt-Add.git' "$NODE_PREBUILT_REV" >> "$SOURCE_REVISIONS_FILE"
+fi
 
 clone_required() {
     local repo="$1" dst="$2" name="$3" branch="$4"
     local branch_opt=""
     [ -n "$branch" ] && branch_opt="-b $branch"
     if git clone --depth 1 $branch_opt "$repo" "$dst" 2>/dev/null; then
+        printf '%s\t%s\t%s\n' "$name" "$repo" "$(git -C "$dst" rev-parse HEAD)" >> "$SOURCE_REVISIONS_FILE"
         echo ">>> 已添加 $name"
     else
         rm -rf "$dst"
@@ -141,7 +149,7 @@ elif [ -d "package/new/bandix-tmp" ]; then
 fi
 clone_required "https://github.com/timsaya/luci-app-bandix.git" "package/new/bandix-luci" "luci-app-bandix（前端）"
 clone_required "https://github.com/sbwml/luci-app-quickfile.git" "package/new/quickfile" "luci-app-quickfile"
-clone_required "https://github.com/svenshi/luci-app-oxidns.git" "package/new/luci-app-oxidns" "luci-app-oxidns"
+clone_required "https://github.com/hahaher123/luci-app-oxidns.git" "package/new/luci-app-oxidns" "luci-app-oxidns"
 clone_required "https://github.com/CyL-Cly/luci-theme-round.git" "package/new/luci-theme-round" "luci-theme-round"
 # round 仓库根目录即包本体，Makefile 自包含（package.mk + PKGARCH:=all，版本号写死，
 # 中文翻译直接安装 theme.zh-cn.lmo、无 luci-i18n 子包），ucode 模板无命名导出语法，

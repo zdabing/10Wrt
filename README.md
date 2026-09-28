@@ -31,7 +31,7 @@
 | 插件 | 说明 | 来源 |
 |---|---|---|
 | **luci-app-clashoo** | Clashoo 双内核代理（mihomo + sing-box） | [kenzok8/openwrt-clashoo](https://github.com/kenzok8/openwrt-clashoo) |
-| **luci-app-oxidns** | OxiDNS 高性能可编程 DNS 引擎（Rust） | [svenshi/luci-app-oxidns](https://github.com/svenshi/luci-app-oxidns) |
+| **luci-app-oxidns** | OxiDNS 高性能可编程 DNS 引擎（Rust） | [hahaher123/luci-app-oxidns](https://github.com/hahaher123/luci-app-oxidns) |
 | **luci-app-ddns** | 动态域名解析 | |
 | **luci-app-upnp** | UPnP IGD / NAT-PMP | |
 | **luci-app-bandix** | 带宽监控 | [timsaya/luci-app-bandix](https://github.com/timsaya/luci-app-bandix) |
@@ -137,6 +137,14 @@ git push
 
 编译完成后（约 1-3 小时），在 Actions 运行页面找到 **Upload firmware** 步骤的构件（Artifacts），下载 `.img.gz` 文件。
 
+正式版本会发布到 **Releases** 页面，除镜像外还附带三类记录文件：
+
+| 文件 | 说明 |
+|---|---|
+| `SHA256SUMS` | 镜像校验值，下载后可用 `sha256sum -c SHA256SUMS` 核对完整性 |
+| `10wrt-packages.manifest` | 固件内已安装软件包及版本清单 |
+| `10wrt-sources.tsv` | 本次构建使用的 OpenWrt、feeds 及第三方插件源码提交号 |
+
 ### x86/64 刷机
 
 ```bash
@@ -165,8 +173,13 @@ dd if=openwrt-*-x86-64-generic-ext4-combined-efi.img of=/dev/sdX bs=4M status=pr
 │   └── root/
 │       ├── mijia-guard.sh                    # 小米 CDN 坏节点体检与规避
 │       └── mijia-bypass-test.sh              # LAN 入口旁路自测
-├── .github/workflows/build-r5c.yml           # R5C 工作流
-├── .github/workflows/build-x86.yml           # x86/64 工作流
+├── scripts/
+│   ├── build-target-env.sh                   # 设备构建参数（目标/种子/设备符号/缓存 key）
+│   ├── create-build-records.sh               # 生成 SHA256SUMS / 包清单 / 源码版本记录
+│   └── validate-seed-packages.sh             # seed 与 .config 软件包核对
+├── .github/workflows/build-common.yml        # 公共构建工作流（编译/验证/发布）
+├── .github/workflows/build-r5c.yml           # R5C 入口工作流（调用公共工作流）
+├── .github/workflows/build-x86.yml           # x86/64 入口工作流（调用公共工作流）
 ```
 
 ### 自定义修改
@@ -184,7 +197,7 @@ dd if=openwrt-*-x86-64-generic-ext4-combined-efi.img of=/dev/sdX bs=4M status=pr
 - [kenzok8/openwrt-clashoo](https://github.com/kenzok8/openwrt-clashoo) — Clashoo 双内核代理（mihomo + sing-box）
 - [nikkinikki-org/OpenWrt-nikki](https://github.com/nikkinikki-org/OpenWrt-nikki) — Nikki 代理客户端
 - [sbwml](https://github.com/sbwml) — 多个插件包
-- [svenshi/luci-app-oxidns](https://github.com/svenshi/luci-app-oxidns) — OxiDNS LuCI 管理界面
+- [hahaher123/luci-app-oxidns](https://github.com/hahaher123/luci-app-oxidns) — OxiDNS LuCI 管理界面
 - [timsaya/luci-app-bandix](https://github.com/timsaya/luci-app-bandix) — 带宽监控
 - [CyL-Cly/luci-theme-round](https://github.com/CyL-Cly/luci-theme-round) — Round 主题（默认）
 - [P3TERX/Actions-OpenWrt](https://github.com/P3TERX/Actions-OpenWrt)
