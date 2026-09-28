@@ -54,6 +54,11 @@ CONFIG_PACKAGE_ppp=y
 CONFIG_PACKAGE_ppp-mod-pppoe=y
 CONFIG_PACKAGE_luci-theme-bootstrap=y
 CONFIG_PACKAGE_luci-theme-round=y
+CONFIG_PACKAGE_kmod-sched=y
+CONFIG_PACKAGE_kmod-sched-bpf=y
+CONFIG_PACKAGE_luci-theme-zen=m
+CONFIG_PACKAGE_zen-traffic=m
+CONFIG_PACKAGE_luci-app-zen-traffic=m
 # 简体中文（LuCI 25.12 的各 luci-i18n-*-zh-cn 包是隐藏配置项，
 # 必须通过这个全局开关让 make defconfig 自动选中）
 CONFIG_LUCI_LANG_zh_Hans=y

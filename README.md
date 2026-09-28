@@ -139,6 +139,18 @@ git push
 
 正式版本会发布到 **Releases** 页面，除镜像外还附带三类记录文件：
 
+R5C 构建还会附带 `luci-theme-zen`、`zen-traffic`、`luci-app-zen-traffic`
+三个测试 APK。这些包与**同一次构建**的 R5C 固件配套；Zen 的流量后台依赖
+内核模块，不能仅凭同为 `dev/main` 分支就认为它能安装在旧固件上。
+刷入对应镜像后，将三个 APK 放到路由器 `/tmp`，再执行：
+
+```sh
+apk add --allow-untrusted /tmp/zen-traffic_*.apk /tmp/luci-app-zen-traffic_*.apk /tmp/luci-theme-zen_*.apk
+/etc/init.d/zen-traffic start
+ubus call zen.traffic getStatus
+ubus call zen.traffic getDevices
+```
+
 | 文件 | 说明 |
 |---|---|
 | `SHA256SUMS` | 镜像校验值，下载后可用 `sha256sum -c SHA256SUMS` 核对完整性 |
