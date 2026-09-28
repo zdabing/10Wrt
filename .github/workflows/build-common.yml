@@ -132,14 +132,6 @@ jobs:
           # 自动核对 seed 中所有显式选中的软件包，第三方源码缺失时立即失败。
           SEED="../${SEED_PATH}"
           bash ../config/scripts/validate-seed-packages.sh "$SEED" .config
-          if [ "$BUILD_TARGET" = "r5c" ]; then
-            for PACKAGE in luci-theme-zen zen-traffic luci-app-zen-traffic; do
-              grep -qxF "CONFIG_PACKAGE_${PACKAGE}=m" .config || {
-                echo "错误：R5C Zen 测试包未选为模块：$PACKAGE"
-                exit 1
-              }
-            done
-          fi
 
       - name: 编译固件
         run: |
@@ -176,22 +168,6 @@ jobs:
             make target/install -j1 V=s 2>&1 | tee -a build.log
 
         timeout-minutes: 360
-
-      - name: 收集 R5C Zen APK
-        if: inputs.target == 'r5c'
-        run: |
-          set -euo pipefail
-          OUT="openwrt/bin/targets/${FIRMWARE_TARGET}/zen-apks"
-          mkdir -p "$OUT"
-          for PACKAGE in luci-theme-zen zen-traffic luci-app-zen-traffic; do
-            mapfile -t FILES < <(find openwrt/bin -type f -name "${PACKAGE}_*.apk")
-            if [ "${#FILES[@]}" -ne 1 ]; then
-              echo "错误：$PACKAGE APK 数量为 ${#FILES[@]}，期望 1"
-              exit 1
-            fi
-            cp "${FILES[0]}" "$OUT/"
-          done
-          ls -lh "$OUT"
 
       - name: 验证固件内关键软件包
         run: |
@@ -254,7 +230,6 @@ jobs:
             openwrt/bin/targets/**/SHA256SUMS
             openwrt/bin/targets/**/10wrt-packages.manifest
             openwrt/bin/targets/**/10wrt-sources.tsv
-            openwrt/bin/targets/**/zen-apks/*.apk
           if-no-files-found: warn
           retention-days: 7
 
@@ -290,21 +265,12 @@ jobs:
           ASSETS=("$FIRMWARE_DIR"/*.img.gz "$FIRMWARE_DIR"/*.img "$FIRMWARE_DIR"/*.tar.gz \
             "$FIRMWARE_DIR"/SHA256SUMS "$FIRMWARE_DIR"/10wrt-packages.manifest \
             "$FIRMWARE_DIR"/10wrt-sources.tsv)
-          if [ "$BUILD_TARGET" = "r5c" ]; then
-            ASSETS+=("$FIRMWARE_DIR"/zen-apks/*.apk)
-          fi
           cat > release-notes.md <<EOF
           ### 管理地址: http://10.0.0.1
 
           镜像校验值见 SHA256SUMS，已安装软件包见 10wrt-packages.manifest，
           OpenWrt 与第三方源码提交号见 10wrt-sources.tsv。
           EOF
-          if [ "$BUILD_TARGET" = "r5c" ]; then
-            cat >> release-notes.md <<EOF
-
-          R5C Zen 测试 APK 与本次构建的固件配套；流量后台依赖内核模块，请勿将其用于旧固件。
-          EOF
-          fi
           # --target 必须指定：缺省时 tag 打到默认分支 main 的 HEAD，
           # Release 的 created_at 会取那个提交的日期——main 停在旧日期时
           # 新 Release 会被下方"保留最新 7 个"清理步骤当成最旧的删掉。

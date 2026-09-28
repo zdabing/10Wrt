@@ -154,15 +154,6 @@ clone_required "https://github.com/CyL-Cly/luci-theme-round.git" "package/new/lu
 # round 仓库根目录即包本体，Makefile 自包含（package.mk + PKGARCH:=all，版本号写死，
 # 中文翻译直接安装 theme.zh-cn.lmo、无 luci-i18n 子包），ucode 模板无命名导出语法，
 # 无需 mint 那样的展开/luci.mk 修正/ucode 兼容补丁，直接作为普通第三方包参与编译。
-# R5C 的 Zen 测试包必须与固件在同一源码树中编译，内核模块 ABI 才一致。
-if [ "${BUILD_TARGET:-}" = "r5c" ]; then
-    clone_required "https://github.com/zdabing/luci-zen.git" "package/new/luci-zen-src" "luci-zen"
-    for pkg in luci-theme-zen luci-app-zen-traffic zen-traffic; do
-        cp -a "package/new/luci-zen-src/$pkg" "package/new/$pkg"
-    done
-    rm -rf package/new/luci-zen-src
-    echo ">>> 已添加 R5C Zen 测试包（与固件同源编译）"
-fi
 # clone_required "https://github.com/nikkinikki-org/OpenWrt-nikki.git" "package/new/nikki" "luci-app-nikki"  # 已注释：不再使用
 
 # ---- Mihomo 格式 geodata（来自 MetaCubeX/meta-rules-dat）----
