@@ -7,6 +7,10 @@ on:
         description: 'x86_64 或 r5c'
         required: true
         type: string
+      version:
+        description: 'OpenWrt 源码分支'
+        required: true
+        type: string
 
 jobs:
   firmware:
@@ -18,7 +22,7 @@ jobs:
 
     env:
       OPENWRT_REPO: https://github.com/openwrt/openwrt.git
-      OPENWRT_VERSION: openwrt-25.12
+      OPENWRT_VERSION: ${{ inputs.version }}
 
     steps:
       - name: 检出配置仓库
@@ -60,8 +64,8 @@ jobs:
 
       - name: 检出 OpenWrt 源码
         run: |
-          git clone --depth=1 -b ${{ env.OPENWRT_VERSION }} \
-            ${{ env.OPENWRT_REPO }} openwrt
+          git clone --depth=1 -b "$OPENWRT_VERSION" \
+            "$OPENWRT_REPO" openwrt
 
       - name: 还原 dl 缓存
         uses: actions/cache@v5

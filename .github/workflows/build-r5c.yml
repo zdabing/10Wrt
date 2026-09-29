@@ -2,6 +2,12 @@ name: Build NanoPi R5C
 
 on:
   workflow_dispatch:
+    inputs:
+      version:
+        description: 'OpenWrt 源码分支（默认 openwrt-25.12）'
+        required: false
+        default: 'openwrt-25.12'
+        type: string
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -12,3 +18,4 @@ jobs:
     uses: ./.github/workflows/build-common.yml
     with:
       target: r5c
+      version: ${{ inputs.version || 'openwrt-25.12' }}

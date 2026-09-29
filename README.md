@@ -5,7 +5,7 @@
 
 基于 [OpenWrt openwrt-25.12](https://github.com/openwrt/openwrt/tree/openwrt-25.12) 分支源码，使用 GitHub Actions 自动编译 x86/64 和 NanoPi R5C 固件。
 
-两个构建工作流均固定使用 `openwrt-25.12` 分支。
+两个构建工作流默认使用 `openwrt-25.12` 分支，也可以在手动运行时修改 OpenWrt 源码分支。
 
 管理地址: **http://10.0.0.1**
 
@@ -126,7 +126,7 @@ git push
 **方式一：手动触发**
 1. 打开 GitHub 仓库 → **Actions** 标签
 2. 选择 **Build NanoPi R5C** 或 **Build x86/64**
-3. 点击 **Run workflow** → 选择分支 → 点击 **Run**
+3. 点击 **Run workflow** → 选择配置仓库分支（如 `dev/main`）→ 在 **OpenWrt 源码分支** 输入框中确认或修改版本（默认 `openwrt-25.12`）→ 点击 **Run workflow**
 
 **方式二：推送代码自动触发**
 - 如需推送触发，在 workflow 文件中添加 `push` 触发器即可
