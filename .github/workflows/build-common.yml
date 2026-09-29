@@ -59,6 +59,14 @@ jobs:
             libssl-dev python3 python3-setuptools python3-pyelftools \
             rsync swig unzip wget zlib1g-dev \
             clang llvm nodejs npm
+          if [ "${{ inputs.target }}" = r5c ]; then
+            for TOOL in clang llc llvm-dis opt llvm-strip; do
+              test -x "/usr/bin/$TOOL" || { echo "缺少 BPF 工具链：/usr/bin/$TOOL"; exit 1; }
+            done
+            /usr/bin/clang --target=bpfel -dM -E - < /dev/null | grep -q '^#define __clang_major__'
+            /usr/bin/llc --version | grep -qi bpf
+            echo 'R5C 主机 BPF 工具链可用'
+          fi
           # 部分第三方 LuCI 前端构建需要 pnpm
           sudo npm install -g pnpm
 
@@ -154,6 +162,9 @@ jobs:
           SEED="../${SEED_PATH}"
           bash ../config/scripts/validate-seed-packages.sh "$SEED" .config
           if [ "$BUILD_TARGET" = "r5c" ]; then
+            for SYMBOL in CONFIG_BPF_TOOLCHAIN_HOST=y 'CONFIG_BPF_TOOLCHAIN_HOST_PATH="/usr"' CONFIG_USE_LLVM_HOST=y; do
+              grep -qxF "$SYMBOL" .config || { echo "错误：R5C BPF 工具链配置未生效：$SYMBOL"; exit 1; }
+            done
             for PACKAGE in zen-traffic luci-app-zen-traffic; do
               grep -qxF "CONFIG_PACKAGE_${PACKAGE}=m" .config || {
                 echo "错误：R5C Zen APK 未选为模块：$PACKAGE"
