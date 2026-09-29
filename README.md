@@ -3,7 +3,7 @@
 [![Build x86/64](https://github.com/zdabing/10Wrt/actions/workflows/build-x86.yml/badge.svg)](https://github.com/zdabing/10Wrt/actions/workflows/build-x86.yml)
 [![Build R5C](https://github.com/zdabing/10Wrt/actions/workflows/build-r5c.yml/badge.svg)](https://github.com/zdabing/10Wrt/actions/workflows/build-r5c.yml)
 
-基于 [OpenWrt](https://github.com/openwrt/openwrt) 源码，使用 GitHub Actions 自动编译 x86/64 和 NanoPi R5C 固件。
+基于 [OpenWrt openwrt-25.12](https://github.com/openwrt/openwrt/tree/openwrt-25.12) 分支源码，使用 GitHub Actions 自动编译 x86/64 和 NanoPi R5C 固件。
 
 管理地址: **http://10.0.0.1**
 
@@ -34,7 +34,6 @@
 | **luci-app-oxidns** | OxiDNS 高性能可编程 DNS 引擎（Rust） | [hahaher123/luci-app-oxidns](https://github.com/hahaher123/luci-app-oxidns) |
 | **luci-app-ddns** | 动态域名解析 | |
 | **luci-app-upnp** | UPnP IGD / NAT-PMP | |
-| **luci-app-bandix** | 带宽监控 | [timsaya/luci-app-bandix](https://github.com/timsaya/luci-app-bandix) |
 | **luci-app-wol** | 网络唤醒 | |
 | **luci-app-quickfile** | 文件管理器 | [sbwml/luci-app-quickfile](https://github.com/sbwml/luci-app-quickfile) |
 | **luci-app-ttyd** | 网页终端 | |
@@ -213,7 +212,6 @@ dd if=openwrt-*-x86-64-generic-ext4-combined-efi.img of=/dev/sdX bs=4M status=pr
 - [nikkinikki-org/OpenWrt-nikki](https://github.com/nikkinikki-org/OpenWrt-nikki) — Nikki 代理客户端
 - [sbwml](https://github.com/sbwml) — 多个插件包
 - [hahaher123/luci-app-oxidns](https://github.com/hahaher123/luci-app-oxidns) — OxiDNS LuCI 管理界面
-- [timsaya/luci-app-bandix](https://github.com/timsaya/luci-app-bandix) — 带宽监控
 - [CyL-Cly/luci-theme-round](https://github.com/CyL-Cly/luci-theme-round) — Round 主题（默认）
 - [P3TERX/Actions-OpenWrt](https://github.com/P3TERX/Actions-OpenWrt)
 - [SuLingGG/OpenWrt-Rpi](https://github.com/SuLingGG/OpenWrt-Rpi)

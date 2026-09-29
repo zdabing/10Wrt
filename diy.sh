@@ -61,7 +61,7 @@ echo ">>> 默认 LAN 地址已改为 10.0.0.1"
 echo ">>> 更新 feeds..."
 ./scripts/feeds update -a
 
-# packages feed 的 squeezelite-custom 在当前 main 产生 Kconfig 循环：
+# packages feed 的 squeezelite-custom 可能产生 Kconfig 循环：
 # PACKAGE_squeezelite-custom -> SQUEEZELITE_WMA_ALAC -> PACKAGE_squeezelite-custom。
 # 本项目未选择该变体；保留 squeezelite-full/dynamic，跳过 custom 声明。
 SQUEEZE_MAKEFILE="feeds/packages/sound/squeezelite/Makefile"
@@ -147,17 +147,6 @@ clone_required() {
     fi
 }
 
-clone_required "https://github.com/timsaya/openwrt-bandix.git"     "package/new/bandix-tmp" "bandix 后端"
-# openwrt-bandix 仓库嵌套了 openwrt-bandix/ 子目录，需要展开
-if [ -d "package/new/bandix-tmp/openwrt-bandix" ]; then
-    mkdir -p package/new/bandix
-    cp -rf package/new/bandix-tmp/openwrt-bandix/. package/new/bandix/
-    rm -rf package/new/bandix-tmp
-    echo ">>> bandix 后端目录已展开"
-elif [ -d "package/new/bandix-tmp" ]; then
-    mv package/new/bandix-tmp package/new/bandix
-fi
-clone_required "https://github.com/timsaya/luci-app-bandix.git" "package/new/bandix-luci" "luci-app-bandix（前端）"
 clone_required "https://github.com/sbwml/luci-app-quickfile.git" "package/new/quickfile" "luci-app-quickfile"
 clone_required "https://github.com/hahaher123/luci-app-oxidns.git" "package/new/luci-app-oxidns" "luci-app-oxidns"
 clone_required "https://github.com/CyL-Cly/luci-theme-round.git" "package/new/luci-theme-round" "luci-theme-round"

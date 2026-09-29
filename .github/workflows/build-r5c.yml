@@ -6,7 +6,7 @@ on:
       version:
         description: 'OpenWrt 版本分支'
         required: false
-        default: 'main'
+        default: 'openwrt-25.12'
         type: string
 
 concurrency:
@@ -18,4 +18,4 @@ jobs:
     uses: ./.github/workflows/build-common.yml
     with:
       target: r5c
-      version: ${{ inputs.version || 'main' }}
+      version: ${{ inputs.version || 'openwrt-25.12' }}
