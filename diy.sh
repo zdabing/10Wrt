@@ -61,6 +61,16 @@ echo ">>> 默认 LAN 地址已改为 10.0.0.1"
 echo ">>> 更新 feeds..."
 ./scripts/feeds update -a
 
+# packages feed 的 squeezelite-custom 在当前 main 产生 Kconfig 循环：
+# PACKAGE_squeezelite-custom -> SQUEEZELITE_WMA_ALAC -> PACKAGE_squeezelite-custom。
+# 本项目未选择该变体；保留 squeezelite-full/dynamic，跳过 custom 声明。
+SQUEEZE_MAKEFILE="feeds/packages/sound/squeezelite/Makefile"
+if [ -f "$SQUEEZE_MAKEFILE" ] &&
+   grep -qxF '$(eval $(call BuildPackage,squeezelite-custom))' "$SQUEEZE_MAKEFILE"; then
+    sed -i '/BuildPackage,squeezelite-custom/d' "$SQUEEZE_MAKEFILE"
+    echo ">>> 已跳过未选用的 squeezelite-custom，避免 Kconfig 依赖循环"
+fi
+
 # ============================================================
 # 替换优化版软件包（在 feeds install 之前）
 # ============================================================

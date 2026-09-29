@@ -110,7 +110,12 @@ jobs:
       - name: 展开配置
         run: |
           cd openwrt
-          make defconfig
+          set -o pipefail
+          make defconfig 2>&1 | tee defconfig.log
+          if grep -Eq '(^|:)(error:|fatal error:)' defconfig.log; then
+            echo "错误：make defconfig 输出了 Kconfig 错误"
+            exit 1
+          fi
           echo "=== 关键配置项 ==="
           grep -E '^(CONFIG_TARGET|CONFIG_PACKAGE_luci)' .config | sort
 
