@@ -72,7 +72,7 @@ CONFIG_PACKAGE_luci-app-ddns=y
 CONFIG_PACKAGE_luci-app-clashoo=y
 CONFIG_PACKAGE_luci-i18n-clashoo-zh-cn=y
 CONFIG_PACKAGE_luci-app-wol=y
-CONFIG_PACKAGE_luci-app-quickfile=y
+# CONFIG_PACKAGE_luci-app-quickfile is not set
 CONFIG_PACKAGE_luci-app-ttyd=y
 # LibreSpeed 测速客户端：路由器自己当测速端去测指定服务器，支持定时任务与历史记录。
 # 显式选中 Go 版客户端，满足 librespeed-common 对 CLI 实现的依赖；

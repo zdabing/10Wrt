@@ -147,54 +147,14 @@ clone_required() {
     fi
 }
 
-clone_required "https://github.com/sbwml/luci-app-quickfile.git" "package/new/quickfile" "luci-app-quickfile"
-# OpenWrt rust-values.mk 强制 release LTO；Quickfile 的 ring/zstd 原生静态库在该模式下链接丢失。
-QUICKFILE_MAKEFILE="package/new/quickfile/quickfile/Makefile"
-grep -qF 'include $(TOPDIR)/feeds/packages/lang/rust/rust-package.mk' "$QUICKFILE_MAKEFILE" || {
-    echo "错误：Quickfile Rust 构建规则与预期不符" >&2
-    exit 1
-}
-sed -i '/^include $(TOPDIR)\/feeds\/packages\/lang\/rust\/rust-package.mk$/a CARGO_PKG_VARS += CARGO_PROFILE_RELEASE_LTO=false' "$QUICKFILE_MAKEFILE"
-grep -qF 'CARGO_PKG_VARS += CARGO_PROFILE_RELEASE_LTO=false' "$QUICKFILE_MAKEFILE"
+# 暂停 Quickfile：上游改为 Rust 源码版，当前工具链链接失败。
+# clone_required "https://github.com/sbwml/luci-app-quickfile.git" "package/new/quickfile" "luci-app-quickfile"
 clone_required "https://github.com/hahaher123/luci-app-oxidns.git" "package/new/luci-app-oxidns" "luci-app-oxidns"
 clone_required "https://github.com/CyL-Cly/luci-theme-round.git" "package/new/luci-theme-round" "luci-theme-round"
 # round 仓库根目录即包本体，Makefile 自包含（package.mk + PKGARCH:=all，版本号写死，
 # 中文翻译直接安装 theme.zh-cn.lmo、无 luci-i18n 子包），ucode 模板无命名导出语法，
 # 无需 mint 那样的展开/luci.mk 修正/ucode 兼容补丁，直接作为普通第三方包参与编译。
-if [ "${BUILD_TARGET:-}" = "r5c" ]; then
-    ZEN_REPO="https://github.com/zdabing/luci-zen.git"
-    ZEN_REF="cd059efda1d797e364e209e285982c15cdff032e"
-    ZEN_SRC="package/new/luci-zen-src"
-    mkdir -p "$ZEN_SRC"
-    git -C "$ZEN_SRC" init -q
-    git -C "$ZEN_SRC" remote add origin "$ZEN_REPO"
-    git -C "$ZEN_SRC" fetch --depth=1 origin "$ZEN_REF"
-    git -C "$ZEN_SRC" checkout -q --detach FETCH_HEAD
-    test "$(git -C "$ZEN_SRC" rev-parse HEAD)" = "$ZEN_REF"
-    for pkg in zen-traffic luci-app-zen-traffic; do
-        cp -a "$ZEN_SRC/$pkg" "package/new/$pkg"
-    done
-    printf '%s\t%s\t%s\n' 'luci-zen' "$ZEN_REPO" "$ZEN_REF" >> "$SOURCE_REVISIONS_FILE"
-    rm -rf "$ZEN_SRC"
-
-    # TC clsact 在 sched-core 中；sched 是不需要的额外队列调度器。
-    ZEN_MAKEFILE="package/new/zen-traffic/Makefile"
-    grep -qF '+kmod-sched-bpf +kmod-sched' "$ZEN_MAKEFILE" || {
-        echo "错误：Zen 内核依赖与预期不符，请检查上游 Makefile" >&2
-        exit 1
-    }
-    sed -i 's/+kmod-sched-bpf +kmod-sched$/+kmod-sched-bpf +kmod-sched-core/' "$ZEN_MAKEFILE"
-    grep -qF '+kmod-sched-bpf +kmod-sched-core' "$ZEN_MAKEFILE"
-
-    # 同样覆盖 OpenWrt 强制的 Rust LTO，保留 Zen 上游 bundled SQLite 的静态链接。
-    grep -qF 'include $(TOPDIR)/feeds/packages/lang/rust/rust-package.mk' "$ZEN_MAKEFILE" || {
-        echo "错误：Zen Rust 构建规则与预期不符" >&2
-        exit 1
-    }
-    sed -i '/^include $(TOPDIR)\/feeds\/packages\/lang\/rust\/rust-package.mk$/a CARGO_PKG_VARS += CARGO_PROFILE_RELEASE_LTO=false' "$ZEN_MAKEFILE"
-    grep -qF 'CARGO_PKG_VARS += CARGO_PROFILE_RELEASE_LTO=false' "$ZEN_MAKEFILE"
-    echo ">>> R5C Zen 软件包已固定到 $ZEN_REF，并依赖 kmod-sched-core"
-fi
+# 暂停 R5C Zen：Rust/SQLite 静态链接失败，先不拉取源码。
 # clone_required "https://github.com/nikkinikki-org/OpenWrt-nikki.git" "package/new/nikki" "luci-app-nikki"  # 已注释：不再使用
 
 # ---- Mihomo 格式 geodata（来自 MetaCubeX/meta-rules-dat）----

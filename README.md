@@ -37,7 +37,6 @@
 | **luci-app-ddns** | 动态域名解析 | |
 | **luci-app-upnp** | UPnP IGD / NAT-PMP | |
 | **luci-app-wol** | 网络唤醒 | |
-| **luci-app-quickfile** | 文件管理器 | [sbwml/luci-app-quickfile](https://github.com/sbwml/luci-app-quickfile) |
 | **luci-app-ttyd** | 网页终端 | |
 | **luci-app-librespeed** | LibreSpeed 测速客户端：路由器主动测指定测速服务器，支持定时任务与历史记录（界面为英文，上游暂无中文翻译） | 官方 feed（luci + packages） |
 | **luci-app-firewall** | 防火墙管理 | |
@@ -140,20 +139,7 @@ git push
 
 正式版本会发布到 **Releases** 页面，除镜像外还附带三类记录文件：
 
-R5C Release 另外附带本次固件编译出的 `zen-traffic`、
-`luci-app-zen-traffic` APK，以及 `kmod-sched-core`、`kmod-sched-bpf`
-模块 APK 和 `ZEN-SHA256SUMS`。两个内核模块已包含在固件中，模块 APK
-用于核对构建版本；刷入**同一次 Release 的 R5C 固件**后，只需把两个
-Zen 应用 APK 上传到路由器 `/tmp` 并安装：
-
-```sh
-apk add --simulate --allow-untrusted /tmp/zen-traffic-*.apk /tmp/luci-app-zen-traffic-*.apk
-apk add --allow-untrusted /tmp/zen-traffic-*.apk /tmp/luci-app-zen-traffic-*.apk
-/etc/init.d/zen-traffic start
-ubus call zen.traffic getStatus
-```
-
-旧固件的内核模块和库版本与这些 APK 不配套，不要强制安装到旧固件。
+Zen Traffic 和 Quickfile 暂时停用，本次固件不会包含它们。
 
 | 文件 | 说明 |
 |---|---|

@@ -59,14 +59,6 @@ jobs:
             libssl-dev python3 python3-setuptools python3-pyelftools \
             rsync swig unzip wget zlib1g-dev \
             clang llvm nodejs npm
-          if [ "${{ inputs.target }}" = r5c ]; then
-            for TOOL in clang llc llvm-dis opt llvm-strip; do
-              test -x "/usr/bin/$TOOL" || { echo "缺少 BPF 工具链：/usr/bin/$TOOL"; exit 1; }
-            done
-            /usr/bin/clang --target=bpfel -dM -E - < /dev/null | grep -q '^#define __clang_major__'
-            /usr/bin/llc --version | grep -qi bpf
-            echo 'R5C 主机 BPF 工具链可用'
-          fi
           # 部分第三方 LuCI 前端构建需要 pnpm
           sudo npm install -g pnpm
 
@@ -161,17 +153,6 @@ jobs:
           # 自动核对 seed 中所有显式选中的软件包，第三方源码缺失时立即失败。
           SEED="../${SEED_PATH}"
           bash ../config/scripts/validate-seed-packages.sh "$SEED" .config
-          if [ "$BUILD_TARGET" = "r5c" ]; then
-            for SYMBOL in CONFIG_BPF_TOOLCHAIN_HOST=y 'CONFIG_BPF_TOOLCHAIN_HOST_PATH="/usr"' CONFIG_USE_LLVM_HOST=y; do
-              grep -qxF "$SYMBOL" .config || { echo "错误：R5C BPF 工具链配置未生效：$SYMBOL"; exit 1; }
-            done
-            for PACKAGE in zen-traffic luci-app-zen-traffic; do
-              grep -qxF "CONFIG_PACKAGE_${PACKAGE}=m" .config || {
-                echo "错误：R5C Zen APK 未选为模块：$PACKAGE"
-                exit 1
-              }
-            done
-          fi
 
       - name: 编译固件
         run: |
@@ -209,23 +190,6 @@ jobs:
 
         timeout-minutes: 360
 
-      - name: 收集 R5C Zen 与内核模块 APK
-        if: inputs.target == 'r5c'
-        run: |
-          set -euo pipefail
-          OUT="openwrt/bin/targets/${FIRMWARE_TARGET}/zen-apks"
-          mkdir -p "$OUT"
-          for PACKAGE in kmod-sched-core kmod-sched-bpf zen-traffic luci-app-zen-traffic; do
-            mapfile -t FILES < <(find openwrt/bin -type f -name "${PACKAGE}-*.apk")
-            if [ "${#FILES[@]}" -ne 1 ]; then
-              echo "错误：$PACKAGE 的 APK 数量为 ${#FILES[@]}，期望 1"
-              exit 1
-            fi
-            cp "${FILES[0]}" "$OUT/"
-          done
-          (cd "$OUT" && sha256sum *.apk > ZEN-SHA256SUMS && sha256sum -c ZEN-SHA256SUMS)
-          ls -lh "$OUT"
-
       - name: 验证固件内关键软件包
         run: |
           PACKAGE_DB=$(find openwrt/build_dir -type f \( \
@@ -241,15 +205,11 @@ jobs:
             luci-i18n-ttyd-zh-cn luci-i18n-upnp-zh-cn luci-i18n-wol-zh-cn
             luci-theme-round
             luci-app-clashoo luci-i18n-clashoo-zh-cn luci-app-oxidns
-            luci-app-quickfile
             librespeed-cli librespeed-common luci-app-librespeed
             iperf3
             kmod-veth
             kmod-nft-queue
           )
-          if [ "$BUILD_TARGET" = "r5c" ]; then
-            REQUIRED_PACKAGES+=(kmod-sched-core kmod-sched-bpf)
-          fi
           MISSING_PACKAGES=()
           for PACKAGE in "${REQUIRED_PACKAGES[@]}"; do
             if ! grep -qxF "P:${PACKAGE}" "$PACKAGE_DB" && \
@@ -290,8 +250,6 @@ jobs:
             openwrt/bin/targets/**/SHA256SUMS
             openwrt/bin/targets/**/10wrt-packages.manifest
             openwrt/bin/targets/**/10wrt-sources.tsv
-            openwrt/bin/targets/**/zen-apks/*.apk
-            openwrt/bin/targets/**/zen-apks/ZEN-SHA256SUMS
           if-no-files-found: warn
           retention-days: 7
 
@@ -327,23 +285,12 @@ jobs:
           ASSETS=("$FIRMWARE_DIR"/*.img.gz "$FIRMWARE_DIR"/*.img "$FIRMWARE_DIR"/*.tar.gz \
             "$FIRMWARE_DIR"/SHA256SUMS "$FIRMWARE_DIR"/10wrt-packages.manifest \
             "$FIRMWARE_DIR"/10wrt-sources.tsv)
-          if [ "$BUILD_TARGET" = "r5c" ]; then
-            ASSETS+=("$FIRMWARE_DIR"/zen-apks/*.apk "$FIRMWARE_DIR"/zen-apks/ZEN-SHA256SUMS)
-          fi
           cat > release-notes.md <<EOF
           ### 管理地址: http://10.0.0.1
 
           镜像校验值见 SHA256SUMS，已安装软件包见 10wrt-packages.manifest，
           OpenWrt 与第三方源码提交号见 10wrt-sources.tsv。
           EOF
-          if [ "$BUILD_TARGET" = "r5c" ]; then
-            cat >> release-notes.md <<EOF
-
-          zen-traffic 和 luci-app-zen-traffic APK 仅与本次 R5C 固件配套。
-          kmod-sched-core 与 kmod-sched-bpf 已装入固件，附带的模块 APK 仅供核验；
-          升级到本次固件后再安装两个 Zen 应用 APK。
-          EOF
-          fi
           # --target 必须指定：缺省时 tag 打到默认分支 main 的 HEAD，
           # Release 的 created_at 会取那个提交的日期——main 停在旧日期时
           # 新 Release 会被下方"保留最新 7 个"清理步骤当成最旧的删掉。
