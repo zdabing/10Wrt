@@ -7,10 +7,6 @@ on:
         description: 'x86_64 或 r5c'
         required: true
         type: string
-      version:
-        description: 'OpenWrt 版本分支'
-        required: true
-        type: string
 
 jobs:
   firmware:
@@ -22,7 +18,7 @@ jobs:
 
     env:
       OPENWRT_REPO: https://github.com/openwrt/openwrt.git
-      OPENWRT_VERSION: ${{ inputs.version }}
+      OPENWRT_VERSION: openwrt-25.12
 
     steps:
       - name: 检出配置仓库

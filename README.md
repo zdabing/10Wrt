@@ -5,6 +5,8 @@
 
 基于 [OpenWrt openwrt-25.12](https://github.com/openwrt/openwrt/tree/openwrt-25.12) 分支源码，使用 GitHub Actions 自动编译 x86/64 和 NanoPi R5C 固件。
 
+两个构建工作流均固定使用 `openwrt-25.12` 分支。
+
 管理地址: **http://10.0.0.1**
 
 ## 固件特性

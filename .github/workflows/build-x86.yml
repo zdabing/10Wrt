@@ -2,12 +2,6 @@ name: Build x86/64
 
 on:
   workflow_dispatch:
-    inputs:
-      version:
-        description: 'OpenWrt 版本分支'
-        required: false
-        default: 'openwrt-25.12'
-        type: string
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -18,4 +12,3 @@ jobs:
     uses: ./.github/workflows/build-common.yml
     with:
       target: x86_64
-      version: ${{ inputs.version || 'openwrt-25.12' }}
