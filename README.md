@@ -139,7 +139,8 @@ git push
 
 正式版本会发布到 **Releases** 页面，除镜像外还附带三类记录文件：
 
-Zen Traffic 和 Quickfile 暂时停用，本次固件不会包含它们。
+Zen Traffic 和 Quickfile 暂时停用，本次固件不会包含它们；R5C 固件保留
+`kmod-sched-core` 和 `kmod-sched-bpf` 内核模块。
 
 | 文件 | 说明 |
 |---|---|

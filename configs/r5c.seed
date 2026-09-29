@@ -55,9 +55,10 @@ CONFIG_PACKAGE_ppp=y
 CONFIG_PACKAGE_ppp-mod-pppoe=y
 CONFIG_PACKAGE_luci-theme-bootstrap=y
 CONFIG_PACKAGE_luci-theme-round=y
-# Zen 及专用内核模块暂时停用。
-# CONFIG_PACKAGE_kmod-sched-core is not set
-# CONFIG_PACKAGE_kmod-sched-bpf is not set
+# TC/BPF 内核模块装入固件，供后续 eBPF 流量采集使用。
+CONFIG_PACKAGE_kmod-sched-core=y
+CONFIG_PACKAGE_kmod-sched-bpf=y
+# Zen 应用暂时停用。
 # CONFIG_PACKAGE_zen-traffic is not set
 # CONFIG_PACKAGE_luci-app-zen-traffic is not set
 # 简体中文（LuCI 25.12 的各 luci-i18n-*-zh-cn 包是隐藏配置项，

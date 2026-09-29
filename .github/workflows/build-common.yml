@@ -153,6 +153,14 @@ jobs:
           # 自动核对 seed 中所有显式选中的软件包，第三方源码缺失时立即失败。
           SEED="../${SEED_PATH}"
           bash ../config/scripts/validate-seed-packages.sh "$SEED" .config
+          if [ "$BUILD_TARGET" = "r5c" ]; then
+            for PACKAGE in kmod-sched-core kmod-sched-bpf; do
+              grep -qxF "CONFIG_PACKAGE_${PACKAGE}=y" .config || {
+                echo "错误：R5C 内核模块未选入固件：$PACKAGE"
+                exit 1
+              }
+            done
+          fi
 
       - name: 编译固件
         run: |
@@ -210,6 +218,9 @@ jobs:
             kmod-veth
             kmod-nft-queue
           )
+          if [ "$BUILD_TARGET" = "r5c" ]; then
+            REQUIRED_PACKAGES+=(kmod-sched-core kmod-sched-bpf)
+          fi
           MISSING_PACKAGES=()
           for PACKAGE in "${REQUIRED_PACKAGES[@]}"; do
             if ! grep -qxF "P:${PACKAGE}" "$PACKAGE_DB" && \
