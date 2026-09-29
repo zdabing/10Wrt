@@ -148,6 +148,14 @@ clone_required() {
 }
 
 clone_required "https://github.com/sbwml/luci-app-quickfile.git" "package/new/quickfile" "luci-app-quickfile"
+# OpenWrt rust-values.mk 强制 release LTO；Quickfile 的 ring/zstd 原生静态库在该模式下链接丢失。
+QUICKFILE_MAKEFILE="package/new/quickfile/quickfile/Makefile"
+grep -qF 'include $(TOPDIR)/feeds/packages/lang/rust/rust-package.mk' "$QUICKFILE_MAKEFILE" || {
+    echo "错误：Quickfile Rust 构建规则与预期不符" >&2
+    exit 1
+}
+sed -i '/^include $(TOPDIR)\/feeds\/packages\/lang\/rust\/rust-package.mk$/a CARGO_PKG_VARS += CARGO_PROFILE_RELEASE_LTO=false' "$QUICKFILE_MAKEFILE"
+grep -qF 'CARGO_PKG_VARS += CARGO_PROFILE_RELEASE_LTO=false' "$QUICKFILE_MAKEFILE"
 clone_required "https://github.com/hahaher123/luci-app-oxidns.git" "package/new/luci-app-oxidns" "luci-app-oxidns"
 clone_required "https://github.com/CyL-Cly/luci-theme-round.git" "package/new/luci-theme-round" "luci-theme-round"
 # round 仓库根目录即包本体，Makefile 自包含（package.mk + PKGARCH:=all，版本号写死，
@@ -177,6 +185,14 @@ if [ "${BUILD_TARGET:-}" = "r5c" ]; then
     }
     sed -i 's/+kmod-sched-bpf +kmod-sched$/+kmod-sched-bpf +kmod-sched-core/' "$ZEN_MAKEFILE"
     grep -qF '+kmod-sched-bpf +kmod-sched-core' "$ZEN_MAKEFILE"
+
+    # 同样覆盖 OpenWrt 强制的 Rust LTO，保留 Zen 上游 bundled SQLite 的静态链接。
+    grep -qF 'include $(TOPDIR)/feeds/packages/lang/rust/rust-package.mk' "$ZEN_MAKEFILE" || {
+        echo "错误：Zen Rust 构建规则与预期不符" >&2
+        exit 1
+    }
+    sed -i '/^include $(TOPDIR)\/feeds\/packages\/lang\/rust\/rust-package.mk$/a CARGO_PKG_VARS += CARGO_PROFILE_RELEASE_LTO=false' "$ZEN_MAKEFILE"
+    grep -qF 'CARGO_PKG_VARS += CARGO_PROFILE_RELEASE_LTO=false' "$ZEN_MAKEFILE"
     echo ">>> R5C Zen 软件包已固定到 $ZEN_REF，并依赖 kmod-sched-core"
 fi
 # clone_required "https://github.com/nikkinikki-org/OpenWrt-nikki.git" "package/new/nikki" "luci-app-nikki"  # 已注释：不再使用
