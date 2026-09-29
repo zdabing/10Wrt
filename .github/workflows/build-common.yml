@@ -227,7 +227,7 @@ jobs:
             luci-theme-round
             luci-app-clashoo luci-i18n-clashoo-zh-cn luci-app-oxidns
             luci-app-quickfile
-            luci-app-librespeed
+            librespeed-cli librespeed-common luci-app-librespeed
             iperf3
             kmod-veth
             kmod-nft-queue
