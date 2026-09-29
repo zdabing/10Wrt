@@ -139,6 +139,21 @@ git push
 
 正式版本会发布到 **Releases** 页面，除镜像外还附带三类记录文件：
 
+R5C Release 另外附带本次固件编译出的 `zen-traffic`、
+`luci-app-zen-traffic` APK，以及 `kmod-sched-core`、`kmod-sched-bpf`
+模块 APK 和 `ZEN-SHA256SUMS`。两个内核模块已包含在固件中，模块 APK
+用于核对构建版本；刷入**同一次 Release 的 R5C 固件**后，只需把两个
+Zen 应用 APK 上传到路由器 `/tmp` 并安装：
+
+```sh
+apk add --simulate --allow-untrusted /tmp/zen-traffic-*.apk /tmp/luci-app-zen-traffic-*.apk
+apk add --allow-untrusted /tmp/zen-traffic-*.apk /tmp/luci-app-zen-traffic-*.apk
+/etc/init.d/zen-traffic start
+ubus call zen.traffic getStatus
+```
+
+旧固件的内核模块和库版本与这些 APK 不配套，不要强制安装到旧固件。
+
 | 文件 | 说明 |
 |---|---|
 | `SHA256SUMS` | 镜像校验值，下载后可用 `sha256sum -c SHA256SUMS` 核对完整性 |

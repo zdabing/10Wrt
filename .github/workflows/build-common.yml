@@ -87,6 +87,22 @@ jobs:
           cd openwrt
           ./diy.sh
 
+      - name: R5C Rust 编译器复用官方 LLVM
+        if: inputs.target == 'r5c'
+        run: |
+          set -euo pipefail
+          RUST_MAKEFILE=openwrt/feeds/packages/lang/rust/Makefile
+          RUST_VERSION=$(sed -n 's/^PKG_VERSION:=//p' "$RUST_MAKEFILE")
+          CI_LLVM_URL=https://ci-artifacts.rust-lang.org/rustc-builds/ac68faa20c58cbccd01ee7208bf3b6e93a7d7f96/rust-dev-1.96.0-x86_64-unknown-linux-gnu.tar.xz
+          if [ "$RUST_VERSION" = 1.96.0 ] && \
+             grep -qF -- '--set=llvm.download-ci-llvm=false' "$RUST_MAKEFILE" && \
+             curl -fsSIL --retry 2 "$CI_LLVM_URL" >/dev/null; then
+            sed -i 's/--set=llvm.download-ci-llvm=false/--set=llvm.download-ci-llvm=true/' "$RUST_MAKEFILE"
+            echo 'Rust 1.96.0 使用官方 CI LLVM'
+          else
+            echo "Rust $RUST_VERSION 使用 OpenWrt 默认 LLVM 编译配置"
+          fi
+
       - name: 复制种子配置
         run: |
           cp "$SEED_PATH" openwrt/.config
@@ -132,6 +148,14 @@ jobs:
           # 自动核对 seed 中所有显式选中的软件包，第三方源码缺失时立即失败。
           SEED="../${SEED_PATH}"
           bash ../config/scripts/validate-seed-packages.sh "$SEED" .config
+          if [ "$BUILD_TARGET" = "r5c" ]; then
+            for PACKAGE in zen-traffic luci-app-zen-traffic; do
+              grep -qxF "CONFIG_PACKAGE_${PACKAGE}=m" .config || {
+                echo "错误：R5C Zen APK 未选为模块：$PACKAGE"
+                exit 1
+              }
+            done
+          fi
 
       - name: 编译固件
         run: |
@@ -169,6 +193,23 @@ jobs:
 
         timeout-minutes: 360
 
+      - name: 收集 R5C Zen 与内核模块 APK
+        if: inputs.target == 'r5c'
+        run: |
+          set -euo pipefail
+          OUT="openwrt/bin/targets/${FIRMWARE_TARGET}/zen-apks"
+          mkdir -p "$OUT"
+          for PACKAGE in kmod-sched-core kmod-sched-bpf zen-traffic luci-app-zen-traffic; do
+            mapfile -t FILES < <(find openwrt/bin -type f -name "${PACKAGE}-*.apk")
+            if [ "${#FILES[@]}" -ne 1 ]; then
+              echo "错误：$PACKAGE 的 APK 数量为 ${#FILES[@]}，期望 1"
+              exit 1
+            fi
+            cp "${FILES[0]}" "$OUT/"
+          done
+          (cd "$OUT" && sha256sum *.apk > ZEN-SHA256SUMS && sha256sum -c ZEN-SHA256SUMS)
+          ls -lh "$OUT"
+
       - name: 验证固件内关键软件包
         run: |
           PACKAGE_DB=$(find openwrt/build_dir -type f \( \
@@ -190,6 +231,9 @@ jobs:
             kmod-veth
             kmod-nft-queue
           )
+          if [ "$BUILD_TARGET" = "r5c" ]; then
+            REQUIRED_PACKAGES+=(kmod-sched-core kmod-sched-bpf)
+          fi
           MISSING_PACKAGES=()
           for PACKAGE in "${REQUIRED_PACKAGES[@]}"; do
             if ! grep -qxF "P:${PACKAGE}" "$PACKAGE_DB" && \
@@ -230,6 +274,8 @@ jobs:
             openwrt/bin/targets/**/SHA256SUMS
             openwrt/bin/targets/**/10wrt-packages.manifest
             openwrt/bin/targets/**/10wrt-sources.tsv
+            openwrt/bin/targets/**/zen-apks/*.apk
+            openwrt/bin/targets/**/zen-apks/ZEN-SHA256SUMS
           if-no-files-found: warn
           retention-days: 7
 
@@ -265,12 +311,23 @@ jobs:
           ASSETS=("$FIRMWARE_DIR"/*.img.gz "$FIRMWARE_DIR"/*.img "$FIRMWARE_DIR"/*.tar.gz \
             "$FIRMWARE_DIR"/SHA256SUMS "$FIRMWARE_DIR"/10wrt-packages.manifest \
             "$FIRMWARE_DIR"/10wrt-sources.tsv)
+          if [ "$BUILD_TARGET" = "r5c" ]; then
+            ASSETS+=("$FIRMWARE_DIR"/zen-apks/*.apk "$FIRMWARE_DIR"/zen-apks/ZEN-SHA256SUMS)
+          fi
           cat > release-notes.md <<EOF
           ### 管理地址: http://10.0.0.1
 
           镜像校验值见 SHA256SUMS，已安装软件包见 10wrt-packages.manifest，
           OpenWrt 与第三方源码提交号见 10wrt-sources.tsv。
           EOF
+          if [ "$BUILD_TARGET" = "r5c" ]; then
+            cat >> release-notes.md <<EOF
+
+          zen-traffic 和 luci-app-zen-traffic APK 仅与本次 R5C 固件配套。
+          kmod-sched-core 与 kmod-sched-bpf 已装入固件，附带的模块 APK 仅供核验；
+          升级到本次固件后再安装两个 Zen 应用 APK。
+          EOF
+          fi
           # --target 必须指定：缺省时 tag 打到默认分支 main 的 HEAD，
           # Release 的 created_at 会取那个提交的日期——main 停在旧日期时
           # 新 Release 会被下方"保留最新 7 个"清理步骤当成最旧的删掉。
