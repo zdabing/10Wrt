@@ -41,6 +41,7 @@
 | **luci-app-librespeed** | LibreSpeed 测速客户端：路由器主动测指定测速服务器，支持定时任务与历史记录（界面为英文，上游暂无中文翻译） | 官方 feed（luci + packages） |
 | **luci-app-firewall** | 防火墙管理 | |
 | **luci-theme-zen** | Zen 主题（默认）：登录页、首页仪表盘、明暗切换、响应式侧栏 | [zdabing/luci-zen](https://github.com/zdabing/luci-zen) |
+| **luci-app-zen-traffic** | 设备流量统计、日/月用量与 WAN 实时历史；内置 `zen-traffic` 后端 | [zdabing/luci-zen](https://github.com/zdabing/luci-zen) |
 
 #### 网络工具
 
@@ -139,9 +140,10 @@ git push
 
 正式版本会发布到 **Releases** 页面，除镜像外还附带三类记录文件：
 
-默认使用 Zen 主题，仅集成 `luci-zen` 仓库中的 `luci-theme-zen` 包。
-Zen Traffic 和 Quickfile 暂时停用，本次固件不会包含它们；主题的设备统计需安装 Zen Traffic 后端才会启用。R5C 固件保留
-`kmod-sched-core` 和 `kmod-sched-bpf` 内核模块。
+x86/64 和 R5C 默认使用 Zen 主题，并内置同一份 `luci-zen` 源码中的
+`zen-traffic` 后端、`luci-app-zen-traffic` 应用及 `kmod-sched-core`、
+`kmod-sched-bpf` 内核模块。刷入新编译的固件后可使用主题设备统计和
+“状态 → Zen 流量”页面。Quickfile 仍暂时停用。
 
 | 文件 | 说明 |
 |---|---|

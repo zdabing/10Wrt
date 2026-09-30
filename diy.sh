@@ -150,14 +150,21 @@ clone_required() {
 # 暂停 Quickfile：上游改为 Rust 源码版，当前工具链链接失败。
 # clone_required "https://github.com/sbwml/luci-app-quickfile.git" "package/new/quickfile" "luci-app-quickfile"
 clone_required "https://github.com/hahaher123/luci-app-oxidns.git" "package/new/luci-app-oxidns" "luci-app-oxidns"
-# luci-zen 是多包仓库；仅将主题包放进本地 feed，不引入 Rust 流量后端。
+# 从同一份 luci-zen 源码集成主题、Rust 流量后端和 LuCI 流量应用。
 ZEN_SOURCE=$(mktemp -d)
 clone_required "https://github.com/zdabing/luci-zen.git" "$ZEN_SOURCE" "luci-zen" "main"
-test -f "$ZEN_SOURCE/luci-theme-zen/Makefile"
-cp -R "$ZEN_SOURCE/luci-theme-zen" package/new/luci-theme-zen
+for pkg in luci-theme-zen zen-traffic luci-app-zen-traffic; do
+    test -f "$ZEN_SOURCE/$pkg/Makefile"
+    cp -R "$ZEN_SOURCE/$pkg" "package/new/$pkg"
+done
 rm -rf "$ZEN_SOURCE"
 # 主题 Makefile 自包含，中文翻译由 luci-base/host 的 po2lmo 生成并随包安装。
-# 暂停 R5C Zen：Rust/SQLite 静态链接失败，先不拉取源码。
+# bundled SQLite 的 C 静态库和 Rust 都关闭 LTO，避免混合工具链链接失败。
+ZEN_MAKEFILE="package/new/zen-traffic/Makefile"
+grep -qxF 'include $(INCLUDE_DIR)/package.mk' "$ZEN_MAKEFILE"
+grep -qxF 'include $(TOPDIR)/feeds/packages/lang/rust/rust-package.mk' "$ZEN_MAKEFILE"
+sed -i '/^include $(INCLUDE_DIR)\/package.mk$/i PKG_BUILD_FLAGS += no-lto' "$ZEN_MAKEFILE"
+sed -i '/^include $(TOPDIR)\/feeds\/packages\/lang\/rust\/rust-package.mk$/a CARGO_PKG_VARS += CARGO_PROFILE_RELEASE_LTO=false' "$ZEN_MAKEFILE"
 # clone_required "https://github.com/nikkinikki-org/OpenWrt-nikki.git" "package/new/nikki" "luci-app-nikki"  # 已注释：不再使用
 
 # ---- Mihomo 格式 geodata（来自 MetaCubeX/meta-rules-dat）----
