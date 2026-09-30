@@ -159,12 +159,7 @@ for pkg in luci-theme-zen zen-traffic luci-app-zen-traffic; do
 done
 rm -rf "$ZEN_SOURCE"
 # 主题 Makefile 自包含，中文翻译由 luci-base/host 的 po2lmo 生成并随包安装。
-# bundled SQLite 的 C 静态库和 Rust 都关闭 LTO，避免混合工具链链接失败。
-ZEN_MAKEFILE="package/new/zen-traffic/Makefile"
-grep -qxF 'include $(INCLUDE_DIR)/package.mk' "$ZEN_MAKEFILE"
-grep -qxF 'include $(TOPDIR)/feeds/packages/lang/rust/rust-package.mk' "$ZEN_MAKEFILE"
-sed -i '/^include $(INCLUDE_DIR)\/package.mk$/i PKG_BUILD_FLAGS += no-lto' "$ZEN_MAKEFILE"
-sed -i '/^include $(TOPDIR)\/feeds\/packages\/lang\/rust\/rust-package.mk$/a CARGO_PKG_VARS += CARGO_PROFILE_RELEASE_LTO=false' "$ZEN_MAKEFILE"
+# 保留 Zen 上游的 Rust LTO，以及 seed 启用的 C/C++ LTO。
 # clone_required "https://github.com/nikkinikki-org/OpenWrt-nikki.git" "package/new/nikki" "luci-app-nikki"  # 已注释：不再使用
 
 # ---- Mihomo 格式 geodata（来自 MetaCubeX/meta-rules-dat）----
