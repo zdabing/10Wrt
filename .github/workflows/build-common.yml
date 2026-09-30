@@ -169,38 +169,17 @@ jobs:
       - name: 编译固件
         run: |
           cd openwrt
-          set -o pipefail
-
-          echo "=== 第一步：编译工具链 (tools) ==="
-          make tools/compile -j$(nproc) V=s 2>&1 | tee -a build.log || \
-            make tools/compile -j$(nproc) V=s 2>&1 | tee -a build.log || \
-            make tools/compile -j1 V=s 2>&1 | tee -a build.log
-
-          echo "=== 第二步：编译交叉工具链 (toolchain) ==="
-          make toolchain/compile -j$(nproc) V=s 2>&1 | tee -a build.log || \
-            make toolchain/compile -j$(nproc) V=s 2>&1 | tee -a build.log || \
-            make toolchain/compile -j1 V=s 2>&1 | tee -a build.log
-
-          echo "=== 第三步：编译内核/目标 (target) ==="
-          make target/compile -j$(nproc) V=s 2>&1 | tee -a build.log || \
-            make target/compile -j1 V=s 2>&1 | tee -a build.log
-
-          echo "=== 第四步：编译软件包 (package) ==="
-          make package/compile -j$(nproc) V=s 2>&1 | tee -a build.log || \
-            make package/compile -j1 V=s 2>&1 | tee -a build.log
-
-          echo "=== 第五步：生成包索引 ==="
-          make package/index V=s 2>&1 | tee -a build.log
-
-          echo "=== 第六步：安装软件包 ==="
-          make package/install -j$(nproc) V=s 2>&1 | tee -a build.log || \
-            make package/install -j1 V=s 2>&1 | tee -a build.log
-
-          echo "=== 第七步：生成固件 ==="
-          make target/install -j$(nproc) V=s 2>&1 | tee -a build.log || \
-            make target/install -j1 V=s 2>&1 | tee -a build.log
-
+          bash ../config/scripts/build-firmware.sh
         timeout-minutes: 360
+
+      - name: 上传编译耗时记录
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: build-timings-${{ inputs.target }}-${{ github.run_id }}
+          path: openwrt/build-timings.tsv
+          if-no-files-found: ignore
+          retention-days: 7
 
       - name: 验证固件内关键软件包
         run: |

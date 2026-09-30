@@ -211,6 +211,41 @@ bash scripts/check-bpf-toolchain.sh /usr /path/to/openwrt/.config
 
 此检查验证主机工具链，不代替 Zen 后端交叉编译和真机 eBPF 加载验证。
 
+### 编译耗时与增量构建
+
+[R5C 成功构建 #36706276709](https://github.com/zdabing/10Wrt/actions/runs/36706276709)
+总耗时约 2 小时 27 分钟，固件编译步骤为 2 小时 21 分 8 秒。
+当前 Actions 只还原 `openwrt/dl` 下载缓存，`tools`、交叉工具链、Rust 主机编译器、
+内核和软件包构建目录仍从零生成；现有官方 CI LLVM 复用已启用。
+尚无分阶段日志证据，不能直接把全部耗时归因于 Zen 或 LLVM。
+
+`scripts/build-firmware.sh` 现在逐阶段记录每次尝试的并行数、耗时和退出码，保留
+原有重试次数与串行兜底。结果写入 Actions Summary，并上传
+`build-timings-<设备>-<运行号>` 小型 artifact（7 天）。下一次实际编译后，可明确
+区分工具链、内核、软件包和失败重试的耗时；增加测量本身不宣称已缩短构建。
+
+后续只修改 Zen 时，优先在保留的同目标 Linux OpenWrt 工作目录中单独重编三包，
+保留 `staging_dir` 和工具链。替换源码后只清理修改的包，不执行整个 `dirclean`。
+例如当前项目集成路径为 `package/new`：
+
+```sh
+make package/new/zen-traffic/clean
+make package/new/zen-traffic/compile V=s -j"$(nproc)"
+make package/new/luci-theme-zen/clean
+make package/new/luci-theme-zen/compile V=s -j"$(nproc)"
+make package/new/luci-app-zen-traffic/clean
+make package/new/luci-app-zen-traffic/compile V=s -j"$(nproc)"
+```
+
+只改主题/应用时跳过后端两条命令。向现有路由器安装包前核对目标、固件和依赖
+版本；独立出包不需要重刷整机。如采用 SDK，应匹配本次源码与 feeds，不能拿
+其他目标或不同内核 ABI 的模块混装。
+
+下一步优化以耗时记录为依据：C/C++ 占比高时考虑有大小上限、按目标区分的
+ccache；Rust/host 与工具链占比高时优先保留构建工作目录或使用持久构建机。
+`ccache` 不缓存 Rust 编译，也不能单靠它保证 2.5 小时降到某个时长。GitHub
+托管 runner 的完整 staging/build_dir 很大，加入缓存前需评估存储与传输成本。
+
 ---
 
 ## 致谢
