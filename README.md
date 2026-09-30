@@ -217,7 +217,21 @@ bash scripts/check-bpf-toolchain.sh /usr /path/to/openwrt/.config
 总耗时约 2 小时 27 分钟，固件编译步骤为 2 小时 21 分 8 秒。
 当前 Actions 只还原 `openwrt/dl` 下载缓存，`tools`、交叉工具链、Rust 主机编译器、
 内核和软件包构建目录仍从零生成；现有官方 CI LLVM 复用已启用。
-尚无分阶段日志证据，不能直接把全部耗时归因于 Zen 或 LLVM。
+原始 OpenWrt 日志的 `time: ...#user#system#wall` 记录提供了单目标耗时：
+
+| 构建目标 | wall 时间 |
+| --- | --- |
+| Rust 主机编译器 | 4774.90 秒（79 分 35 秒） |
+| Python3 主机工具 | 1407.28 秒（23 分 27 秒） |
+| Go bootstrap 主机工具 | 1292.81 秒（21 分 33 秒） |
+| GCC initial / final | 656.75 / 616.13 秒 |
+| Linux 内核编译 | 647.89 秒（10 分 48 秒） |
+| Zen daemon | 138.14 秒（2 分 18 秒） |
+| Zen 主题 / 应用 | 1.55 / 1.03 秒 |
+
+这些目标部分并行执行，wall 时间不能相加当作总时长，也不能把 79.6 分钟全算作
+LLVM：本次已经复用官方 CI LLVM，但仍构建两阶段 Rust 编译器、标准库和 Cargo。
+Zen daemon 的记录不含其前置 Rust 主机编译器；完整冷构建仍需这些依赖。
 
 `scripts/build-firmware.sh` 现在逐阶段记录每次尝试的并行数、耗时和退出码，保留
 原有重试次数与串行兜底。结果写入 Actions Summary，并上传
@@ -241,8 +255,10 @@ make package/new/luci-app-zen-traffic/compile V=s -j"$(nproc)"
 版本；独立出包不需要重刷整机。如采用 SDK，应匹配本次源码与 feeds，不能拿
 其他目标或不同内核 ABI 的模块混装。
 
-下一步优化以耗时记录为依据：C/C++ 占比高时考虑有大小上限、按目标区分的
-ccache；Rust/host 与工具链占比高时优先保留构建工作目录或使用持久构建机。
+依据当前证据，优先复用与目标、Rust 配方、工具链和配置匹配的 Rust/host 与构建
+工作目录；保存与恢复缓存后必须验证 rustc/cargo、目标标准库和构建 stamp，不能
+仅触碰 stamp 跳过一个缺失的编译器。C/C++ 占比高时再考虑有大小上限、按目标
+区分的 ccache，或使用持久构建机。
 `ccache` 不缓存 Rust 编译，也不能单靠它保证 2.5 小时降到某个时长。GitHub
 托管 runner 的完整 staging/build_dir 很大，加入缓存前需评估存储与传输成本。
 
