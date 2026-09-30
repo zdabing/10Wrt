@@ -262,6 +262,21 @@ make package/new/luci-app-zen-traffic/compile V=s -j"$(nproc)"
 `ccache` 不缓存 Rust 编译，也不能单靠它保证 2.5 小时降到某个时长。GitHub
 托管 runner 的完整 staging/build_dir 很大，加入缓存前需评估存储与传输成本。
 
+R5C 构建现增加独立的 Rust 分发包缓存：首次仍按 OpenWrt 配方从源码编译并保存
+完整 `build/dist/*.tar.gz`，随后由原有 `Host/Install` 安装。匹配缓存可复用这些
+实际构建过的分发包；不恢复或伪造 `.built`、`.rust_installed` 等 stamp。
+缓存键覆盖 OpenWrt/packages 提交、完整配置、Rust 配方/目标参数、本地工具链
+修改以及主机 OS、架构、glibc/GCC 版本，没有宽泛的旧版本回退键。
+
+命中前逐包验证 SHA256，临时安装 rustc/cargo 与主机/目标标准库，执行主机
+线程程序，并用当前目标 GCC 链接目标程序核对 ELF 架构。缺失、损坏、配置
+不匹配或编译器/链接验证失败，均返回原源码编译路径；源码编译失败仍使
+整个构建失败。只在成功构建和固件验收后保存缓存。当前仅覆盖 R5C。
+
+运行 `python3 scripts/test-rust-dist-cache.py` 可验证缓存损坏、身份失效、组件
+缺失、拒绝未验证编译器以及 GNU make 的冷构建失败传播。实际缓存命中后的
+全固件编译与冷/热耗时对照仍待验证，当前不宣称已把 2.5 小时缩短到特定时长。
+
 ---
 
 ## 致谢
