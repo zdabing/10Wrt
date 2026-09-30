@@ -181,6 +181,7 @@ dd if=openwrt-*-x86-64-generic-ext4-combined-efi.img of=/dev/sdX bs=4M status=pr
 │       └── mijia-bypass-test.sh              # LAN 入口旁路自测
 ├── scripts/
 │   ├── build-target-env.sh                   # 设备构建参数（目标/种子/设备符号/缓存 key）
+│   ├── check-bpf-toolchain.sh                # eBPF 工具链与配置预检查
 │   ├── create-build-records.sh               # 生成 SHA256SUMS / 包清单 / 源码版本记录
 │   └── validate-seed-packages.sh             # seed 与 .config 软件包核对
 ├── .github/workflows/build-common.yml        # 公共构建工作流（编译/验证/发布）
@@ -193,6 +194,22 @@ dd if=openwrt-*-x86-64-generic-ext4-combined-efi.img of=/dev/sdX bs=4M status=pr
 1. **修改种子配置** — 编辑 `configs/*.seed`，添加/移除软件包
 2. **修改自定义脚本** — 编辑 `diy.sh`，可添加 feed、修改默认 IP、打补丁等
 3. **修改首次启动设置** — 编辑 `files/etc/uci-defaults/99-init-settings`
+
+### eBPF 编译依赖检查
+
+工作流安装 LLVM 后会立即检查五个工具的路径、版本一致性，并实际运行
+Clang → opt → llvm-dis → llc → llvm-strip 编译一个最小 eBPF 程序。
+`make defconfig` 后还会核对 OpenWrt 的主机 LLVM 选择和路径配置。
+缺工具、版本混用或 BPF 编译失败时，会在正式编译前停止并给出具体原因，
+避免等待数小时后才出现 `/invalid/clang` 错误。
+
+Linux 本地编译也可运行（`/usr` 应替换为 LLVM 的安装前缀）：
+
+```sh
+bash scripts/check-bpf-toolchain.sh /usr /path/to/openwrt/.config
+```
+
+此检查验证主机工具链，不代替 Zen 后端交叉编译和真机 eBPF 加载验证。
 
 ---
 
