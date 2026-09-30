@@ -40,7 +40,7 @@
 | **luci-app-ttyd** | 网页终端 | |
 | **luci-app-librespeed** | LibreSpeed 测速客户端：路由器主动测指定测速服务器，支持定时任务与历史记录（界面为英文，上游暂无中文翻译） | 官方 feed（luci + packages） |
 | **luci-app-firewall** | 防火墙管理 | |
-| **luci-theme-round** | Round 主题（默认）：圆角青色玻璃 UI、明暗切换、侧栏布局 | [CyL-Cly/luci-theme-round](https://github.com/CyL-Cly/luci-theme-round) |
+| **luci-theme-zen** | Zen 主题（默认）：登录页、首页仪表盘、明暗切换、响应式侧栏 | [zdabing/luci-zen](https://github.com/zdabing/luci-zen) |
 
 #### 网络工具
 
@@ -125,7 +125,7 @@ git push
 **方式一：手动触发**
 1. 打开 GitHub 仓库 → **Actions** 标签
 2. 选择 **Build NanoPi R5C** 或 **Build x86/64**
-3. 点击 **Run workflow** → 选择配置仓库分支（如 `dev/main`）→ 在 **OpenWrt 源码分支** 输入框中确认或修改版本（默认 `openwrt-25.12`）→ 点击 **Run workflow**
+3. 点击 **Run workflow** → 选择配置仓库分支（如 `dev/zen`）→ 在 **OpenWrt 源码分支** 输入框中确认或修改版本（默认 `openwrt-25.12`）→ 点击 **Run workflow**
 
 **方式二：推送代码自动触发**
 - 如需推送触发，在 workflow 文件中添加 `push` 触发器即可
@@ -139,7 +139,8 @@ git push
 
 正式版本会发布到 **Releases** 页面，除镜像外还附带三类记录文件：
 
-Zen Traffic 和 Quickfile 暂时停用，本次固件不会包含它们；R5C 固件保留
+默认使用 Zen 主题，仅集成 `luci-zen` 仓库中的 `luci-theme-zen` 包。
+Zen Traffic 和 Quickfile 暂时停用，本次固件不会包含它们；主题的设备统计需安装 Zen Traffic 后端才会启用。R5C 固件保留
 `kmod-sched-core` 和 `kmod-sched-bpf` 内核模块。
 
 | 文件 | 说明 |
@@ -201,7 +202,7 @@ dd if=openwrt-*-x86-64-generic-ext4-combined-efi.img of=/dev/sdX bs=4M status=pr
 - [nikkinikki-org/OpenWrt-nikki](https://github.com/nikkinikki-org/OpenWrt-nikki) — Nikki 代理客户端
 - [sbwml](https://github.com/sbwml) — 多个插件包
 - [hahaher123/luci-app-oxidns](https://github.com/hahaher123/luci-app-oxidns) — OxiDNS LuCI 管理界面
-- [CyL-Cly/luci-theme-round](https://github.com/CyL-Cly/luci-theme-round) — Round 主题（默认）
+- [zdabing/luci-zen](https://github.com/zdabing/luci-zen) — Zen 主题（默认）
 - [P3TERX/Actions-OpenWrt](https://github.com/P3TERX/Actions-OpenWrt)
 - [SuLingGG/OpenWrt-Rpi](https://github.com/SuLingGG/OpenWrt-Rpi)
 

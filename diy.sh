@@ -150,10 +150,13 @@ clone_required() {
 # 暂停 Quickfile：上游改为 Rust 源码版，当前工具链链接失败。
 # clone_required "https://github.com/sbwml/luci-app-quickfile.git" "package/new/quickfile" "luci-app-quickfile"
 clone_required "https://github.com/hahaher123/luci-app-oxidns.git" "package/new/luci-app-oxidns" "luci-app-oxidns"
-clone_required "https://github.com/CyL-Cly/luci-theme-round.git" "package/new/luci-theme-round" "luci-theme-round"
-# round 仓库根目录即包本体，Makefile 自包含（package.mk + PKGARCH:=all，版本号写死，
-# 中文翻译直接安装 theme.zh-cn.lmo、无 luci-i18n 子包），ucode 模板无命名导出语法，
-# 无需 mint 那样的展开/luci.mk 修正/ucode 兼容补丁，直接作为普通第三方包参与编译。
+# luci-zen 是多包仓库；仅将主题包放进本地 feed，不引入 Rust 流量后端。
+ZEN_SOURCE=$(mktemp -d)
+clone_required "https://github.com/zdabing/luci-zen.git" "$ZEN_SOURCE" "luci-zen" "main"
+test -f "$ZEN_SOURCE/luci-theme-zen/Makefile"
+cp -R "$ZEN_SOURCE/luci-theme-zen" package/new/luci-theme-zen
+rm -rf "$ZEN_SOURCE"
+# 主题 Makefile 自包含，中文翻译由 luci-base/host 的 po2lmo 生成并随包安装。
 # 暂停 R5C Zen：Rust/SQLite 静态链接失败，先不拉取源码。
 # clone_required "https://github.com/nikkinikki-org/OpenWrt-nikki.git" "package/new/nikki" "luci-app-nikki"  # 已注释：不再使用
 
@@ -181,13 +184,9 @@ META_GEO_URL="https://github.com/MetaCubeX/meta-rules-dat/releases/latest/downlo
 # wget -q --show-progress -O files/etc/clashoo/GeoIP.dat     "${META_GEO_URL}/geoip.dat"   || echo "!!! 警告：Clashoo GeoIP.dat 下载失败"
 # echo ">>> Clashoo geodata → files/etc/clashoo/"
 
-# 将默认主题改为 round（克隆失败则保留 OpenWrt 自带的 bootstrap）
-if [ -d package/new/luci-theme-round ]; then
-    sed -i 's|/luci-static/bootstrap|/luci-static/round|g' feeds/luci/modules/luci-base/root/etc/config/luci
-    echo ">>> 默认主题已改为 luci-theme-round"
-else
-    echo "!!! 警告：Round 主题不可用，默认保留 luci-theme-bootstrap"
-fi
+# 将首次启动的默认主题设为 Zen。
+sed -i 's|/luci-static/bootstrap|/luci-static/zen|g' feeds/luci/modules/luci-base/root/etc/config/luci
+echo ">>> 默认主题已改为 luci-theme-zen"
 
 # 默认语言固定为简体中文（需配合 seed 里的 CONFIG_LUCI_LANG_zh_Hans 全局开关）
 LUCI_CFG="feeds/luci/modules/luci-base/root/etc/config/luci"
