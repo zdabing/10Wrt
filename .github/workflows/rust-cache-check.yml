@@ -1,0 +1,26 @@
+name: Rust distribution cache checks
+
+on:
+  push:
+    branches: [codex/build-timing-evidence]
+    paths:
+      - 'scripts/rust-dist-cache.py'
+      - 'scripts/test-rust-dist-cache.py'
+      - '.github/workflows/rust-cache-check.yml'
+  pull_request:
+    paths:
+      - 'scripts/rust-dist-cache.py'
+      - 'scripts/test-rust-dist-cache.py'
+      - '.github/workflows/build-common.yml'
+      - '.github/workflows/rust-cache-check.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - name: Check corruption, invalidation and real make failure propagation
+        run: python3 scripts/test-rust-dist-cache.py

@@ -1,4 +1,6 @@
 # 编译产物
+__pycache__/
+rust-dist-cache/
 openwrt/
 immortalwrt/
 bin/

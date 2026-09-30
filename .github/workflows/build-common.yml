@@ -166,6 +166,19 @@ jobs:
             done
           fi
 
+      - name: 计算 R5C Rust 分发包缓存身份
+        if: inputs.target == 'r5c'
+        id: rust-cache-key
+        run: python3 config/scripts/rust-dist-cache.py prepare openwrt rust-dist-cache >> "$GITHUB_OUTPUT"
+
+      - name: 还原匹配的 Rust 分发包
+        if: inputs.target == 'r5c'
+        id: rust-cache-restore
+        uses: actions/cache/restore@v5
+        with:
+          path: rust-dist-cache
+          key: rust-dist-v1-${{ steps.rust-cache-key.outputs.key }}
+
       - name: 编译固件
         run: |
           cd openwrt
@@ -264,6 +277,13 @@ jobs:
             echo "### SHA256 校验值" >> $GITHUB_STEP_SUMMARY
             cat "openwrt/bin/targets/${FIRMWARE_TARGET}/SHA256SUMS" >> $GITHUB_STEP_SUMMARY
           fi
+
+      - name: 保存成功构建的 R5C Rust 分发包
+        if: inputs.target == 'r5c' && steps.rust-cache-restore.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v5
+        with:
+          path: rust-dist-cache
+          key: rust-dist-v1-${{ steps.rust-cache-key.outputs.key }}
 
       - name: 发布到 Release
         run: |
