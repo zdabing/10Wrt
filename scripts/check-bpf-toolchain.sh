@@ -48,7 +48,7 @@ trap 'rm -rf "$probe_dir"' EXIT
 cat > "$probe_dir/probe.c" <<'EOF'
 __attribute__((section("classifier")))
 int bpf_probe(void *ctx) { return 0; }
-char license[] __attribute__((section("license"))) = "GPL";
+char bpf_probe_license[] __attribute__((section("license"), used)) = "GPL";
 EOF
 
 probe_step() {
