@@ -128,6 +128,12 @@ git push
 2. 选择 **Build NanoPi R5C** 或 **Build x86/64**
 3. 点击 **Run workflow** → 选择配置仓库分支（如 `dev/zen`）→ 在 **OpenWrt 源码分支** 输入框中确认或修改版本（默认 `openwrt-25.12`）→ 点击 **Run workflow**
 
+R5C 还可选择 **Zen 源码分支或标签**，默认 `main`；验收修复版填
+`codex/router-acceptance`。这是 `luci-zen` 仓库的分支，与上方 10Wrt 配置仓库分支
+及 OpenWrt 源码分支分别独立。构建记录会保存实际检出的 Zen 提交号。
+**发布 Release** 默认关闭：测试时只生成固件 artifact 和耗时记录，不发布或删除
+已有 Release/Tag。正式发布时才勾选；x86/64 原有发布行为保持不变。
+
 **方式二：推送代码自动触发**
 - 如需推送触发，在 workflow 文件中添加 `push` 触发器即可
 

@@ -11,6 +11,16 @@ on:
         description: 'OpenWrt 源码分支'
         required: true
         type: string
+      zen_ref:
+        description: 'Zen 源码分支或标签'
+        required: false
+        default: 'main'
+        type: string
+      publish_release:
+        description: '是否发布 Release 并清理旧版本'
+        required: false
+        default: true
+        type: boolean
 
 jobs:
   firmware:
@@ -23,6 +33,7 @@ jobs:
     env:
       OPENWRT_REPO: https://github.com/openwrt/openwrt.git
       OPENWRT_VERSION: ${{ inputs.version }}
+      ZEN_REF: ${{ inputs.zen_ref }}
 
     steps:
       - name: 检出配置仓库
@@ -286,6 +297,7 @@ jobs:
           key: rust-dist-v1-${{ steps.rust-cache-key.outputs.key }}
 
       - name: 发布到 Release
+        if: success() && inputs.publish_release
         run: |
           set -euo pipefail
           shopt -s nullglob
@@ -317,6 +329,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
 
       - name: 清理旧 Release/Tag（本设备系列仅保留最新 7 个）
+        if: success() && inputs.publish_release
         run: |
           # 每次构建成功后自动清理：本设备（${BUILD_TARGET}）系列仅保留最新 7 个 Release，
           # 更旧的 Release 与其 git tag 一并删除（--cleanup-tag）。

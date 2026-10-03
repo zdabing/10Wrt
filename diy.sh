@@ -135,9 +135,9 @@ fi
 
 clone_required() {
     local repo="$1" dst="$2" name="$3" branch="$4"
-    local branch_opt=""
-    [ -n "$branch" ] && branch_opt="-b $branch"
-    if git clone --depth 1 $branch_opt "$repo" "$dst" 2>/dev/null; then
+    local branch_opt=()
+    [ -n "$branch" ] && branch_opt=(-b "$branch")
+    if git clone --depth 1 "${branch_opt[@]}" "$repo" "$dst" 2>/dev/null; then
         printf '%s\t%s\t%s\n' "$name" "$repo" "$(git -C "$dst" rev-parse HEAD)" >> "$SOURCE_REVISIONS_FILE"
         echo ">>> 已添加 $name"
     else
@@ -152,7 +152,7 @@ clone_required() {
 clone_required "https://github.com/hahaher123/luci-app-oxidns.git" "package/new/luci-app-oxidns" "luci-app-oxidns"
 # 从同一份 luci-zen 源码集成主题、Rust 流量后端和 LuCI 流量应用。
 ZEN_SOURCE=$(mktemp -d)
-clone_required "https://github.com/zdabing/luci-zen.git" "$ZEN_SOURCE" "luci-zen" "main"
+clone_required "https://github.com/zdabing/luci-zen.git" "$ZEN_SOURCE" "luci-zen" "${ZEN_REF:-main}"
 for pkg in luci-theme-zen zen-traffic luci-app-zen-traffic; do
     test -f "$ZEN_SOURCE/$pkg/Makefile"
     cp -R "$ZEN_SOURCE/$pkg" "package/new/$pkg"

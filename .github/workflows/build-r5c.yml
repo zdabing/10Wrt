@@ -8,6 +8,16 @@ on:
         required: false
         default: 'openwrt-25.12'
         type: string
+      zen_ref:
+        description: 'Zen 源码分支或标签；修复版填 codex/router-acceptance'
+        required: false
+        default: 'main'
+        type: string
+      publish_release:
+        description: '发布 Release 并执行原有旧版本清理；测试构建保持关闭'
+        required: false
+        default: false
+        type: boolean
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -19,3 +29,5 @@ jobs:
     with:
       target: r5c
       version: ${{ inputs.version || 'openwrt-25.12' }}
+      zen_ref: ${{ inputs.zen_ref || 'main' }}
+      publish_release: ${{ inputs.publish_release }}
