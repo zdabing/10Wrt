@@ -126,25 +126,14 @@ clone_or_warn() {
 }
 
 clone_or_warn "https://github.com/svenshi/luci-app-oxidns.git"    "package/new/luci-app-oxidns" "luci-app-oxidns"
-# 同一份 Zen 源码提供主题、Rust 流量后端和 LuCI 应用，缺包时停止构建。
+# 从 Zen 仓库导入主题、流量后端和 LuCI 应用。
 ZEN_SOURCE=$(mktemp -d)
-if ! git clone --depth 1 --branch "${ZEN_REF:-main}" \
-    https://github.com/zdabing/luci-zen.git "$ZEN_SOURCE"; then
-    rm -rf "$ZEN_SOURCE"
-    echo "!!! 错误：Zen 源码克隆失败"
-    exit 1
-fi
+git clone --depth 1 --branch main https://github.com/zdabing/luci-zen.git "$ZEN_SOURCE"
 for pkg in luci-theme-zen zen-traffic luci-app-zen-traffic; do
-    if [ ! -f "$ZEN_SOURCE/$pkg/Makefile" ]; then
-        rm -rf "$ZEN_SOURCE"
-        echo "!!! 错误：Zen 源码缺少 $pkg/Makefile"
-        exit 1
-    fi
     cp -R "$ZEN_SOURCE/$pkg" "package/new/$pkg"
 done
 echo ">>> 已集成 Zen 主题与流量统计：$(git -C "$ZEN_SOURCE" rev-parse HEAD)"
 rm -rf "$ZEN_SOURCE"
-# Rust/C LTO 的 SQLite 链接兼容规则由 Zen 自身 Makefile 提供。
 # clone_or_warn "https://github.com/nikkinikki-org/OpenWrt-nikki.git" "package/new/nikki"    "luci-app-nikki"  # 已注释：不再使用
 
 # ---- Mihomo 格式 geodata（来自 MetaCubeX/meta-rules-dat）----

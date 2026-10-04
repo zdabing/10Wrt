@@ -43,7 +43,7 @@
 | **luci-theme-bootstrap** | Bootstrap 备用主题 | |
 
 x86/64 与 NanoPi R5C 均集成 Zen 的主题、流量后端和 LuCI 应用，默认使用 Zen。
-流量统计所需的 `kmod-sched-core`、`kmod-sched-bpf` 内核模块随固件安装，
+流量后端及所需内核模块由 Zen 软件包的依赖自动选择，
 可在“状态 → Zen 流量”页面查看统计。
 
 #### 网络工具
@@ -98,9 +98,7 @@ git push
 2. 选择 **Build NanoPi R5C** 或 **Build x86/64**
 3. 点击 **Run workflow** → 选择分支 → 点击 **Run**
 
-两个设备均可在 **Zen 源码分支或标签** 中选择 `luci-zen` 仓库的版本，默认 `main`。
-构建前验证完整 eBPF 主机编译链，展开配置后核对 Zen 软件包与 LLVM 选择，
-构建完成后检查固件的软件包数据库。Zen 缺包时停止上传与发布。
+Zen 源码使用 `luci-zen` 仓库的 `main` 分支。
 
 **方式二：推送代码自动触发**
 - 如需推送触发，在 workflow 文件中添加 `push` 触发器即可
@@ -137,9 +135,6 @@ dd if=immortalwrt-*-x86-64-generic-ext4-combined-efi.img of=/dev/sdX bs=4M statu
 │   └── r5c.seed                              # NanoPi R5C 种子配置
 ├── files/
 │   └── etc/uci-defaults/99-init-settings     # 首次启动脚本
-├── scripts/
-│   ├── check-bpf-toolchain.sh               # eBPF 工具链与配置检查
-│   └── check-zen-packages.sh                # Zen 配置及固件安装包检查
 ├── .github/workflows/build-r5c.yml           # R5C 工作流
 ├── .github/workflows/build-x86.yml           # x86/64 工作流
 ```
