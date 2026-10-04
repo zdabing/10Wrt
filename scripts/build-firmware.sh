@@ -45,3 +45,5 @@ build_phase package/compile "$jobs" 1
 build_phase package/index 1
 build_phase package/install "$jobs" 1
 build_phase target/install "$jobs" 1
+# target/install 仅生成每张镜像的 JSON；profiles.json 由顶层目标汇总。
+build_phase json_overview_image_info 1

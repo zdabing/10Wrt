@@ -1,6 +1,8 @@
 import hashlib
 import importlib.util
 import json
+import os
+import subprocess
 import tempfile
 import unittest
 from pathlib import Path
@@ -11,6 +13,37 @@ spec.loader.exec_module(module)
 
 
 class FirmwareTests(unittest.TestCase):
+    def build_profiles(self, root, firmware, profiles, fail=False):
+        # 模拟 OpenWrt 分阶段构建：target/install 只写单镜像 JSON，
+        # json_overview_image_info 才生成发布脚本需要的 profiles.json。
+        tools = root / 'tools'
+        tools.mkdir()
+        make = tools / 'make'
+        make.write_text('''#!/usr/bin/env bash
+set -eu
+case "$1" in
+    target/install)
+        mkdir -p json_info_files
+        cp image-fixture.json json_info_files/image.json
+        ;;
+    json_overview_image_info)
+        [ "$FAIL_OVERVIEW" = 0 ] || exit 23
+        cp json_info_files/image.json "$FIXTURE_FIRMWARE_DIR/profiles.json"
+        ;;
+esac
+''', encoding='utf-8', newline='\n')
+        make.chmod(0o755)
+        (root / 'image-fixture.json').write_text(json.dumps(profiles), encoding='utf-8')
+        script = root / 'build-firmware.sh'
+        script.write_text(Path(__file__).with_name('build-firmware.sh').read_text(encoding='utf-8'),
+                          encoding='utf-8', newline='\n')
+        env = dict(os.environ, PATH=str(tools) + os.pathsep + os.environ['PATH'],
+                   BUILD_JOBS='1', FIXTURE_FIRMWARE_DIR=firmware.as_posix(),
+                   FAIL_OVERVIEW='1' if fail else '0',
+                   GITHUB_STEP_SUMMARY=str(root / 'summary.md'))
+        return subprocess.run(['bash', script.as_posix()], cwd=root, env=env,
+                              capture_output=True, text=True)
+
     def test_r5c_and_x86_exact_profile_images(self):
         for device, target, image_type, filename in [
             ('r5c', 'rockchip/armv8', 'sysupgrade', 'openwrt-r5c-squashfs-sysupgrade.img.gz'),
@@ -24,7 +57,8 @@ class FirmwareTests(unittest.TestCase):
                 payload = b'firmware fixture'; digest = hashlib.sha256(payload).hexdigest()
                 (firmware / filename).write_bytes(payload)
                 profiles = dict(target=target, profiles={identity['profile']:dict(images=[dict(type=image_type,name=filename,sha256=digest,size=len(payload)),dict(type='rootfs',name='rootfs.img.gz')])})
-                (firmware / 'profiles.json').write_text(json.dumps(profiles))
+                result = self.build_profiles(Path(directory), firmware, profiles)
+                self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
                 data = module.release(overlay, firmware)
                 self.assertEqual([f['filename'] for f in data['files']], [filename])
                 self.assertEqual(data['tag'], identity['tag'])
@@ -34,6 +68,15 @@ class FirmwareTests(unittest.TestCase):
                 profiles['target'] = 'wrong/target'
                 (firmware / 'profiles.json').write_text(json.dumps(profiles))
                 with self.assertRaises(ValueError): module.release(overlay, firmware)
+
+    def test_overview_generation_failure_stops_build(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            firmware = root / 'firmware'
+            firmware.mkdir()
+            result = self.build_profiles(root, firmware, {}, fail=True)
+            self.assertEqual(result.returncode, 23, result.stdout + result.stderr)
+            self.assertFalse((firmware / 'profiles.json').exists())
 
 
 if __name__ == '__main__':
