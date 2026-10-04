@@ -1,0 +1,12 @@
+name: Firmware update metadata checks
+on:
+  push:
+    paths: ['scripts/*firmware-update-metadata.py', '.github/workflows/build-common.yml', '.github/workflows/firmware-metadata-check.yml']
+  pull_request:
+    paths: ['scripts/*firmware-update-metadata.py', '.github/workflows/build-common.yml', '.github/workflows/firmware-metadata-check.yml']
+jobs:
+  metadata:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - run: python3 scripts/test-firmware-update-metadata.py

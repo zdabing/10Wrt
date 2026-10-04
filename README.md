@@ -300,3 +300,7 @@ R5C 构建现增加独立的 Rust 分发包缓存：首次仍按 OpenWrt 配方�
 ## 免责声明
 
 本固件仅供学习研究使用，请勿用于任何商业用途。使用本固件所导致的任何损失由使用者自行承担。
+
+### Zen 固件版本与更新信息
+
+`dev/zen` 构建前写入 `/usr/share/10wrt/release.json`，包含设备 target/profile、发布 tag、构建号及配置提交。构建后从 OpenWrt `profiles.json` 校验同设备可刷写镜像，发布 `10wrt-update.json`，并在 Release 正文附加同一元数据，供 Zen 设置页手动检查更新。R5C 使用 sysupgrade；x86 使用 combined/combined-efi，排除单独 rootfs 镜像。保留 `/etc` 配置不会覆盖这个构建标识。旧固件缺少标识时显示当前构建未知。测试：`python3 scripts/test-firmware-update-metadata.py`。

@@ -125,6 +125,7 @@ jobs:
         run: |
           cd openwrt
           set -o pipefail
+          echo "CONFIG_JSON_OVERVIEW_IMAGE_INFO=y" >> .config
           make defconfig 2>&1 | tee defconfig.log
           if grep -Eq '(^|:)(error:|fatal error:)' defconfig.log; then
             echo "错误：make defconfig 输出了 Kconfig 错误"
@@ -190,6 +191,13 @@ jobs:
           path: rust-dist-cache
           key: rust-dist-v1-${{ steps.rust-cache-key.outputs.key }}
 
+      - name: 写入固件构建身份
+        run: |
+          FIRMWARE_TAG="${BUILD_TARGET}-$(TZ=Asia/Shanghai date +%Y.%m.%d)-${GITHUB_RUN_NUMBER}"
+          export FIRMWARE_TAG
+          echo "FIRMWARE_TAG=$FIRMWARE_TAG" >> "$GITHUB_ENV"
+          python3 config/scripts/firmware-update-metadata.py stamp
+
       - name: 编译固件
         run: |
           cd openwrt
@@ -242,7 +250,9 @@ jobs:
           echo "固件关键软件包验证通过：${#REQUIRED_PACKAGES[@]} 项"
 
       - name: 生成并验证发布记录
-        run: bash config/scripts/create-build-records.sh "$FIRMWARE_TARGET" "$GITHUB_SHA"
+        run: |
+          bash config/scripts/create-build-records.sh "$FIRMWARE_TARGET" "$GITHUB_SHA"
+          python3 config/scripts/firmware-update-metadata.py release --firmware-dir "openwrt/bin/targets/$FIRMWARE_TARGET"
 
       - name: 调试 - 列出构建输出
         if: always()
@@ -267,6 +277,7 @@ jobs:
             openwrt/bin/targets/**/SHA256SUMS
             openwrt/bin/targets/**/10wrt-packages.manifest
             openwrt/bin/targets/**/10wrt-sources.tsv
+            openwrt/bin/targets/**/10wrt-update.json
           if-no-files-found: warn
           retention-days: 7
 
@@ -301,7 +312,7 @@ jobs:
         run: |
           set -euo pipefail
           shopt -s nullglob
-          TAG="${BUILD_TARGET}-$(TZ=Asia/Shanghai date +%Y.%m.%d)-${{ github.run_number }}"
+          TAG="$FIRMWARE_TAG"
           TITLE="10Wrt ${TARGET_LABEL} — $(TZ=Asia/Shanghai date +%Y-%m-%d)"
           FIRMWARE_DIR="openwrt/bin/targets/${FIRMWARE_TARGET}"
           test -d "$FIRMWARE_DIR"
@@ -309,13 +320,14 @@ jobs:
           ls -lh "$FIRMWARE_DIR"/
           ASSETS=("$FIRMWARE_DIR"/*.img.gz "$FIRMWARE_DIR"/*.img "$FIRMWARE_DIR"/*.tar.gz \
             "$FIRMWARE_DIR"/SHA256SUMS "$FIRMWARE_DIR"/10wrt-packages.manifest \
-            "$FIRMWARE_DIR"/10wrt-sources.tsv)
+            "$FIRMWARE_DIR"/10wrt-sources.tsv "$FIRMWARE_DIR"/10wrt-update.json)
           cat > release-notes.md <<EOF
           ### 管理地址: http://10.0.0.1
 
           镜像校验值见 SHA256SUMS，已安装软件包见 10wrt-packages.manifest，
           OpenWrt 与第三方源码提交号见 10wrt-sources.tsv。
           EOF
+          cat "$FIRMWARE_DIR/10wrt-update-notes.md" >> release-notes.md
           # --target 必须指定：缺省时 tag 打到默认分支 main 的 HEAD，
           # Release 的 created_at 会取那个提交的日期——main 停在旧日期时
           # 新 Release 会被下方"保留最新 7 个"清理步骤当成最旧的删掉。
