@@ -125,20 +125,27 @@ clone_or_warn() {
     fi
 }
 
-clone_or_warn "https://github.com/timsaya/openwrt-bandix.git"     "package/new/bandix-tmp" "bandix 后端"
-# openwrt-bandix 仓库嵌套了 openwrt-bandix/ 子目录，需要展开
-if [ -d "package/new/bandix-tmp/openwrt-bandix" ]; then
-    mkdir -p package/new/bandix
-    cp -rf package/new/bandix-tmp/openwrt-bandix/. package/new/bandix/
-    rm -rf package/new/bandix-tmp
-    echo ">>> bandix 后端目录已展开"
-elif [ -d "package/new/bandix-tmp" ]; then
-    mv package/new/bandix-tmp package/new/bandix
-fi
-clone_or_warn "https://github.com/timsaya/luci-app-bandix.git"    "package/new/bandix-luci" "luci-app-bandix（前端）"
 clone_or_warn "https://github.com/sbwml/luci-app-quickfile.git"   "package/new/quickfile" "luci-app-quickfile"
 clone_or_warn "https://github.com/svenshi/luci-app-oxidns.git"    "package/new/luci-app-oxidns" "luci-app-oxidns"
-clone_or_warn "https://github.com/zzsj0928/luci-theme-liquid.git" "package/new/luci-theme-liquid" "luci-theme-liquid"
+# 同一份 Zen 源码提供主题、Rust 流量后端和 LuCI 应用，缺包时停止构建。
+ZEN_SOURCE=$(mktemp -d)
+if ! git clone --depth 1 --branch "${ZEN_REF:-main}" \
+    https://github.com/zdabing/luci-zen.git "$ZEN_SOURCE"; then
+    rm -rf "$ZEN_SOURCE"
+    echo "!!! 错误：Zen 源码克隆失败"
+    exit 1
+fi
+for pkg in luci-theme-zen zen-traffic luci-app-zen-traffic; do
+    if [ ! -f "$ZEN_SOURCE/$pkg/Makefile" ]; then
+        rm -rf "$ZEN_SOURCE"
+        echo "!!! 错误：Zen 源码缺少 $pkg/Makefile"
+        exit 1
+    fi
+    cp -R "$ZEN_SOURCE/$pkg" "package/new/$pkg"
+done
+echo ">>> 已集成 Zen 主题与流量统计：$(git -C "$ZEN_SOURCE" rev-parse HEAD)"
+rm -rf "$ZEN_SOURCE"
+# Rust/C LTO 的 SQLite 链接兼容规则由 Zen 自身 Makefile 提供。
 # clone_or_warn "https://github.com/nikkinikki-org/OpenWrt-nikki.git" "package/new/nikki"    "luci-app-nikki"  # 已注释：不再使用
 
 # ---- Mihomo 格式 geodata（来自 MetaCubeX/meta-rules-dat）----
@@ -165,11 +172,9 @@ META_GEO_URL="https://github.com/MetaCubeX/meta-rules-dat/releases/latest/downlo
 # wget -q --show-progress -O files/etc/clashoo/GeoIP.dat     "${META_GEO_URL}/geoip.dat"   || echo "!!! 警告：Clashoo GeoIP.dat 下载失败"
 # echo ">>> Clashoo geodata → files/etc/clashoo/"
 
-# 将默认主题从 bootstrap 改为 liquid
-if [ -d package/new/luci-theme-liquid ]; then
-    sed -i 's|/luci-static/bootstrap|/luci-static/liquid|g' feeds/luci/modules/luci-base/root/etc/config/luci
-    echo ">>> 默认主题已改为 luci-theme-liquid"
-fi
+# ---- 默认使用 Zen 主题 ----
+sed -i 's|/luci-static/bootstrap|/luci-static/zen|g' feeds/luci/modules/luci-base/root/etc/config/luci
+echo ">>> 默认主题已改为 luci-theme-zen"
 
 # ---- kenzok8 feed ----
 KENZOK8_FEED="src-git kenzok8 https://github.com/kenzok8/openwrt-clashoo.git"

@@ -35,12 +35,17 @@
 | **luci-app-ddns** | 动态域名解析 | |
 | **luci-app-upnp** | UPnP IGD / NAT-PMP | |
 | **luci-app-3cat** | 3Cat 工具 | |
-| **luci-app-bandix** | 带宽监控 | [timsaya/luci-app-bandix](https://github.com/timsaya/luci-app-bandix) |
 | **luci-app-wol** | 网络唤醒 | |
 | **luci-app-quickfile** | 文件管理器 | [sbwml/luci-app-quickfile](https://github.com/sbwml/luci-app-quickfile) |
 | **luci-app-ttyd** | 网页终端 | |
 | **luci-app-firewall** | 防火墙管理 | |
-| **luci-theme-liquid** | Liquid 主题（默认） | [zzsj0928/luci-theme-liquid](https://github.com/zzsj0928/luci-theme-liquid) |
+| **luci-theme-zen** | Zen 主题（默认）：首页仪表盘、明暗切换、响应式侧栏 | [zdabing/luci-zen](https://github.com/zdabing/luci-zen) |
+| **luci-app-zen-traffic** | 设备流量统计、日/月用量与历史记录，内置 `zen-traffic` 后端 | [zdabing/luci-zen](https://github.com/zdabing/luci-zen) |
+| **luci-theme-bootstrap** | Bootstrap 备用主题 | |
+
+x86/64 与 NanoPi R5C 均集成 Zen 的主题、流量后端和 LuCI 应用，默认使用 Zen。
+流量统计所需的 `kmod-sched-core`、`kmod-sched-bpf` 内核模块随固件安装，
+可在“状态 → Zen 流量”页面查看统计。
 
 #### 网络工具
 
@@ -94,6 +99,10 @@ git push
 2. 选择 **Build NanoPi R5C** 或 **Build x86/64**
 3. 点击 **Run workflow** → 选择分支 → 点击 **Run**
 
+两个设备均可在 **Zen 源码分支或标签** 中选择 `luci-zen` 仓库的版本，默认 `main`。
+构建前验证完整 eBPF 主机编译链，展开配置后核对 Zen 软件包与 LLVM 选择，
+构建完成后检查固件的软件包数据库。Zen 缺包时停止上传与发布。
+
 **方式二：推送代码自动触发**
 - 如需推送触发，在 workflow 文件中添加 `push` 触发器即可
 
@@ -129,6 +138,9 @@ dd if=immortalwrt-*-x86-64-generic-ext4-combined-efi.img of=/dev/sdX bs=4M statu
 │   └── r5c.seed                              # NanoPi R5C 种子配置
 ├── files/
 │   └── etc/uci-defaults/99-init-settings     # 首次启动脚本
+├── scripts/
+│   ├── check-bpf-toolchain.sh               # eBPF 工具链与配置检查
+│   └── check-zen-packages.sh                # Zen 配置及固件安装包检查
 ├── .github/workflows/build-r5c.yml           # R5C 工作流
 ├── .github/workflows/build-x86.yml           # x86/64 工作流
 ```
@@ -149,8 +161,7 @@ dd if=immortalwrt-*-x86-64-generic-ext4-combined-efi.img of=/dev/sdX bs=4M statu
 - [nikkinikki-org/OpenWrt-nikki](https://github.com/nikkinikki-org/OpenWrt-nikki) — Nikki 代理客户端
 - [sbwml](https://github.com/sbwml) — 多个插件包
 - [svenshi/luci-app-oxidns](https://github.com/svenshi/luci-app-oxidns) — OxiDNS LuCI 管理界面
-- [timsaya/luci-app-bandix](https://github.com/timsaya/luci-app-bandix) — 带宽监控
-- [zzsj0928/luci-theme-liquid](https://github.com/zzsj0928/luci-theme-liquid) — Liquid 主题（默认）
+- [zdabing/luci-zen](https://github.com/zdabing/luci-zen) — Zen 主题与流量统计
 - [P3TERX/Actions-OpenWrt](https://github.com/P3TERX/Actions-OpenWrt)
 - [SuLingGG/OpenWrt-Rpi](https://github.com/SuLingGG/OpenWrt-Rpi)
 
