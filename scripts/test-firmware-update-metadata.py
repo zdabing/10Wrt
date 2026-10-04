@@ -52,7 +52,7 @@ esac
             with self.subTest(device=device), tempfile.TemporaryDirectory() as directory:
                 overlay, firmware = Path(directory) / 'files', Path(directory) / 'firmware'
                 firmware.mkdir()
-                identity = module.stamp(overlay, dict(GITHUB_REPOSITORY='zdabing/10Wrt', FIRMWARE_TAG=device+'-2026.10.04-88', FIRMWARE_TARGET=target, BUILD_TARGET=device, GITHUB_RUN_NUMBER='88', GITHUB_SHA='a'*40))
+                identity = module.stamp(overlay, dict(GITHUB_REPOSITORY='zdabing/10Wrt', FIRMWARE_TAG='openwrt-'+device+'-2026.10.04-88', FIRMWARE_TARGET=target, BUILD_TARGET=device, GITHUB_RUN_NUMBER='88', GITHUB_SHA='a'*40))
                 self.assertTrue((overlay / 'usr/share/10wrt/release.json').is_file())
                 payload = b'firmware fixture'; digest = hashlib.sha256(payload).hexdigest()
                 (firmware / filename).write_bytes(payload)

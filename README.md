@@ -5,6 +5,9 @@
 
 基于 [OpenWrt openwrt-25.12](https://github.com/openwrt/openwrt/tree/openwrt-25.12) 分支源码，使用 GitHub Actions 自动编译 x86/64 和 NanoPi R5C 固件。
 
+配置仓库分支：[`openwrt`](https://github.com/zdabing/10Wrt/tree/openwrt) 编译 OpenWrt；[`immortalwrt`](https://github.com/zdabing/10Wrt/tree/immortalwrt)（默认）编译 ImmortalWrt。
+[Releases](https://github.com/zdabing/10Wrt/releases) 标题按 `10Wrt OpenWrt / ImmortalWrt 设备 — 日期` 区分；新 Tag 使用 `openwrt-` / `immortalwrt-` 前缀，各源码、各设备分别保留最新 7 个版本。
+
 两个构建工作流默认使用 `openwrt-25.12` 分支，也可以在手动运行时修改 OpenWrt 源码分支。
 
 管理地址: **http://10.0.0.1**
@@ -126,7 +129,7 @@ git push
 **方式一：手动触发**
 1. 打开 GitHub 仓库 → **Actions** 标签
 2. 选择 **Build NanoPi R5C** 或 **Build x86/64**
-3. 点击 **Run workflow** → 选择配置仓库分支（如 `dev/zen`）→ 在 **OpenWrt 源码分支** 输入框中确认或修改版本（默认 `openwrt-25.12`）→ 点击 **Run workflow**
+3. 点击 **Run workflow** → 选择配置仓库分支 `openwrt` → 在 **OpenWrt 源码分支** 输入框中确认或修改版本（默认 `openwrt-25.12`）→ 点击 **Run workflow**
 
 R5C 还可选择 **Zen 源码分支或标签**，默认 `main`；验收修复版填
 `codex/router-acceptance`。这是 `luci-zen` 仓库的分支，与上方 10Wrt 配置仓库分支
@@ -303,4 +306,4 @@ R5C 构建现增加独立的 Rust 分发包缓存：首次仍按 OpenWrt 配方�
 
 ### Zen 固件版本与更新信息
 
-`dev/zen` 构建前写入 `/usr/share/10wrt/release.json`，包含设备 target/profile、发布 tag、构建号及配置提交。构建后从 OpenWrt `profiles.json` 校验同设备可刷写镜像，发布 `10wrt-update.json`，并在 Release 正文附加同一元数据，供 Zen 设置页手动检查更新。R5C 使用 sysupgrade；x86 使用 combined/combined-efi，排除单独 rootfs 镜像。保留 `/etc` 配置不会覆盖这个构建标识。旧固件缺少标识时显示当前构建未知。测试：`python3 scripts/test-firmware-update-metadata.py`。
+`openwrt` 构建前写入 `/usr/share/10wrt/release.json`，包含设备 target/profile、发布 tag、构建号及配置提交。构建后从 OpenWrt `profiles.json` 校验同设备可刷写镜像，发布 `10wrt-update.json`，并在 Release 正文附加同一元数据，供 Zen 设置页手动检查更新。R5C 使用 sysupgrade；x86 使用 combined/combined-efi，排除单独 rootfs 镜像。保留 `/etc` 配置不会覆盖这个构建标识。旧固件缺少标识时显示当前构建未知。测试：`python3 scripts/test-firmware-update-metadata.py`。

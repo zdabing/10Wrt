@@ -1,4 +1,5 @@
 name: Build NanoPi R5C
+run-name: Build OpenWrt NanoPi R5C
 
 on:
   workflow_dispatch:

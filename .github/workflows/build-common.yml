@@ -193,7 +193,7 @@ jobs:
 
       - name: 写入固件构建身份
         run: |
-          FIRMWARE_TAG="${BUILD_TARGET}-$(TZ=Asia/Shanghai date +%Y.%m.%d)-${GITHUB_RUN_NUMBER}"
+          FIRMWARE_TAG="openwrt-${BUILD_TARGET}-$(TZ=Asia/Shanghai date +%Y.%m.%d)-${GITHUB_RUN_NUMBER}"
           export FIRMWARE_TAG
           echo "FIRMWARE_TAG=$FIRMWARE_TAG" >> "$GITHUB_ENV"
           python3 config/scripts/firmware-update-metadata.py stamp
@@ -267,7 +267,7 @@ jobs:
         if: success()
         uses: actions/upload-artifact@v7
         with:
-          name: 10Wrt-${{ inputs.target }}-${{ github.run_id }}
+          name: 10Wrt-openwrt-${{ inputs.target }}-${{ github.run_id }}
           path: |
             openwrt/bin/targets/**/*.img.gz
             openwrt/bin/targets/**/*.img
@@ -284,7 +284,7 @@ jobs:
       - name: 生成固件清单
         if: always()
         run: |
-          echo "## 10Wrt ${TARGET_LABEL} 编译结果" >> $GITHUB_STEP_SUMMARY
+          echo "## 10Wrt OpenWrt ${TARGET_LABEL} 编译结果" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           if [ -d openwrt/bin/targets ]; then
             echo "### 固件文件" >> $GITHUB_STEP_SUMMARY
@@ -313,7 +313,7 @@ jobs:
           set -euo pipefail
           shopt -s nullglob
           TAG="$FIRMWARE_TAG"
-          TITLE="10Wrt ${TARGET_LABEL} — $(TZ=Asia/Shanghai date +%Y-%m-%d)"
+          TITLE="10Wrt OpenWrt ${TARGET_LABEL} — $(TZ=Asia/Shanghai date +%Y-%m-%d)"
           FIRMWARE_DIR="openwrt/bin/targets/${FIRMWARE_TARGET}"
           test -d "$FIRMWARE_DIR"
           echo "固件目录: $FIRMWARE_DIR"
@@ -328,8 +328,8 @@ jobs:
           OpenWrt 与第三方源码提交号见 10wrt-sources.tsv。
           EOF
           cat "$FIRMWARE_DIR/10wrt-update-notes.md" >> release-notes.md
-          # --target 必须指定：缺省时 tag 打到默认分支 main 的 HEAD，
-          # Release 的 created_at 会取那个提交的日期——main 停在旧日期时
+          # --target 必须指定：缺省时 tag 打到默认分支 immortalwrt 的 HEAD，
+          # Release 的 created_at 会取那个提交的日期——默认分支停在旧日期时
           # 新 Release 会被下方"保留最新 7 个"清理步骤当成最旧的删掉。
           gh release create "$TAG" "${ASSETS[@]}" \
             --target "$GITHUB_SHA" \
@@ -340,17 +340,18 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
 
-      - name: 清理旧 Release/Tag（本设备系列仅保留最新 7 个）
+      - name: 清理旧 Release/Tag（OpenWrt 本设备系列仅保留最新 7 个）
         if: success() && inputs.publish_release
         run: |
-          # 每次构建成功后自动清理：本设备（${BUILD_TARGET}）系列仅保留最新 7 个 Release，
+          # 仅清理 OpenWrt 本设备，保留最新 7 个；旧 Tag 通过标题区分源码。
           # 更旧的 Release 与其 git tag 一并删除（--cleanup-tag）。
           # 若构建失败则本步骤不执行，不会误删。
-          for PREFIX in "$BUILD_TARGET"; do
+          for DEVICE in "$BUILD_TARGET"; do
+            PREFIX="openwrt-${DEVICE}"
             echo "=== 清理前缀 ${PREFIX}（保留最新 7 个）==="
             gh api "repos/${{ github.repository }}/releases?per_page=100" \
-              --jq 'sort_by(.published_at // .created_at) | reverse | .[].tag_name' 2>/dev/null \
-              | grep -E "^${PREFIX}-" | tail -n +8 | while read -r TAG; do
+              --jq 'sort_by(.published_at // .created_at) | reverse | .[] | select((.tag_name | startswith("'"${PREFIX}-"'")) or ((.tag_name | startswith("'"${DEVICE}-"'")) and (.name | startswith("10Wrt OpenWrt ")))) | .tag_name' 2>/dev/null \
+              | tail -n +8 | while read -r TAG; do
                 echo "删除旧 Release/Tag: ${TAG}"
                 gh release delete "$TAG" --yes --cleanup-tag \
                   --repo ${{ github.repository }} || \
