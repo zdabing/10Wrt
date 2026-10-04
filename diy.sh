@@ -125,7 +125,6 @@ clone_or_warn() {
     fi
 }
 
-clone_or_warn "https://github.com/sbwml/luci-app-quickfile.git"   "package/new/quickfile" "luci-app-quickfile"
 clone_or_warn "https://github.com/svenshi/luci-app-oxidns.git"    "package/new/luci-app-oxidns" "luci-app-oxidns"
 # 同一份 Zen 源码提供主题、Rust 流量后端和 LuCI 应用，缺包时停止构建。
 ZEN_SOURCE=$(mktemp -d)

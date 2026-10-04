@@ -36,7 +36,6 @@
 | **luci-app-upnp** | UPnP IGD / NAT-PMP | |
 | **luci-app-3cat** | 3Cat 工具 | |
 | **luci-app-wol** | 网络唤醒 | |
-| **luci-app-quickfile** | 文件管理器 | [sbwml/luci-app-quickfile](https://github.com/sbwml/luci-app-quickfile) |
 | **luci-app-ttyd** | 网页终端 | |
 | **luci-app-firewall** | 防火墙管理 | |
 | **luci-theme-zen** | Zen 主题（默认）：首页仪表盘、明暗切换、响应式侧栏 | [zdabing/luci-zen](https://github.com/zdabing/luci-zen) |
