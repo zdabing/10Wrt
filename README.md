@@ -5,7 +5,7 @@
 
 基于 [OpenWrt openwrt-25.12](https://github.com/openwrt/openwrt/tree/openwrt-25.12) 分支源码，使用 GitHub Actions 自动编译 x86/64 和 NanoPi R5C 固件。
 
-配置仓库分支：[`openwrt`](https://github.com/zdabing/10Wrt/tree/openwrt) 编译 OpenWrt；[`immortalwrt`](https://github.com/zdabing/10Wrt/tree/immortalwrt)（默认）编译 ImmortalWrt。
+配置仓库分支：[`openwrt`](https://github.com/zdabing/10Wrt/tree/openwrt) 编译 OpenWrt；[`main`](https://github.com/zdabing/10Wrt/tree/main)（默认）编译 ImmortalWrt。
 [Releases](https://github.com/zdabing/10Wrt/releases) 标题按 `10Wrt OpenWrt / ImmortalWrt 设备 — 日期` 区分；新 Tag 使用 `openwrt-` / `immortalwrt-` 前缀，各源码、各设备分别保留最新 7 个版本。
 
 两个构建工作流默认使用 `openwrt-25.12` 分支，也可以在手动运行时修改 OpenWrt 源码分支。

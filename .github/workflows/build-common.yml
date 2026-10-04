@@ -328,7 +328,7 @@ jobs:
           OpenWrt 与第三方源码提交号见 10wrt-sources.tsv。
           EOF
           cat "$FIRMWARE_DIR/10wrt-update-notes.md" >> release-notes.md
-          # --target 必须指定：缺省时 tag 打到默认分支 immortalwrt 的 HEAD，
+          # --target 必须指定：缺省时 tag 打到默认分支 main 的 HEAD，
           # Release 的 created_at 会取那个提交的日期——默认分支停在旧日期时
           # 新 Release 会被下方"保留最新 7 个"清理步骤当成最旧的删掉。
           gh release create "$TAG" "${ASSETS[@]}" \
