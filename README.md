@@ -5,6 +5,9 @@
 
 基于 [ImmortalWrt](https://github.com/immortalwrt/immortalwrt) 源码，使用 GitHub Actions 自动编译 x86/64 和 NanoPi R5C 固件。
 
+配置仓库分支：[`immortalwrt`](https://github.com/zdabing/10Wrt/tree/immortalwrt)（默认）编译 ImmortalWrt；[`openwrt`](https://github.com/zdabing/10Wrt/tree/openwrt) 编译 OpenWrt。
+[Releases](https://github.com/zdabing/10Wrt/releases) 标题按 `10Wrt ImmortalWrt / OpenWrt 设备 — 日期` 区分；新 Tag 使用 `immortalwrt-` / `openwrt-` 前缀，各源码、各设备分别保留最新 7 个版本。
+
 管理地址: **http://10.0.0.1**
 
 ## 固件特性
@@ -96,7 +99,7 @@ git push
 **方式一：手动触发**
 1. 打开 GitHub 仓库 → **Actions** 标签
 2. 选择 **Build NanoPi R5C** 或 **Build x86/64**
-3. 点击 **Run workflow** → 选择分支 → 点击 **Run**
+3. 点击 **Run workflow** → 选择 `immortalwrt` 分支 → 点击 **Run**
 
 Zen 源码使用 `luci-zen` 仓库的 `main` 分支。
 

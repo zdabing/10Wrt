@@ -1,4 +1,5 @@
 name: Build NanoPi R5C
+run-name: Build ImmortalWrt NanoPi R5C
 
 on:
   workflow_dispatch:
@@ -158,7 +159,7 @@ jobs:
       - name: 上传固件
         uses: actions/upload-artifact@v7
         with:
-          name: 10Wrt-r5c-${{ github.run_id }}
+          name: 10Wrt-immortalwrt-r5c-${{ github.run_id }}
           path: |
             immortalwrt/bin/targets/**/*.img.gz
             immortalwrt/bin/targets/**/*.img
@@ -171,7 +172,7 @@ jobs:
       - name: 生成固件清单
         if: always()
         run: |
-          echo "## 10Wrt NanoPi R5C 编译结果" >> $GITHUB_STEP_SUMMARY
+          echo "## 10Wrt ImmortalWrt NanoPi R5C 编译结果" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           if [ -d immortalwrt/bin/targets ]; then
             echo "### 固件文件" >> $GITHUB_STEP_SUMMARY
@@ -185,8 +186,8 @@ jobs:
       - name: 发布到 Release
         run: |
           shopt -s nullglob
-          TAG="r5c-$(TZ=Asia/Shanghai date +%Y.%m.%d)-${{ github.run_number }}"
-          TITLE="10Wrt NanoPi R5C — $(TZ=Asia/Shanghai date +%Y-%m-%d)"
+          TAG="immortalwrt-r5c-$(TZ=Asia/Shanghai date +%Y.%m.%d)-${{ github.run_number }}"
+          TITLE="10Wrt ImmortalWrt NanoPi R5C — $(TZ=Asia/Shanghai date +%Y-%m-%d)"
           FIRMWARE_DIR=$(find immortalwrt/bin/targets -mindepth 1 -type d -name "armv8" 2>/dev/null | head -1)
           if [ -z "$FIRMWARE_DIR" ]; then
             echo "警告：未找到固件目录，跳过发布"
@@ -203,16 +204,17 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
 
-      - name: 清理旧 Release/Tag（每设备系列仅保留最新 7 个）
+      - name: 清理旧 Release/Tag（ImmortalWrt 每设备系列仅保留最新 7 个）
         run: |
-          # 每次构建成功后自动清理：r5c / x86_64 各保留最新 7 个 Release，
+          # 仅清理 ImmortalWrt，按设备各保留最新 7 个；旧 Tag 通过标题区分源码。
           # 更旧的 Release 与其 git tag 一并删除（--cleanup-tag）。
           # 若构建失败则本步骤不执行，不会误删。
-          for PREFIX in r5c x86_64; do
+          for DEVICE in r5c x86_64; do
+            PREFIX="immortalwrt-${DEVICE}"
             echo "=== 清理前缀 ${PREFIX}（保留最新 7 个）==="
             gh api "repos/${{ github.repository }}/releases?per_page=100" \
-              --jq 'sort_by(.published_at // .created_at) | reverse | .[].tag_name' 2>/dev/null \
-              | grep -E "^${PREFIX}-" | tail -n +8 | while read -r TAG; do
+              --jq 'sort_by(.published_at // .created_at) | reverse | .[] | select((.tag_name | startswith("'"${PREFIX}-"'")) or ((.tag_name | startswith("'"${DEVICE}-"'")) and (.name | startswith("10Wrt ImmortalWrt ")))) | .tag_name' 2>/dev/null \
+              | tail -n +8 | while read -r TAG; do
                 echo "删除旧 Release/Tag: ${TAG}"
                 gh release delete "$TAG" --yes --cleanup-tag \
                   --repo ${{ github.repository }} || \
