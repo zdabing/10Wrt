@@ -33,7 +33,9 @@ jobs:
           path: config
 
       - name: 验证发布脚本
-        run: python3 config/.github/scripts/test-publish-firmware.py
+        run: |
+          python3 config/.github/scripts/test-publish-firmware.py
+          python3 config/.github/scripts/test-zen-support.py
 
       - name: 清理磁盘空间
         run: |
@@ -97,6 +99,7 @@ jobs:
         run: |
           cd immortalwrt
           make defconfig
+          python3 ../config/.github/scripts/export-zen-support.py . --check-config
           echo "=== 关键配置项 ==="
           grep -E '^(CONFIG_TARGET|CONFIG_PACKAGE_luci)' .config | sort
 
@@ -154,6 +157,9 @@ jobs:
 
         timeout-minutes: 360
 
+      - name: 保留匹配固件的 Zen 与内核模块
+        run: python3 config/.github/scripts/export-zen-support.py immortalwrt --target rockchip/armv8
+
       - name: 调试 - 列出构建输出
         if: always()
         run: |
@@ -171,6 +177,7 @@ jobs:
             immortalwrt/bin/targets/**/*.img.gz
             immortalwrt/bin/targets/**/*.img
             immortalwrt/bin/targets/**/*.bin
+            immortalwrt/bin/targets/**/zen-support.json
             immortalwrt/bin/targets/**/*.tar.gz
             immortalwrt/bin/targets/**/immortalwrt-*-*
           if-no-files-found: warn

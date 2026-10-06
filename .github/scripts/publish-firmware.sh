@@ -9,10 +9,17 @@ case "$device" in
   x86_64) device_title='x86/64' ;;
   *) echo "Unsupported device: $device" >&2; exit 1 ;;
 esac
-assets=("$firmware_dir"/*.img.gz "$firmware_dir"/*.img "$firmware_dir"/*.tar.gz)
+assets=("$firmware_dir"/*.img.gz "$firmware_dir"/*.img)
+for file in "$firmware_dir"/*.tar.gz; do
+  [[ "${file##*/}" = zen-support.tar.gz ]] || assets+=("$file")
+done
 if ((${#assets[@]} == 0)); then
   echo "No firmware files in $firmware_dir; refusing to publish an empty release" >&2
   exit 1
+fi
+
+if [[ -f "$firmware_dir/zen-support.tar.gz" ]]; then
+  assets+=("$firmware_dir/zen-support.tar.gz" "$firmware_dir/zen-support.json")
 fi
 
 # Capture one instant for the tag, title and annotated tag date, including

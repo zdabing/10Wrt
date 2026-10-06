@@ -168,3 +168,11 @@ dd if=immortalwrt-*-x86-64-generic-ext4-combined-efi.img of=/dev/sdX bs=4M statu
 ## 免责声明
 
 本固件仅供学习研究使用，请勿用于任何商业用途。使用本固件所导致的任何损失由使用者自行承担。
+
+## Zen eBPF 安装依赖与配套模块
+
+两个目标明确内置 `zen-traffic`、`kmod-sched-bpf`、`kmod-sched-core`。构建会验证选包和实际内核 BPF 能力，缺少配套包时停止发布。
+
+每次固件附带 `zen-support.tar.gz` 和 `zen-support.json`，保留同一构建的目标 APK 软件源、签名公钥、三个 Zen 功能包及配置/校验清单。该归档只用于对应固件，不能把其他构建的内核模块混装；用户态依赖仍使用匹配软件源。
+
+Zen 签名软件源与安装入口说明：[APK 安装与发布](https://github.com/zdabing/luci-zen/blob/main/docs/APK-DISTRIBUTION.md)。官方 OpenWrt 软件源不自动用于 ImmortalWrt 或其他自编译固件。
