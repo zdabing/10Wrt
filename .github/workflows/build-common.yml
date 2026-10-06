@@ -21,10 +21,6 @@ on:
         required: false
         default: true
         type: boolean
-    secrets:
-      RELEASE_TOKEN:
-        description: '本仓库 Contents 和 Workflows 写权限的发布令牌；仅正式发布需要'
-        required: false
 
 jobs:
   firmware:
@@ -40,17 +36,6 @@ jobs:
       ZEN_REF: ${{ inputs.zen_ref }}
 
     steps:
-      - name: 检查发布令牌
-        if: inputs.publish_release
-        env:
-          GH_TOKEN: ${{ secrets.RELEASE_TOKEN }}
-        run: |
-          if [ -z "$GH_TOKEN" ]; then
-            echo '::error::发布需要仓库 Secret RELEASE_TOKEN：使用仅授权本仓库的 fine-grained PAT，Contents 和 Workflows 均设为 Read and write。测试编译请关闭发布 Release。'
-            exit 1
-          fi
-          gh api "repos/$GITHUB_REPOSITORY" --silent
-
       - name: 检出配置仓库
         uses: actions/checkout@v6
         with:
@@ -294,7 +279,7 @@ jobs:
         run: |
           bash config/.github/scripts/publish-firmware.sh "$BUILD_TARGET" "openwrt/bin/targets/${FIRMWARE_TARGET}"
         env:
-          GH_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
 
       - name: 清理旧 Release/Tag（OpenWrt 本设备系列仅保留最新 7 个）
         if: success() && inputs.publish_release
@@ -316,7 +301,7 @@ jobs:
           done
           echo "清理完成"
         env:
-          GH_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
 
       - name: 清理旧 dl 缓存（每个 key 仅保留最新 1 个版本）
         run: |

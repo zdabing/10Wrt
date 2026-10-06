@@ -17,8 +17,6 @@ concurrency:
 jobs:
   build:
     uses: ./.github/workflows/build-common.yml
-    secrets:
-      RELEASE_TOKEN: ${{ secrets.RELEASE_TOKEN }}
     with:
       target: x86_64
       version: ${{ inputs.version || 'openwrt-25.12' }}

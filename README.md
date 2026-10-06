@@ -8,9 +8,9 @@
 配置仓库分支：[`openwrt`](https://github.com/zdabing/10Wrt/tree/openwrt) 编译 OpenWrt；[`main`](https://github.com/zdabing/10Wrt/tree/main)（默认）编译 ImmortalWrt。
 下载请优先打开 [最新发布](https://github.com/zdabing/10Wrt/releases/latest)，并核对标题中的设备和源码类型；[全部发布](https://github.com/zdabing/10Wrt/releases) 包含历史版本。
 OpenWrt 新发布使用 `v年.月.日-t时分秒-openwrt-设备-构建编号-重试编号` 标签，与 ImmortalWrt 使用相同的日期、时间排序格式。
-标签在固件身份写入时确定，镜像内身份、更新元数据和下载标签保持一致；发布时创建采用当前时间的附注标签，避免旧源码提交日期影响列表排序。
+标签在固件身份写入时确定，镜像内身份、更新元数据和下载标签保持一致；由 Release 发布流程直接创建标签，指向实际配置源码提交，使用默认 `GITHUB_TOKEN`。
 标题显示构建完成时间（UTC+8）、设备及构建编号，发布说明保留校验和、软件包清单和源码记录，并链接对应 Actions 构建。
-各源码、各设备分别保留最新 7 个版本，清理兼容新旧标签；已有发布和下载链接保持不变。
+各源码、各设备按 Release 发布时间分别保留最新 7 个版本，清理兼容新旧标签；使用 `--latest` 指定最新发布，不再额外创建附注标签调整日期。
 
 两个构建工作流默认使用 `openwrt-25.12` 分支，也可以在手动运行时修改 OpenWrt 源码分支。
 
@@ -140,14 +140,6 @@ R5C 还可选择 **Zen 源码分支或标签**，默认 `main`；验收修复版
 及 OpenWrt 源码分支分别独立。构建记录会保存实际检出的 Zen 提交号。
 **发布 Release** 默认关闭：测试时只生成固件 artifact 和耗时记录，不发布或删除
 已有 Release/Tag。正式发布时才勾选；x86/64 原有发布行为保持不变。
-
-正式发布前，在仓库 **Settings → Secrets and variables → Actions** 中添加
-`RELEASE_TOKEN`：创建 fine-grained PAT，只授权 `zdabing/10Wrt`，将 **Contents**
-和 **Workflows** 设为 **Read and write**。编译期间分支可能更新，默认
-`GITHUB_TOKEN` 给包含工作流变更的旧提交打标签可能返回 `403`，不能仅靠
-`contents: write` 解决（[GitHub 标签权限说明](https://docs.github.com/en/rest/git/refs#create-a-reference)）。
-发布与旧版本清理使用此令牌，缓存仍使用默认令牌。未配置或令牌无效时在编译前停止；
-关闭 Release 的 R5C 测试构建不需要此令牌。预检查只验证令牌能访问仓库，写权限需按上述设置。
 
 **方式二：推送代码自动触发**
 - 如需推送触发，在 workflow 文件中添加 `push` 触发器即可

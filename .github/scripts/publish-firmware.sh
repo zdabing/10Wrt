@@ -18,11 +18,10 @@ if ((${#assets[@]} == 0)); then
   exit 1
 fi
 
-# Use one instant for the completion title and annotated tag date.
+# Record build completion in the release title and notes.
 # The tag name was already stamped into the firmware before image generation.
 epoch=$(date +%s)
 display_date=$(TZ=UTC-8 date -d "@$epoch" +'%Y-%m-%d %H:%M:%S')
-tag_date=$(date -u -d "@$epoch" +'%Y-%m-%dT%H:%M:%SZ')
 tag=${FIRMWARE_TAG:?Expected the tag stamped into the firmware identity}
 title="10Wrt OpenWrt ${device_title} — ${display_date} (UTC+8) · #${GITHUB_RUN_NUMBER}.${GITHUB_RUN_ATTEMPT}"
 
@@ -37,16 +36,6 @@ done
 assets+=("$firmware_dir/SHA256SUMS" "$firmware_dir/10wrt-packages.manifest"
          "$firmware_dir/10wrt-sources.tsv" "$firmware_dir/10wrt-update.json")
 
-# Lightweight tags inherit the source commit date for release ordering.
-# Annotated tags retain the source SHA but date the release at build completion.
-tag_sha=$(gh api --method POST "repos/$GITHUB_REPOSITORY/git/tags" \
-  -f tag="$tag" -f message="$title" -f object="$GITHUB_SHA" -f type=commit \
-  -f 'tagger[name]=github-actions[bot]' \
-  -f 'tagger[email]=41898282+github-actions[bot]@users.noreply.github.com' \
-  -f "tagger[date]=$tag_date" --jq .sha)
-gh api --method POST "repos/$GITHUB_REPOSITORY/git/refs" \
-  -f "ref=refs/tags/$tag" -f sha="$tag_sha" >/dev/null
-
 notes=$(mktemp)
 trap 'rm -f "$notes"' EXIT
 cat > "$notes" <<EOF
@@ -57,7 +46,9 @@ cat > "$notes" <<EOF
 - 构建记录：https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}
 EOF
 cat "$firmware_dir/10wrt-update-notes.md" >> "$notes"
-gh release create "$tag" "${assets[@]}" --verify-tag \
+# Let the release API create the tag at the exact configuration commit.
+# Cleanup sorts by published_at; it does not require an annotated tag date.
+gh release create "$tag" "${assets[@]}" --target "$GITHUB_SHA" \
   --title "$title" --notes-file "$notes" --latest --repo "$GITHUB_REPOSITORY"
 printf '\n### 已发布固件\n\n[%s](https://github.com/%s/releases/tag/%s)\n' \
   "$title" "$GITHUB_REPOSITORY" "$tag" >> "$GITHUB_STEP_SUMMARY"
