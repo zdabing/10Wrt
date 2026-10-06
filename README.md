@@ -8,7 +8,7 @@
 配置仓库分支：[`main`](https://github.com/zdabing/10Wrt/tree/main)（默认）编译 ImmortalWrt；[`openwrt`](https://github.com/zdabing/10Wrt/tree/openwrt) 编译 OpenWrt。
 下载请优先打开 [最新发布](https://github.com/zdabing/10Wrt/releases/latest)，并核对标题中的设备和源码类型；[全部发布](https://github.com/zdabing/10Wrt/releases) 包含历史版本。
 ImmortalWrt 新发布统一使用 `v年.月.日-t时分秒-immortalwrt-设备-构建编号-重试编号` 标签，例如 `v2026.10.6-t014347-immortalwrt-r5c-73-1`。
-标签采用构建完成时间的附注标签，避免复用旧源码提交时日期排序滞后；标题显示 UTC+8 时间、设备及构建编号，发布说明链接到对应 Actions 构建。
+标签名和标题采用构建完成时间（UTC+8），包含设备及构建编号；由 Release 发布流程直接创建标签，指向实际配置源码提交，使用默认 `GITHUB_TOKEN`。发布说明链接到对应 Actions 构建，旧版本按 Release 发布时间清理，使用 `--latest` 指定最新发布。
 各源码、各设备分别保留最新 7 个版本，清理同时识别新旧标签；已有发布和下载链接保持不变。OpenWrt 分支的发布规则由该分支维护。
 
 管理地址: **http://10.0.0.1**

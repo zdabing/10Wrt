@@ -12,7 +12,7 @@ BASH = os.environ.get('BASH_BIN') or shutil.which('bash') or '/bin/bash'
 
 
 class PublicationTests(unittest.TestCase):
-    def publish(self, device='r5c', assets=True, fail_tag=False):
+    def publish(self, device='r5c', assets=True, fail_release=False):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             firmware = root / 'firmware with spaces'
@@ -30,17 +30,14 @@ if [[ "$*" == '+%s' ]]; then echo 1791222227; else /usr/bin/date "$@"; fi
                 'gh': '''#!/usr/bin/env bash
 printf '%s\\0' "$@" >> "$TEST_LOG"
 printf '\\0' >> "$TEST_LOG"
-if [[ "$*" == *'/git/tags'* ]]; then
-  [[ "$FAIL_TAG" != 1 ]] || exit 1
-  echo aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-fi
+[[ "$FAIL_RELEASE" != 1 ]] || exit 1
 ''',
             }
             for name, body in scripts.items():
                 path = mocks / name
                 path.write_text(body, encoding='utf-8', newline='\n')
                 path.chmod(0o755)
-            env = dict(os.environ, TEST_LOG=log.as_posix(), FAIL_TAG=str(int(fail_tag)),
+            env = dict(os.environ, TEST_LOG=log.as_posix(), FAIL_RELEASE=str(int(fail_release)),
                        GITHUB_REPOSITORY='owner/repo', GITHUB_SHA='b' * 40,
                        GITHUB_RUN_NUMBER='73', GITHUB_RUN_ATTEMPT='2',
                        GITHUB_RUN_ID='37331650703', GITHUB_STEP_SUMMARY=summary.as_posix())
@@ -52,23 +49,19 @@ fi
             calls = [row.decode().split('\0') for row in log.read_bytes().split(b'\0\0') if row]
             return result, calls, summary.read_text(encoding='utf-8') if summary.exists() else ''
 
-    def test_both_devices_use_build_date_and_annotated_tag(self):
+    def test_both_devices_publish_at_exact_source_commit(self):
         for device in ('r5c', 'x86_64'):
             with self.subTest(device=device):
                 result, calls, summary = self.publish(device)
                 self.assertEqual(result.returncode, 0, result.stderr)
-                self.assertEqual(len(calls), 3)
+                self.assertEqual(len(calls), 1)
                 tag = f'v2026.10.6-t014347-immortalwrt-{device}-73-2'
-                self.assertIn('tag=' + tag, calls[0])
-                self.assertIn('object=' + 'b' * 40, calls[0])
-                self.assertIn('tagger[date]=2026-10-05T17:43:47Z', calls[0])
-                self.assertIn('ref=refs/tags/' + tag, calls[1])
-                self.assertIn('sha=' + 'a' * 40, calls[1])
-                self.assertEqual(calls[2][:3], ['release', 'create', tag])
-                self.assertIn('--verify-tag', calls[2])
-                self.assertIn('--latest', calls[2])
-                self.assertIn('--notes-file', calls[2])
-                self.assertTrue(any('firmware with spaces/firmware.img.gz' in arg for arg in calls[2]))
+                self.assertEqual(calls[0][:3], ['release', 'create', tag])
+                self.assertEqual(calls[0][calls[0].index('--target') + 1], 'b' * 40)
+                self.assertNotIn('--verify-tag', calls[0])
+                self.assertIn('--latest', calls[0])
+                self.assertIn('--notes-file', calls[0])
+                self.assertTrue(any('firmware with spaces/firmware.img.gz' in arg for arg in calls[0]))
                 self.assertIn('2026-10-06 01:43:47 (UTC+8)', summary)
                 self.assertIn('/releases/tag/' + tag, summary)
 
@@ -77,10 +70,11 @@ fi
         self.assertNotEqual(result.returncode, 0)
         self.assertEqual(calls, [])
 
-    def test_failed_tag_creation_does_not_publish_release(self):
-        result, calls, _ = self.publish(fail_tag=True)
+    def test_failed_release_does_not_report_success(self):
+        result, calls, summary = self.publish(fail_release=True)
         self.assertNotEqual(result.returncode, 0)
         self.assertEqual(len(calls), 1)
+        self.assertEqual(summary, '')
 
     def test_unknown_device_is_rejected(self):
         result, calls, _ = self.publish(device='unknown')
