@@ -6,7 +6,11 @@
 基于 [OpenWrt openwrt-25.12](https://github.com/openwrt/openwrt/tree/openwrt-25.12) 分支源码，使用 GitHub Actions 自动编译 x86/64 和 NanoPi R5C 固件。
 
 配置仓库分支：[`openwrt`](https://github.com/zdabing/10Wrt/tree/openwrt) 编译 OpenWrt；[`main`](https://github.com/zdabing/10Wrt/tree/main)（默认）编译 ImmortalWrt。
-[Releases](https://github.com/zdabing/10Wrt/releases) 标题按 `10Wrt OpenWrt / ImmortalWrt 设备 — 日期` 区分；新 Tag 使用 `openwrt-` / `immortalwrt-` 前缀，各源码、各设备分别保留最新 7 个版本。
+下载请优先打开 [最新发布](https://github.com/zdabing/10Wrt/releases/latest)，并核对标题中的设备和源码类型；[全部发布](https://github.com/zdabing/10Wrt/releases) 包含历史版本。
+OpenWrt 新发布使用 `v年.月.日-t时分秒-openwrt-设备-构建编号-重试编号` 标签，与 ImmortalWrt 使用相同的日期、时间排序格式。
+标签在固件身份写入时确定，镜像内身份、更新元数据和下载标签保持一致；发布时创建采用当前时间的附注标签，避免旧源码提交日期影响列表排序。
+标题显示构建完成时间（UTC+8）、设备及构建编号，发布说明保留校验和、软件包清单和源码记录，并链接对应 Actions 构建。
+各源码、各设备分别保留最新 7 个版本，清理兼容新旧标签；已有发布和下载链接保持不变。
 
 两个构建工作流默认使用 `openwrt-25.12` 分支，也可以在手动运行时修改 OpenWrt 源码分支。
 
