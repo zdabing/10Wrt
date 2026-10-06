@@ -42,7 +42,9 @@ jobs:
           path: config
 
       - name: 验证发布脚本
-        run: python3 config/.github/scripts/test-publish-firmware.py
+        run: |
+          python3 config/.github/scripts/test-publish-firmware.py
+          python3 config/.github/scripts/test-zen-support.py
 
       - name: 载入设备配置
         run: bash config/scripts/build-target-env.sh "${{ inputs.target }}" >> "$GITHUB_ENV"
@@ -149,6 +151,7 @@ jobs:
           fi
           echo "设备配置验证通过：${TARGET_LABEL}"
           # 一次核对 seed，避免缺失的软件源被 defconfig 静默丢弃。
+          python3 ../config/.github/scripts/export-zen-support.py . --check-config
           bash ../config/scripts/validate-seed-packages.sh "../${SEED_PATH}" .config
           grep -qxF 'CONFIG_LUCI_LANG_zh_Hans=y' .config || {
             echo '错误：LuCI 简体中文配置未生效'
@@ -200,6 +203,7 @@ jobs:
 
       - name: 生成并验证发布记录
         run: |
+          python3 config/.github/scripts/export-zen-support.py openwrt --target "$FIRMWARE_TARGET"
           bash config/scripts/create-build-records.sh "$FIRMWARE_TARGET" "$GITHUB_SHA"
           python3 config/scripts/firmware-update-metadata.py release --firmware-dir "openwrt/bin/targets/$FIRMWARE_TARGET"
 
@@ -234,6 +238,7 @@ jobs:
             openwrt/bin/targets/**/*.img.gz
             openwrt/bin/targets/**/*.img
             openwrt/bin/targets/**/*.bin
+            openwrt/bin/targets/**/zen-support.json
             openwrt/bin/targets/**/*.tar.gz
             openwrt/bin/targets/**/openwrt-*-*
             openwrt/bin/targets/**/SHA256SUMS

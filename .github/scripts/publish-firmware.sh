@@ -9,7 +9,10 @@ case "$device" in
   x86_64) device_title='x86/64' ;;
   *) echo "Unsupported device: $device" >&2; exit 1 ;;
 esac
-assets=("$firmware_dir"/*.img.gz "$firmware_dir"/*.img "$firmware_dir"/*.tar.gz)
+assets=("$firmware_dir"/*.img.gz "$firmware_dir"/*.img)
+for file in "$firmware_dir"/*.tar.gz; do
+  [[ "${file##*/}" = zen-support.tar.gz ]] || assets+=("$file")
+done
 if ((${#assets[@]} == 0)); then
   echo "No firmware files in $firmware_dir; refusing to publish an empty release" >&2
   exit 1
@@ -24,6 +27,10 @@ tag=${FIRMWARE_TAG:?Expected the tag stamped into the firmware identity}
 title="10Wrt OpenWrt ${device_title} — ${display_date} (UTC+8) · #${GITHUB_RUN_NUMBER}.${GITHUB_RUN_ATTEMPT}"
 
 # Keep the existing firmware identity, checksums and update metadata together.
+if [[ -f "$firmware_dir/zen-support.tar.gz" ]]; then
+  assets+=("$firmware_dir/zen-support.tar.gz" "$firmware_dir/zen-support.json")
+fi
+
 for name in SHA256SUMS 10wrt-packages.manifest 10wrt-sources.tsv 10wrt-update.json 10wrt-update-notes.md; do
   test -s "$firmware_dir/$name"
 done

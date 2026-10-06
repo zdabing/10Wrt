@@ -284,3 +284,11 @@ R5C 构建现增加独立的 Rust 分发包缓存：首次仍按 OpenWrt 配方�
 ### Zen 固件版本与更新信息
 
 `openwrt` 构建前写入 `/usr/share/10wrt/release.json`，包含设备 target/profile、发布 tag、构建号及配置提交。构建后从 OpenWrt `profiles.json` 校验同设备可刷写镜像，发布 `10wrt-update.json`，并在 Release 正文附加同一元数据，供 Zen 设置页手动检查更新。R5C 使用 sysupgrade；x86 使用 combined/combined-efi，排除单独 rootfs 镜像。保留 `/etc` 配置不会覆盖这个构建标识。旧固件缺少标识时显示当前构建未知。测试：`python3 scripts/test-firmware-update-metadata.py`。
+
+## Zen eBPF 安装依赖与配套模块
+
+两个目标明确内置 `zen-traffic`、`kmod-sched-bpf`、`kmod-sched-core`。构建会验证选包和实际内核 BPF 能力，缺少配套包时停止发布。
+
+每次固件附带 `zen-support.tar.gz` 和 `zen-support.json`，保留同一构建的目标 APK 软件源、签名公钥、三个 Zen 功能包及配置/校验清单。该归档只用于对应固件，不能把其他构建的内核模块混装；用户态依赖仍使用匹配软件源。
+
+Zen 签名软件源与安装入口说明：[APK 安装与发布](https://github.com/zdabing/luci-zen/blob/main/docs/APK-DISTRIBUTION.md)。官方 OpenWrt 软件源不自动用于 ImmortalWrt 或其他自编译固件。
