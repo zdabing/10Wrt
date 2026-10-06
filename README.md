@@ -81,6 +81,7 @@ x86/64 与 NanoPi R5C 均集成 Zen 的主题、流量后端和 LuCI 应用，�
 ### 首次启动自动配置
 
 - 开启 **Packet Steering**（多队列软中断均衡）
+- 默认启用 **irqbalance** 分配硬件中断；R5C 的 ImmortalWrt `kmod-r8125` 默认支持 RSS 与多发送队列。
 - 时区设为 `Asia/Shanghai`
 - Luci 诊断地址改百度
 
