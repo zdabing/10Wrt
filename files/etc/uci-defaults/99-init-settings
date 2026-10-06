@@ -8,6 +8,11 @@
 uci -q get network.globals.packet_steering >/dev/null || \
 uci set network.globals.packet_steering='1'
 
+# ---- IRQ Balance（自动分配硬件中断）----
+if [ -x /etc/init.d/irqbalance ]; then
+    uci set irqbalance.irqbalance.enabled='1'
+fi
+
 # ---- 时区设为 Asia/Shanghai ----
 uci set system.@system[0].timezone='CST-8'
 uci set system.@system[0].zonename='Asia/Shanghai'

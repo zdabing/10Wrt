@@ -123,7 +123,9 @@ CONFIG_PACKAGE_kmod-usb-storage-extras=y
 CONFIG_PACKAGE_kmod-usb3=y
 CONFIG_PACKAGE_lsblk=y
 
-CONFIG_PACKAGE_kmod-r8125=y
+# RSS 变体启用多接收队列与多发送队列，配合 irqbalance 分配中断。
+# CONFIG_PACKAGE_kmod-r8125 is not set
+CONFIG_PACKAGE_kmod-r8125-rss=y
 
 # 压缩选项
 CONFIG_KERNEL_ZSTD=y

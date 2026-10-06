@@ -82,6 +82,7 @@ OpenWrt 新发布使用 `v年.月.日-t时分秒-openwrt-设备-构建编号-重
 ### 首次启动自动配置
 
 - 开启 **Packet Steering**（多队列软中断均衡）
+- 默认启用 **irqbalance** 分配硬件中断；R5C 使用 `kmod-r8125-rss` 启用多接收队列和多发送队列，与普通 `kmod-r8125` 互斥。
 - 时区设为 `Asia/Shanghai`
 - Luci 诊断地址改百度
 - 启动小米 CDN 坏节点规避（`/root/mijia-guard.sh`，之后每 15 分钟由 cron 接管）
