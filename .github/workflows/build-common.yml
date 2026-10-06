@@ -99,7 +99,7 @@ jobs:
           cp config/diy.sh openwrt/
           chmod +x openwrt/diy.sh
           cd openwrt
-          ./diy.sh
+          ./diy.sh "../$SEED_PATH"
 
       - name: R5C Rust 编译器复用官方 LLVM
         if: inputs.target == 'r5c'

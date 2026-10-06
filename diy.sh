@@ -6,6 +6,12 @@
 
 set -e
 
+# 在 feeds 更新前读取 seed，避免 feeds 刷新 .config 时改变安装清单。
+SEED_FILE=${1:-.config}
+[ -f "$SEED_FILE" ] || { echo "错误：缺少种子配置：$SEED_FILE" >&2; exit 1; }
+mapfile -t SEED_PACKAGES < <(sed -n 's/\r$//; s/^CONFIG_PACKAGE_\([^=]*\)=[ym]$/\1/p' "$SEED_FILE" | sort -u)
+(( ${#SEED_PACKAGES[@]} > 0 )) || { echo '错误：seed 未选择任何软件包' >&2; exit 1; }
+
 echo ">>> [diy.sh] 开始自定义配置..."
 
 # ---- 编译优化：Os（体积优先）→ O2（性能优先）----
@@ -61,26 +67,6 @@ echo ">>> 默认 LAN 地址已改为 10.0.0.1"
 echo ">>> 更新 feeds..."
 ./scripts/feeds update -a
 
-# luci-app-weechat 的 +weechat 虚拟依赖会同时引用 full/minimal 两个提供者，
-# full 对 minimal 的冲突约束导致 Kconfig 循环，即使 seed 未选 WeeChat 也会报错。
-# 显式依赖默认的 headless minimal 变体，在 feeds 建索引/安装前修正。
-WEECHAT_LUCI_MAKEFILE="feeds/luci/applications/luci-app-weechat/Makefile"
-if [ -f "$WEECHAT_LUCI_MAKEFILE" ] &&
-   grep -Eq '^LUCI_DEPENDS.*\+weechat([[:space:]]|$)' "$WEECHAT_LUCI_MAKEFILE"; then
-    sed -i -E '/^LUCI_DEPENDS/s/\+weechat([[:space:]]|$)/+weechat-minimal\1/g' "$WEECHAT_LUCI_MAKEFILE"
-    echo ">>> luci-app-weechat 已固定依赖 weechat-minimal，避免 Kconfig 依赖循环"
-fi
-
-# packages feed 的 squeezelite-custom 可能产生 Kconfig 循环：
-# PACKAGE_squeezelite-custom -> SQUEEZELITE_WMA_ALAC -> PACKAGE_squeezelite-custom。
-# 本项目未选择该变体；保留 squeezelite-full/dynamic，跳过 custom 声明。
-SQUEEZE_MAKEFILE="feeds/packages/sound/squeezelite/Makefile"
-if [ -f "$SQUEEZE_MAKEFILE" ] &&
-   grep -qxF '$(eval $(call BuildPackage,squeezelite-custom))' "$SQUEEZE_MAKEFILE"; then
-    sed -i '/BuildPackage,squeezelite-custom/d' "$SQUEEZE_MAKEFILE"
-    echo ">>> 已跳过未选用的 squeezelite-custom，避免 Kconfig 依赖循环"
-fi
-
 # ============================================================
 # 替换优化版软件包（在 feeds install 之前）
 # ============================================================
@@ -128,16 +114,12 @@ sed -i 's/cheaper = 1/cheaper = 2/g' feeds/packages/net/uwsgi/files-luci-support
 sed -i 's/option timeout 30/option timeout 60/g' package/system/rpcd/files/rpcd.config 2>/dev/null || true
 sed -i 's#20) \* 1000#60) \* 1000#g' feeds/luci/modules/luci-base/htdocs/luci-static/resources/rpc.js 2>/dev/null || true
 
-# ---- 安装 feeds ----
-echo ">>> 安装 feeds..."
-./scripts/feeds install -a
-
 # ============================================================
-# 第三方插件（feeds install -a 之后添加，再注册进 feeds）
+# 第三方插件（先准备所有软件源，再按 seed 安装）
 # ============================================================
 
-mkdir -p package/new
-SOURCE_REVISIONS_FILE="package/new/.source-revisions.tsv"
+mkdir -p custom-packages
+SOURCE_REVISIONS_FILE="custom-packages/.source-revisions.tsv"
 : > "$SOURCE_REVISIONS_FILE"
 if [ -n "$NODE_PREBUILT_REV" ]; then
     printf '%s\t%s\t%s\n' 'node-prebuilt' 'https://github.com/QiuSimons/OpenWrt-Add.git' "$NODE_PREBUILT_REV" >> "$SOURCE_REVISIONS_FILE"
@@ -158,19 +140,19 @@ clone_required() {
 }
 
 # 暂停 Quickfile：上游改为 Rust 源码版，当前工具链链接失败。
-# clone_required "https://github.com/sbwml/luci-app-quickfile.git" "package/new/quickfile" "luci-app-quickfile"
-clone_required "https://github.com/hahaher123/luci-app-oxidns.git" "package/new/luci-app-oxidns" "luci-app-oxidns"
+# clone_required "https://github.com/sbwml/luci-app-quickfile.git" "custom-packages/quickfile" "luci-app-quickfile"
+clone_required "https://github.com/hahaher123/luci-app-oxidns.git" "custom-packages/luci-app-oxidns" "luci-app-oxidns"
 # 从同一份 luci-zen 源码集成主题、Rust 流量后端和 LuCI 流量应用。
 ZEN_SOURCE=$(mktemp -d)
 clone_required "https://github.com/zdabing/luci-zen.git" "$ZEN_SOURCE" "luci-zen" "${ZEN_REF:-main}"
 for pkg in luci-theme-zen zen-traffic luci-app-zen-traffic; do
     test -f "$ZEN_SOURCE/$pkg/Makefile"
-    cp -R "$ZEN_SOURCE/$pkg" "package/new/$pkg"
+    cp -R "$ZEN_SOURCE/$pkg" "custom-packages/$pkg"
 done
 rm -rf "$ZEN_SOURCE"
 # 主题 Makefile 自包含，中文翻译由 luci-base/host 的 po2lmo 生成并随包安装。
 # Rust/C LTO 的 SQLite 链接兼容配置由 Zen 自身 Makefile 提供。
-# clone_required "https://github.com/nikkinikki-org/OpenWrt-nikki.git" "package/new/nikki" "luci-app-nikki"  # 已注释：不再使用
+# clone_required "https://github.com/nikkinikki-org/OpenWrt-nikki.git" "custom-packages/nikki" "luci-app-nikki"  # 已注释：不再使用
 
 # ---- Mihomo 格式 geodata（来自 MetaCubeX/meta-rules-dat）----
 # 关键：Clashoo 基于 Mihomo 内核，需要 MetaCubeX 格式的 geodata！
@@ -216,21 +198,26 @@ KENZOK8_FEED="src-git kenzok8 https://github.com/kenzok8/openwrt-clashoo.git"
 if ! grep -qF "$KENZOK8_FEED" feeds.conf.default; then
     echo "$KENZOK8_FEED" >> feeds.conf.default
     ./scripts/feeds update kenzok8
-    ./scripts/feeds install -a -p kenzok8
     echo ">>> 已添加 kenzok8/openwrt-clashoo 软件源"
 else
     echo ">>> kenzok8 feed 已存在，跳过"
 fi
 
-# ---- 将 package/new 注册为本地 feed ----
-echo ">>> 注册 package/new 为本地 feed..."
+# ---- 将 custom-packages 注册为本地 feed ----
+echo ">>> 注册 custom-packages 为本地 feed..."
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-NEW_FEED="src-link new ${SCRIPT_DIR}/package/new"
+NEW_FEED="src-link new ${SCRIPT_DIR}/custom-packages"
 if ! grep -qF "$NEW_FEED" feeds.conf.default; then
     echo "$NEW_FEED" >> feeds.conf.default
 fi
 ./scripts/feeds update new
-./scripts/feeds install -a -p new
-echo ">>> package/new 已注册并安装到 feeds"
+# 重建被本地修改过的包索引（Node.js / LuCI），不重新下载。
+./scripts/feeds update -i packages luci
+
+# 清理旧的全量 feed 链接，只注册 seed 所需的源包及其递归依赖。
+# feeds install 自动处理运行依赖和 /host 构建依赖；同一源包的变体仍会一起注册。
+./scripts/feeds uninstall -a
+./scripts/feeds install -p new "${SEED_PACKAGES[@]}"
+echo ">>> 已按 seed 注册 ${#SEED_PACKAGES[@]} 个软件包及其依赖"
 
 echo ">>> [diy.sh] 自定义配置完成"

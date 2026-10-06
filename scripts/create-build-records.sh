@@ -57,8 +57,8 @@ test -s "$firmware_dir/10wrt-packages.manifest" || {
         test -d "$feed/.git" || continue
         printf 'feed/%s\t%s\t%s\n' "${feed##*/}" "$(git -C "$feed" remote get-url origin)" "$(git -C "$feed" rev-parse HEAD)"
     done
-    if test -f openwrt/package/new/.source-revisions.tsv; then
-        cat openwrt/package/new/.source-revisions.tsv
+    if test -f openwrt/custom-packages/.source-revisions.tsv; then
+        cat openwrt/custom-packages/.source-revisions.tsv
     fi
 } > "$firmware_dir/10wrt-sources.tsv"
 

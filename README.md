@@ -211,7 +211,10 @@ dd if=openwrt-*-x86-64-generic-ext4-combined-efi.img of=/dev/sdX bs=4M status=pr
 
 工作流安装 clang/LLVM，seed 使用 `/usr` 下的主机 BPF 工具链。
 主题和流量页面由 seed 选择，流量后端与内核模块由软件包依赖自动带入。
-配置展开后只核对设备、seed 软件包和简体中文开关；编译失败会停止构建。
+`diy.sh` 按 seed 中选中的软件包注册 feeds，由 OpenWrt 自动补齐运行和构建依赖，
+不再执行 `feeds install -a`。未使用的 WeeChat 等源包不会接入固件 Kconfig；
+被选中源包的其他变体仍会一起注册。配置展开后核对设备、seed 软件包和简体中文开关。
+编译失败会停止构建。Linux 本地调用时传入 seed，例如 `./diy.sh ../config/configs/r5c.seed`。
 不再单独运行 eBPF 探测、冷暖缓存基准或上传阶段耗时记录。
 
 保留下载缓存、R5C 官方 CI LLVM 复用和匹配的 Rust 分发包缓存，减少重复构建。
@@ -219,15 +222,15 @@ dd if=openwrt-*-x86-64-generic-ext4-combined-efi.img of=/dev/sdX bs=4M status=pr
 
 后续只修改 Zen 时，优先在保留的同目标 Linux OpenWrt 工作目录中单独重编三包，
 保留 `staging_dir` 和工具链。替换源码后只清理修改的包，不执行整个 `dirclean`。
-例如当前项目集成路径为 `package/new`：
+第三方源码放在 `custom-packages`，通过 `new` feed 按需接入构建。重编译路径为：
 
 ```sh
-make package/new/zen-traffic/clean
-make package/new/zen-traffic/compile V=s -j"$(nproc)"
-make package/new/luci-theme-zen/clean
-make package/new/luci-theme-zen/compile V=s -j"$(nproc)"
-make package/new/luci-app-zen-traffic/clean
-make package/new/luci-app-zen-traffic/compile V=s -j"$(nproc)"
+make package/feeds/new/zen-traffic/clean
+make package/feeds/new/zen-traffic/compile V=s -j"$(nproc)"
+make package/feeds/new/luci-theme-zen/clean
+make package/feeds/new/luci-theme-zen/compile V=s -j"$(nproc)"
+make package/feeds/new/luci-app-zen-traffic/clean
+make package/feeds/new/luci-app-zen-traffic/compile V=s -j"$(nproc)"
 ```
 
 只改主题/应用时跳过后端两条命令。向现有路由器安装包前核对目标、固件和依赖
