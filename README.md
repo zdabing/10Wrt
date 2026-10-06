@@ -6,7 +6,10 @@
 基于 [ImmortalWrt](https://github.com/immortalwrt/immortalwrt) 源码，使用 GitHub Actions 自动编译 x86/64 和 NanoPi R5C 固件。
 
 配置仓库分支：[`main`](https://github.com/zdabing/10Wrt/tree/main)（默认）编译 ImmortalWrt；[`openwrt`](https://github.com/zdabing/10Wrt/tree/openwrt) 编译 OpenWrt。
-[Releases](https://github.com/zdabing/10Wrt/releases) 标题按 `10Wrt ImmortalWrt / OpenWrt 设备 — 日期` 区分；新 Tag 使用 `immortalwrt-` / `openwrt-` 前缀，各源码、各设备分别保留最新 7 个版本。
+下载请优先打开 [最新发布](https://github.com/zdabing/10Wrt/releases/latest)，并核对标题中的设备和源码类型；[全部发布](https://github.com/zdabing/10Wrt/releases) 包含历史版本。
+ImmortalWrt 新发布统一使用 `v年.月.日-t时分秒-immortalwrt-设备-构建编号-重试编号` 标签，例如 `v2026.10.6-t014347-immortalwrt-r5c-73-1`。
+标签采用构建完成时间的附注标签，避免复用旧源码提交时日期排序滞后；标题显示 UTC+8 时间、设备及构建编号，发布说明链接到对应 Actions 构建。
+各源码、各设备分别保留最新 7 个版本，清理同时识别新旧标签；已有发布和下载链接保持不变。OpenWrt 分支的发布规则由该分支维护。
 
 管理地址: **http://10.0.0.1**
 

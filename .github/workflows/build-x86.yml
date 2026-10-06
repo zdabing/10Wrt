@@ -14,6 +14,10 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: write
+  actions: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -27,6 +31,9 @@ jobs:
         uses: actions/checkout@v6
         with:
           path: config
+
+      - name: 验证发布脚本
+        run: python3 config/.github/scripts/test-publish-firmware.py
 
       - name: 清理磁盘空间
         run: |
@@ -185,22 +192,8 @@ jobs:
 
       - name: 发布到 Release
         run: |
-          shopt -s nullglob
-          TAG="immortalwrt-x86_64-$(TZ=Asia/Shanghai date +%Y.%m.%d)-${{ github.run_number }}"
-          TITLE="10Wrt ImmortalWrt x86/64 — $(TZ=Asia/Shanghai date +%Y-%m-%d)"
           FIRMWARE_DIR=$(find immortalwrt/bin/targets -mindepth 1 -type d -name "64" 2>/dev/null | head -1)
-          if [ -z "$FIRMWARE_DIR" ]; then
-            echo "警告：未找到固件目录，跳过发布"
-            exit 0
-          fi
-          echo "固件目录: $FIRMWARE_DIR"
-          ls -lh "$FIRMWARE_DIR"/
-          gh release create "$TAG" $FIRMWARE_DIR/*.img.gz $FIRMWARE_DIR/*.img $FIRMWARE_DIR/*.tar.gz \
-            --target "$GITHUB_SHA" \
-            --title "$TITLE" \
-            --notes "### 管理地址: http://10.0.0.1" \
-            --latest \
-            --repo ${{ github.repository }}
+          bash config/.github/scripts/publish-firmware.sh x86_64 "$FIRMWARE_DIR"
         env:
           GH_TOKEN: ${{ github.token }}
 
@@ -213,7 +206,7 @@ jobs:
             PREFIX="immortalwrt-${DEVICE}"
             echo "=== 清理前缀 ${PREFIX}（保留最新 7 个）==="
             gh api "repos/${{ github.repository }}/releases?per_page=100" \
-              --jq 'sort_by(.published_at // .created_at) | reverse | .[] | select((.tag_name | startswith("'"${PREFIX}-"'")) or ((.tag_name | startswith("'"${DEVICE}-"'")) and (.name | startswith("10Wrt ImmortalWrt ")))) | .tag_name' 2>/dev/null \
+              --jq 'sort_by(.published_at // .created_at) | reverse | .[] | select((.tag_name | test("^v[0-9]+\\.[0-9]+\\.[0-9]+-t[0-9]{6}-'"${PREFIX}"'-[0-9]+-[0-9]+$")) or (.tag_name | startswith("'"${PREFIX}-"'")) or ((.tag_name | startswith("'"${DEVICE}-"'")) and (.name | startswith("10Wrt ImmortalWrt ")))) | .tag_name' 2>/dev/null \
               | tail -n +8 | while read -r TAG; do
                 echo "删除旧 Release/Tag: ${TAG}"
                 gh release delete "$TAG" --yes --cleanup-tag \
