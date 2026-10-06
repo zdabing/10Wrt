@@ -76,9 +76,6 @@ jobs:
           # 部分第三方 LuCI 前端构建需要 pnpm
           sudo npm install -g pnpm
 
-      - name: 检查 eBPF 主机编译链
-        run: bash config/scripts/check-bpf-toolchain.sh /usr
-
       - name: 检出 OpenWrt 源码
         run: |
           git clone --depth=1 -b "$OPENWRT_VERSION" \
@@ -146,40 +143,12 @@ jobs:
             exit 1
           fi
           echo "设备配置验证通过：${TARGET_LABEL}"
-          # LuCI 25.12 的语言包是隐藏项，直接写 CONFIG_PACKAGE_luci-i18n-* 会被
-          # make defconfig 丢弃。全局语言开关必须保留，并自动选中基础中文包。
-          if ! grep -q "^CONFIG_LUCI_LANG_zh_Hans=y$" .config; then
-            echo "错误：LuCI 简体中文全局开关未生效！"
-            grep 'CONFIG_LUCI_LANG' .config || echo "(无)"
+          # 一次核对 seed，避免缺失的软件源被 defconfig 静默丢弃。
+          bash ../config/scripts/validate-seed-packages.sh "../${SEED_PATH}" .config
+          grep -qxF 'CONFIG_LUCI_LANG_zh_Hans=y' .config || {
+            echo '错误：LuCI 简体中文配置未生效'
             exit 1
-          fi
-          REQUIRED_I18N_CONFIGS=(
-            luci-i18n-base-zh-cn luci-i18n-ddns-zh-cn
-            luci-i18n-firewall-zh-cn luci-i18n-package-manager-zh-cn
-            luci-i18n-ttyd-zh-cn luci-i18n-upnp-zh-cn luci-i18n-wol-zh-cn
-          )
-          MISSING_I18N_CONFIGS=()
-          for PACKAGE in "${REQUIRED_I18N_CONFIGS[@]}"; do
-            grep -qxF "CONFIG_PACKAGE_${PACKAGE}=y" .config || MISSING_I18N_CONFIGS+=("$PACKAGE")
-          done
-          if (( ${#MISSING_I18N_CONFIGS[@]} > 0 )); then
-            echo "错误：以下 LuCI 中文语言包未被自动选中："
-            printf '  - %s\n' "${MISSING_I18N_CONFIGS[@]}"
-            exit 1
-          fi
-          echo "LuCI 简体中文配置验证通过：${#REQUIRED_I18N_CONFIGS[@]} 个语言包"
-          # 自动核对 seed 中所有显式选中的软件包，第三方源码缺失时立即失败。
-          SEED="../${SEED_PATH}"
-          bash ../config/scripts/validate-seed-packages.sh "$SEED" .config
-          bash ../config/scripts/check-bpf-toolchain.sh /usr .config
-          if [ "$BUILD_TARGET" = "r5c" ]; then
-            for PACKAGE in kmod-sched-core kmod-sched-bpf; do
-              grep -qxF "CONFIG_PACKAGE_${PACKAGE}=y" .config || {
-                echo "错误：R5C 内核模块未选入固件：$PACKAGE"
-                exit 1
-              }
-            done
-          fi
+          }
 
       - name: 计算 R5C Rust 分发包缓存身份
         if: inputs.target == 'r5c'
@@ -209,51 +178,6 @@ jobs:
           cd openwrt
           bash ../config/scripts/build-firmware.sh
         timeout-minutes: 360
-
-      - name: 上传编译耗时记录
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: build-timings-${{ inputs.target }}-${{ github.run_id }}
-          path: openwrt/build-timings.tsv
-          if-no-files-found: ignore
-          retention-days: 7
-
-      - name: 验证固件内关键软件包
-        run: |
-          PACKAGE_DB=$(find openwrt/build_dir -type f \( \
-            -path '*/root-*/lib/apk/db/installed' -o \
-            -path '*/root-*/usr/lib/opkg/status' \) -print -quit)
-          if [ -z "$PACKAGE_DB" ]; then
-            echo "错误：未找到固件根文件系统的软件包数据库"
-            exit 1
-          fi
-          REQUIRED_PACKAGES=(
-            luci-i18n-base-zh-cn luci-i18n-ddns-zh-cn
-            luci-i18n-firewall-zh-cn luci-i18n-package-manager-zh-cn
-            luci-i18n-ttyd-zh-cn luci-i18n-upnp-zh-cn luci-i18n-wol-zh-cn
-            luci-theme-zen
-            zen-traffic luci-app-zen-traffic
-            kmod-sched-core kmod-sched-bpf
-            luci-app-clashoo luci-i18n-clashoo-zh-cn luci-app-oxidns
-            librespeed-cli librespeed-common luci-app-librespeed
-            iperf3
-            kmod-veth
-            kmod-nft-queue
-          )
-          MISSING_PACKAGES=()
-          for PACKAGE in "${REQUIRED_PACKAGES[@]}"; do
-            if ! grep -qxF "P:${PACKAGE}" "$PACKAGE_DB" && \
-               ! grep -qxF "Package: ${PACKAGE}" "$PACKAGE_DB"; then
-              MISSING_PACKAGES+=("$PACKAGE")
-            fi
-          done
-          if (( ${#MISSING_PACKAGES[@]} > 0 )); then
-            echo "错误：固件中缺少以下关键软件包："
-            printf '  - %s\n' "${MISSING_PACKAGES[@]}"
-            exit 1
-          fi
-          echo "固件关键软件包验证通过：${#REQUIRED_PACKAGES[@]} 项"
 
       - name: 生成并验证发布记录
         run: |

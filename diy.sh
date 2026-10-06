@@ -61,6 +61,16 @@ echo ">>> 默认 LAN 地址已改为 10.0.0.1"
 echo ">>> 更新 feeds..."
 ./scripts/feeds update -a
 
+# luci-app-weechat 的 +weechat 虚拟依赖会同时引用 full/minimal 两个提供者，
+# full 对 minimal 的冲突约束导致 Kconfig 循环，即使 seed 未选 WeeChat 也会报错。
+# 显式依赖默认的 headless minimal 变体，在 feeds 建索引/安装前修正。
+WEECHAT_LUCI_MAKEFILE="feeds/luci/applications/luci-app-weechat/Makefile"
+if [ -f "$WEECHAT_LUCI_MAKEFILE" ] &&
+   grep -Eq '^LUCI_DEPENDS.*\+weechat([[:space:]]|$)' "$WEECHAT_LUCI_MAKEFILE"; then
+    sed -i -E '/^LUCI_DEPENDS/s/\+weechat([[:space:]]|$)/+weechat-minimal\1/g' "$WEECHAT_LUCI_MAKEFILE"
+    echo ">>> luci-app-weechat 已固定依赖 weechat-minimal，避免 Kconfig 依赖循环"
+fi
+
 # packages feed 的 squeezelite-custom 可能产生 Kconfig 循环：
 # PACKAGE_squeezelite-custom -> SQUEEZELITE_WMA_ALAC -> PACKAGE_squeezelite-custom。
 # 本项目未选择该变体；保留 squeezelite-full/dynamic，跳过 custom 声明。

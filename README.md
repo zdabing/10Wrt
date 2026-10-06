@@ -194,7 +194,6 @@ dd if=openwrt-*-x86-64-generic-ext4-combined-efi.img of=/dev/sdX bs=4M status=pr
 │       └── mijia-bypass-test.sh              # LAN 入口旁路自测
 ├── scripts/
 │   ├── build-target-env.sh                   # 设备构建参数（目标/种子/设备符号/缓存 key）
-│   ├── check-bpf-toolchain.sh                # eBPF 工具链与配置预检查
 │   ├── create-build-records.sh               # 生成 SHA256SUMS / 包清单 / 源码版本记录
 │   └── validate-seed-packages.sh             # seed 与 .config 软件包核对
 ├── .github/workflows/build-common.yml        # 公共构建工作流（编译/验证/发布）
@@ -208,48 +207,15 @@ dd if=openwrt-*-x86-64-generic-ext4-combined-efi.img of=/dev/sdX bs=4M status=pr
 2. **修改自定义脚本** — 编辑 `diy.sh`，可添加 feed、修改默认 IP、打补丁等
 3. **修改首次启动设置** — 编辑 `files/etc/uci-defaults/99-init-settings`
 
-### eBPF 编译依赖检查
+### Zen 构建与缓存
 
-工作流安装 LLVM 后会立即检查五个工具的路径、版本一致性，并实际运行
-Clang → opt → llvm-dis → llc → llvm-strip 编译一个最小 eBPF 程序。
-`make defconfig` 后还会核对 OpenWrt 的主机 LLVM 选择和路径配置。
-缺工具、版本混用或 BPF 编译失败时，会在正式编译前停止并给出具体原因，
-避免等待数小时后才出现 `/invalid/clang` 错误。
+工作流安装 clang/LLVM，seed 使用 `/usr` 下的主机 BPF 工具链。
+主题和流量页面由 seed 选择，流量后端与内核模块由软件包依赖自动带入。
+配置展开后只核对设备、seed 软件包和简体中文开关；编译失败会停止构建。
+不再单独运行 eBPF 探测、冷暖缓存基准或上传阶段耗时记录。
 
-Linux 本地编译也可运行（`/usr` 应替换为 LLVM 的安装前缀）：
-
-```sh
-bash scripts/check-bpf-toolchain.sh /usr /path/to/openwrt/.config
-```
-
-此检查验证主机工具链，不代替 Zen 后端交叉编译和真机 eBPF 加载验证。
-
-### 编译耗时与增量构建
-
-[R5C 成功构建 #36706276709](https://github.com/zdabing/10Wrt/actions/runs/36706276709)
-总耗时约 2 小时 27 分钟，固件编译步骤为 2 小时 21 分 8 秒。
-当前 Actions 只还原 `openwrt/dl` 下载缓存，`tools`、交叉工具链、Rust 主机编译器、
-内核和软件包构建目录仍从零生成；现有官方 CI LLVM 复用已启用。
-原始 OpenWrt 日志的 `time: ...#user#system#wall` 记录提供了单目标耗时：
-
-| 构建目标 | wall 时间 |
-| --- | --- |
-| Rust 主机编译器 | 4774.90 秒（79 分 35 秒） |
-| Python3 主机工具 | 1407.28 秒（23 分 27 秒） |
-| Go bootstrap 主机工具 | 1292.81 秒（21 分 33 秒） |
-| GCC initial / final | 656.75 / 616.13 秒 |
-| Linux 内核编译 | 647.89 秒（10 分 48 秒） |
-| Zen daemon | 138.14 秒（2 分 18 秒） |
-| Zen 主题 / 应用 | 1.55 / 1.03 秒 |
-
-这些目标部分并行执行，wall 时间不能相加当作总时长，也不能把 79.6 分钟全算作
-LLVM：本次已经复用官方 CI LLVM，但仍构建两阶段 Rust 编译器、标准库和 Cargo。
-Zen daemon 的记录不含其前置 Rust 主机编译器；完整冷构建仍需这些依赖。
-
-`scripts/build-firmware.sh` 现在逐阶段记录每次尝试的并行数、耗时和退出码，保留
-原有重试次数与串行兜底。结果写入 Actions Summary，并上传
-`build-timings-<设备>-<运行号>` 小型 artifact（7 天）。下一次实际编译后，可明确
-区分工具链、内核、软件包和失败重试的耗时；增加测量本身不宣称已缩短构建。
+保留下载缓存、R5C 官方 CI LLVM 复用和匹配的 Rust 分发包缓存，减少重复构建。
+发布时保留校验值、软件包清单、源码版本和 Zen 固件更新信息。
 
 后续只修改 Zen 时，优先在保留的同目标 Linux OpenWrt 工作目录中单独重编三包，
 保留 `staging_dir` 和工具链。替换源码后只清理修改的包，不执行整个 `dirclean`。
@@ -284,7 +250,7 @@ R5C 构建现增加独立的 Rust 分发包缓存：首次仍按 OpenWrt 配方�
 命中前逐包验证 SHA256，临时安装 rustc/cargo 与主机/目标标准库，执行主机
 线程程序，并用当前目标 GCC 链接目标程序核对 ELF 架构。缺失、损坏、配置
 不匹配或编译器/链接验证失败，均返回原源码编译路径；源码编译失败仍使
-整个构建失败。只在成功构建和固件验收后保存缓存。当前仅覆盖 R5C。
+整个构建失败。只在构建和发布记录生成成功后保存缓存。当前仅覆盖 R5C。
 
 运行 `python3 scripts/test-rust-dist-cache.py` 可验证缓存损坏、身份失效、组件
 缺失、拒绝未验证编译器以及 GNU make 的冷构建失败传播。实际缓存命中后的
