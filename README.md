@@ -141,6 +141,14 @@ R5C 还可选择 **Zen 源码分支或标签**，默认 `main`；验收修复版
 **发布 Release** 默认关闭：测试时只生成固件 artifact 和耗时记录，不发布或删除
 已有 Release/Tag。正式发布时才勾选；x86/64 原有发布行为保持不变。
 
+正式发布前，在仓库 **Settings → Secrets and variables → Actions** 中添加
+`RELEASE_TOKEN`：创建 fine-grained PAT，只授权 `zdabing/10Wrt`，将 **Contents**
+和 **Workflows** 设为 **Read and write**。编译期间分支可能更新，默认
+`GITHUB_TOKEN` 给包含工作流变更的旧提交打标签可能返回 `403`，不能仅靠
+`contents: write` 解决（[GitHub 标签权限说明](https://docs.github.com/en/rest/git/refs#create-a-reference)）。
+发布与旧版本清理使用此令牌，缓存仍使用默认令牌。未配置或令牌无效时在编译前停止；
+关闭 Release 的 R5C 测试构建不需要此令牌。预检查只验证令牌能访问仓库，写权限需按上述设置。
+
 **方式二：推送代码自动触发**
 - 如需推送触发，在 workflow 文件中添加 `push` 触发器即可
 
