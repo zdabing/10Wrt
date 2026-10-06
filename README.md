@@ -217,7 +217,11 @@ dd if=openwrt-*-x86-64-generic-ext4-combined-efi.img of=/dev/sdX bs=4M status=pr
 编译失败会停止构建。Linux 本地调用时传入 seed，例如 `./diy.sh ../config/configs/r5c.seed`。
 不再单独运行 eBPF 探测、冷暖缓存基准或上传阶段耗时记录。
 
-保留下载缓存、R5C 官方 CI LLVM 复用和匹配的 Rust 分发包缓存，减少重复构建。
+构建环境固定为 Ubuntu 24.04；先执行 `make download`，再执行顶层 `make world`，
+由 OpenWrt 管理工具链、内核、软件包、镜像、索引和构建信息。并行失败后只重试一次单线程。
+下载完成后保存新的缓存 key，下次按设备和源码分支前缀恢复，编译失败也能复用已下载源码。
+失败日志保留 7 天，包含自定义脚本、配置展开、下载和编译日志。
+保留 R5C 官方 CI LLVM 复用和匹配的 Rust 分发包缓存，减少重复构建。
 发布时保留校验值、软件包清单、源码版本和 Zen 固件更新信息。
 
 后续只修改 Zen 时，优先在保留的同目标 Linux OpenWrt 工作目录中单独重编三包，

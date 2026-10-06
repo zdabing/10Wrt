@@ -25,7 +25,7 @@ on:
 jobs:
   firmware:
     name: 编译固件
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: write   # 创建/删除 Release 与 Tag
       actions: write    # 清理旧 dl 缓存
@@ -82,11 +82,15 @@ jobs:
             "$OPENWRT_REPO" openwrt
 
       - name: 还原 dl 缓存
-        uses: actions/cache@v5
+        id: dl-cache
+        uses: actions/cache/restore@v5
         with:
           path: openwrt/dl
-          key: dl-openwrt-${{ inputs.target == 'x86_64' && 'x86' || 'r5c' }}
-          restore-keys: dl-openwrt-
+          key: dl-openwrt-${{ env.CACHE_SUFFIX }}-${{ env.OPENWRT_VERSION }}-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            dl-openwrt-${{ env.CACHE_SUFFIX }}-${{ env.OPENWRT_VERSION }}-
+            dl-openwrt-${{ env.CACHE_SUFFIX }}-
+            dl-openwrt-
 
       - name: 复制 files 覆盖层
         run: |
@@ -99,7 +103,8 @@ jobs:
           cp config/diy.sh openwrt/
           chmod +x openwrt/diy.sh
           cd openwrt
-          ./diy.sh "../$SEED_PATH"
+          set -o pipefail
+          ./diy.sh "../$SEED_PATH" 2>&1 | tee diy.log
 
       - name: R5C Rust 编译器复用官方 LLVM
         if: inputs.target == 'r5c'
@@ -173,6 +178,20 @@ jobs:
           echo "FIRMWARE_TAG=$FIRMWARE_TAG" >> "$GITHUB_ENV"
           python3 config/scripts/firmware-update-metadata.py stamp
 
+      - name: 下载构建源码
+        run: |
+          cd openwrt
+          set -o pipefail
+          make download -j$(nproc) V=s 2>&1 | tee -a download.log || \
+            make download -j1 V=s 2>&1 | tee -a download.log
+        timeout-minutes: 60
+
+      - name: 保存更新的 dl 缓存
+        uses: actions/cache/save@v5
+        with:
+          path: openwrt/dl
+          key: ${{ steps.dl-cache.outputs.cache-primary-key }}
+
       - name: 编译固件
         run: |
           cd openwrt
@@ -192,6 +211,19 @@ jobs:
           echo ""
           echo "=== build.log 最后 30 行 ==="
           tail -30 openwrt/build.log 2>/dev/null || echo "(无 build.log)"
+
+      - name: 上传失败日志
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: build-logs-${{ inputs.target }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            openwrt/diy.log
+            openwrt/defconfig.log
+            openwrt/download.log
+            openwrt/build.log
+          if-no-files-found: ignore
+          retention-days: 7
 
       - name: 上传固件
         if: success()
@@ -268,8 +300,7 @@ jobs:
 
       - name: 清理旧 dl 缓存（每个 key 仅保留最新 1 个版本）
         run: |
-          # Actions 免费额度仅 0.5GB 存储（缓存+构件），dl 缓存每次构建都会给同一 key 新增一个版本，
-          # 不清理会持续累积。这里只保留每个 key 最新 1 个版本，其余删除。
+          # 每次下载后保存新的缓存 key；本设备只保留最新一份下载缓存。
           for KEY in "dl-openwrt-${CACHE_SUFFIX}"; do
             echo "=== 清理缓存前缀 ${KEY} ==="
             gh api "repos/${{ github.repository }}/actions/caches?per_page=100" \

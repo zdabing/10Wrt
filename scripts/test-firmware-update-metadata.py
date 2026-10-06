@@ -13,23 +13,23 @@ spec.loader.exec_module(module)
 
 
 class FirmwareTests(unittest.TestCase):
-    def build_profiles(self, root, firmware, profiles, fail=False):
-        # 模拟 OpenWrt 分阶段构建：target/install 只写单镜像 JSON，
-        # json_overview_image_info 才生成发布脚本需要的 profiles.json。
+    def build_profiles(self, root, firmware, profiles, fail=False, retry=False):
+        # 模拟顶层 world 生成镜像及 profiles.json，并保留失败传播检查。
         tools = root / 'tools'
         tools.mkdir()
         make = tools / 'make'
         make.write_text('''#!/usr/bin/env bash
 set -eu
+printf '%s\n' "$*" >> make-calls.log
 case "$1" in
-    target/install)
+    world)
+        [ "$FAIL_OVERVIEW" = 0 ] || exit 23
+        if [ "$RETRY_PARALLEL" = 1 ] && [ "$2" != -j1 ]; then exit 17; fi
         mkdir -p json_info_files
         cp image-fixture.json json_info_files/image.json
-        ;;
-    json_overview_image_info)
-        [ "$FAIL_OVERVIEW" = 0 ] || exit 23
         cp json_info_files/image.json "$FIXTURE_FIRMWARE_DIR/profiles.json"
         ;;
+    *) exit 99 ;;
 esac
 ''', encoding='utf-8', newline='\n')
         make.chmod(0o755)
@@ -38,11 +38,11 @@ esac
         script.write_text(Path(__file__).with_name('build-firmware.sh').read_text(encoding='utf-8'),
                           encoding='utf-8', newline='\n')
         env = dict(os.environ, PATH=str(tools) + os.pathsep + os.environ['PATH'],
-                   BUILD_JOBS='1', FIXTURE_FIRMWARE_DIR=firmware.as_posix(),
+                   BUILD_JOBS='2', RETRY_PARALLEL='1' if retry else '0', FIXTURE_FIRMWARE_DIR=firmware.as_posix(),
                    FAIL_OVERVIEW='1' if fail else '0',
                    GITHUB_STEP_SUMMARY=str(root / 'summary.md'))
         return subprocess.run(['bash', script.as_posix()], cwd=root, env=env,
-                              capture_output=True, text=True)
+                              capture_output=True, text=True, encoding='utf-8')
 
     def test_r5c_and_x86_exact_profile_images(self):
         for device, target, image_type, filename in [
@@ -68,6 +68,17 @@ esac
                 profiles['target'] = 'wrong/target'
                 (firmware / 'profiles.json').write_text(json.dumps(profiles))
                 with self.assertRaises(ValueError): module.release(overlay, firmware)
+
+    def test_parallel_failure_retries_serially(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            firmware = root / 'firmware'
+            firmware.mkdir()
+            result = self.build_profiles(root, firmware, {}, retry=True)
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assertEqual((root / 'make-calls.log').read_text().splitlines(),
+                             ['world -j2 V=s', 'world -j1 V=s'])
+            self.assertTrue((firmware / 'profiles.json').exists())
 
     def test_overview_generation_failure_stops_build(self):
         with tempfile.TemporaryDirectory() as directory:
