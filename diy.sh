@@ -109,10 +109,10 @@ echo ">>> 安装 feeds..."
 ./scripts/feeds install -a
 
 # ============================================================
-# 第三方插件（feeds install -a 之后添加，再注册进 feeds）
+# 自定义软件包（按项目放入 package/，由构建系统直接扫描）
 # ============================================================
 
-mkdir -p package/new
+mkdir -p package/custom package/zen
 
 clone_or_warn() {
     local repo="$1" dst="$2" name="$3" branch="$4"
@@ -125,65 +125,20 @@ clone_or_warn() {
     fi
 }
 
-clone_or_warn "https://github.com/svenshi/luci-app-oxidns.git"    "package/new/luci-app-oxidns" "luci-app-oxidns"
-# 从 Zen 仓库导入主题、流量后端和 LuCI 应用。
+clone_or_warn "https://github.com/svenshi/luci-app-oxidns.git" "package/custom/luci-app-oxidns" "luci-app-oxidns"
+# 从自有 zdabing/luci-zen 项目导入三个软件包，单独放入 package/zen。
+# 这是编译源码目录，不注册为 feed，也不生成虚假的在线 APK 仓库。
 ZEN_SOURCE=$(mktemp -d)
 git clone --depth 1 --branch main https://github.com/zdabing/luci-zen.git "$ZEN_SOURCE"
 for pkg in luci-theme-zen zen-traffic luci-app-zen-traffic; do
-    cp -R "$ZEN_SOURCE/$pkg" "package/new/$pkg"
+    mkdir -p "package/zen/$pkg"
+    cp -R "$ZEN_SOURCE/$pkg/." "package/zen/$pkg/"
 done
 echo ">>> 已集成 Zen 主题与流量统计：$(git -C "$ZEN_SOURCE" rev-parse HEAD)"
 rm -rf "$ZEN_SOURCE"
-# clone_or_warn "https://github.com/nikkinikki-org/OpenWrt-nikki.git" "package/new/nikki"    "luci-app-nikki"  # 已注释：不再使用
-
-# ---- Mihomo 格式 geodata（来自 MetaCubeX/meta-rules-dat）----
-# 关键：Clashoo 基于 Mihomo 内核，需要 MetaCubeX 格式的 geodata！
-# 不能用 V2Ray 格式（/usr/share/v2ray/geosite.dat）混用，否则报：
-#   "list cn not found" / "proto: cannot parse invalid wire-format data"
-#
-# 各组件 geodata 分布：
-#   /etc/nikki/run/GeoSite.dat    → Mihomo 格式（MetaCubeX）         → Nikki  # 已注释
-#   /etc/clashoo/GeoSite.dat      → Mihomo 格式（MetaCubeX）         → Clashoo
-#   /usr/share/daed/geosite.dat   → daed 自带                        → Daed  # 已注释
-echo ">>> 下载 Mihomo 格式 geodata (MetaCubeX/meta-rules-dat)..."
-META_GEO_URL="https://github.com/MetaCubeX/meta-rules-dat/releases/latest/download"
-
-# Nikki 工作目录: /etc/nikki/run/
-# mkdir -p files/etc/nikki/run
-# wget -q --show-progress -O files/etc/nikki/run/GeoSite.dat "${META_GEO_URL}/geosite.dat" || echo "!!! 警告：Nikki GeoSite.dat 下载失败"
-# wget -q --show-progress -O files/etc/nikki/run/GeoIP.dat   "${META_GEO_URL}/geoip.dat"   || echo "!!! 警告：Nikki GeoIP.dat 下载失败"
-# echo ">>> Nikki geodata → files/etc/nikki/run/"
-
-# Clashoo 工作目录: /etc/clashoo/
-# mkdir -p files/etc/clashoo
-# wget -q --show-progress -O files/etc/clashoo/GeoSite.dat   "${META_GEO_URL}/geosite.dat" || echo "!!! 警告：Clashoo GeoSite.dat 下载失败"
-# wget -q --show-progress -O files/etc/clashoo/GeoIP.dat     "${META_GEO_URL}/geoip.dat"   || echo "!!! 警告：Clashoo GeoIP.dat 下载失败"
-# echo ">>> Clashoo geodata → files/etc/clashoo/"
 
 # ---- 默认使用 Zen 主题 ----
 sed -i 's|/luci-static/bootstrap|/luci-static/zen|g' feeds/luci/modules/luci-base/root/etc/config/luci
 echo ">>> 默认主题已改为 luci-theme-zen"
-
-# ---- kenzok8 feed ----
-KENZOK8_FEED="src-git kenzok8 https://github.com/kenzok8/openwrt-clashoo.git"
-if ! grep -qF "$KENZOK8_FEED" feeds.conf.default; then
-    echo "$KENZOK8_FEED" >> feeds.conf.default
-    ./scripts/feeds update kenzok8
-    ./scripts/feeds install -a -p kenzok8
-    echo ">>> 已添加 kenzok8/openwrt-clashoo 软件源"
-else
-    echo ">>> kenzok8 feed 已存在，跳过"
-fi
-
-# ---- 将 package/new 注册为本地 feed ----
-echo ">>> 注册 package/new 为本地 feed..."
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-NEW_FEED="src-link new ${SCRIPT_DIR}/package/new"
-if ! grep -qF "$NEW_FEED" feeds.conf.default; then
-    echo "$NEW_FEED" >> feeds.conf.default
-fi
-./scripts/feeds update new
-./scripts/feeds install -a -p new
-echo ">>> package/new 已注册并安装到 feeds"
 
 echo ">>> [diy.sh] 自定义配置完成"
