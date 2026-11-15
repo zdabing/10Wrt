@@ -141,7 +141,6 @@ clone_required() {
 
 # 暂停 Quickfile：上游改为 Rust 源码版，当前工具链链接失败。
 # clone_required "https://github.com/sbwml/luci-app-quickfile.git" "custom-packages/quickfile" "luci-app-quickfile"
-clone_required "https://github.com/hahaher123/luci-app-oxidns.git" "custom-packages/luci-app-oxidns" "luci-app-oxidns"
 # 从同一份 luci-zen 源码集成主题、Rust 流量后端和 LuCI 流量应用。
 ZEN_SOURCE=$(mktemp -d)
 clone_required "https://github.com/zdabing/luci-zen.git" "$ZEN_SOURCE" "luci-zen" "${ZEN_REF:-main}"
@@ -155,7 +154,7 @@ rm -rf "$ZEN_SOURCE"
 
 # 从自有 zdabing/Z_bett 项目集成 bettbox 与 luci-app-bettbox（稀疏检出仅拉取包目录）。
 BETTBOX_SOURCE=$(mktemp -d)
-if git clone --depth 1 --filter=blob:none --sparse -b "${BETTBOX_REF:-main}" "https://github.com/zdabing/Z_bett.git" "$BETTBOX_SOURCE" 2>/dev/null && \
+if git clone --depth 1 --filter=blob:none --sparse -b "${BETTBOX_REF:-main}" "https://github.com/zdabing/Z_bett.git" "$BETTBOX_SOURCE" && \
    (cd "$BETTBOX_SOURCE" && git sparse-checkout set bettbox luci-app-bettbox); then
     printf '%s\t%s\t%s\n' "Z_bett" "https://github.com/zdabing/Z_bett.git" "$(git -C "$BETTBOX_SOURCE" rev-parse HEAD)" >> "$SOURCE_REVISIONS_FILE"
     echo ">>> 已添加 Z_bett"

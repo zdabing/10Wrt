@@ -40,7 +40,6 @@ OpenWrt 新发布使用 `v年.月.日-t时分秒-openwrt-设备-构建编号-重
 | 插件 | 说明 | 来源 |
 |---|---|---|
 | **luci-app-bettbox** | Bettbox 代理管理（内置 `bettbox` 核心与 `bettbox-forge` 脚本引擎） | [zdabing/Z_bett](https://github.com/zdabing/Z_bett) |
-| **luci-app-oxidns** | OxiDNS 高性能可编程 DNS 引擎（Rust） | [hahaher123/luci-app-oxidns](https://github.com/hahaher123/luci-app-oxidns) |
 | **luci-app-ddns** | 动态域名解析 | |
 | **luci-app-upnp** | UPnP IGD / NAT-PMP | |
 | **luci-app-wol** | 网络唤醒 | |
@@ -281,7 +280,6 @@ R5C 构建现增加独立的 Rust 分发包缓存：首次仍按 OpenWrt 配方�
 - [zdabing/Z_bett](https://github.com/zdabing/Z_bett) — Bettbox 代理核心与 LuCI 界面
 - [nikkinikki-org/OpenWrt-nikki](https://github.com/nikkinikki-org/OpenWrt-nikki) — Nikki 代理客户端
 - [sbwml](https://github.com/sbwml) — 多个插件包
-- [hahaher123/luci-app-oxidns](https://github.com/hahaher123/luci-app-oxidns) — OxiDNS LuCI 管理界面
 - [zdabing/luci-zen](https://github.com/zdabing/luci-zen) — Zen 主题（默认）
 - [P3TERX/Actions-OpenWrt](https://github.com/P3TERX/Actions-OpenWrt)
 - [SuLingGG/OpenWrt-Rpi](https://github.com/SuLingGG/OpenWrt-Rpi)
