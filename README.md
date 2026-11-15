@@ -36,7 +36,6 @@ ImmortalWrt 新发布统一使用 `v年.月.日-t时分秒-immortalwrt-设备-�
 
 | 插件 | 说明 | 来源 |
 |---|---|---|
-| **luci-app-oxidns** | OxiDNS 高性能可编程 DNS 引擎（Rust） | [svenshi/luci-app-oxidns](https://github.com/svenshi/luci-app-oxidns) |
 | **luci-app-bettbox** | Bettbox 代理管理（内置 `bettbox` 核心与 `bettbox-forge` 脚本引擎） | [zdabing/Z_bett](https://github.com/zdabing/Z_bett) |
 | **luci-app-ddns** | 动态域名解析 | |
 | **luci-app-upnp** | UPnP IGD / NAT-PMP | |
@@ -114,7 +113,7 @@ git push
 3. 点击 **Run workflow** → 选择 `main` 分支 → 点击 **Run**
 
 Zen 与 Bettbox 源码均使用各自仓库的 `main` 分支。
-自有项目 `zdabing/luci-zen` 的三个软件包放在构建树 `package/zen/`，`zdabing/Z_bett` 的 `bettbox` 与 `luci-app-bettbox` 放在 `package/bettbox/`，OxiDNS 放在 `package/custom/`，由构建系统直接扫描。目录名称不作为在线 APK 软件源；不再注册 `new` 或 `kenzok8` feed。
+自有项目 `zdabing/luci-zen` 的三个软件包放在构建树 `package/zen/`，`zdabing/Z_bett` 的 `bettbox` 与 `luci-app-bettbox` 放在 `package/bettbox/`，由构建系统直接扫描。目录名称不作为在线 APK 软件源；不再注册 `new` 或 `kenzok8` feed。
 
 **方式二：推送代码自动触发**
 - 如需推送触发，在 workflow 文件中添加 `push` 触发器即可
@@ -169,7 +168,6 @@ dd if=immortalwrt-*-x86-64-generic-ext4-combined-efi.img of=/dev/sdX bs=4M statu
 - [xuanranran/OpenWrt_RockChip](https://github.com/xuanranran/OpenWrt_RockChip) — 参考项目
 - [nikkinikki-org/OpenWrt-nikki](https://github.com/nikkinikki-org/OpenWrt-nikki) — Nikki 代理客户端
 - [sbwml](https://github.com/sbwml) — 多个插件包
-- [svenshi/luci-app-oxidns](https://github.com/svenshi/luci-app-oxidns) — OxiDNS LuCI 管理界面
 - [zdabing/luci-zen](https://github.com/zdabing/luci-zen) — Zen 主题与流量统计
 - [zdabing/Z_bett](https://github.com/zdabing/Z_bett) — Bettbox 代理核心与 LuCI 界面
 - [P3TERX/Actions-OpenWrt](https://github.com/P3TERX/Actions-OpenWrt)

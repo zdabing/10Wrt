@@ -112,20 +112,8 @@ echo ">>> 安装 feeds..."
 # 自定义软件包（按项目放入 package/，由构建系统直接扫描）
 # ============================================================
 
-mkdir -p package/custom package/zen package/bettbox
+mkdir -p package/zen package/bettbox
 
-clone_or_warn() {
-    local repo="$1" dst="$2" name="$3" branch="$4"
-    local branch_opt=""
-    [ -n "$branch" ] && branch_opt="-b $branch"
-    if git clone --depth 1 $branch_opt "$repo" "$dst" 2>/dev/null; then
-        echo ">>> 已添加 $name"
-    else
-        echo "!!! 警告：$name 克隆失败，已跳过"
-    fi
-}
-
-clone_or_warn "https://github.com/svenshi/luci-app-oxidns.git" "package/custom/luci-app-oxidns" "luci-app-oxidns"
 # 从自有 zdabing/luci-zen 项目导入三个软件包，单独放入 package/zen。
 # 这是编译源码目录，不注册为 feed，也不生成虚假的在线 APK 仓库。
 ZEN_SOURCE=$(mktemp -d)
