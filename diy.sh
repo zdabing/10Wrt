@@ -114,11 +114,12 @@ echo ">>> 安装 feeds..."
 
 mkdir -p package/zen package/bettbox
 
-# 从自有 zdabing/luci-zen 项目导入三个软件包，单独放入 package/zen。
+# 从自有 zdabing/luci-zen 项目导入两个软件包（luci-zen 后端与 luci-app-zen 前端/主题），单独放入 package/zen。
 # 这是编译源码目录，不注册为 feed，也不生成虚假的在线 APK 仓库。
 ZEN_SOURCE=$(mktemp -d)
-git clone --depth 1 --branch main https://github.com/zdabing/luci-zen.git "$ZEN_SOURCE"
-for pkg in luci-theme-zen zen-traffic luci-app-zen-traffic; do
+git clone --depth 1 --branch "${ZEN_REF:-main}" https://github.com/zdabing/luci-zen.git "$ZEN_SOURCE"
+for pkg in luci-zen luci-app-zen; do
+    test -f "$ZEN_SOURCE/$pkg/Makefile"
     mkdir -p "package/zen/$pkg"
     cp -R "$ZEN_SOURCE/$pkg/." "package/zen/$pkg/"
 done
@@ -140,6 +141,6 @@ rm -rf "$BETTBOX_SOURCE"
 
 # ---- 默认使用 Zen 主题 ----
 sed -i 's|/luci-static/bootstrap|/luci-static/zen|g' feeds/luci/modules/luci-base/root/etc/config/luci
-echo ">>> 默认主题已改为 luci-theme-zen"
+echo ">>> 默认主题已改为 Zen (/luci-static/zen)"
 
 echo ">>> [diy.sh] 自定义配置完成"

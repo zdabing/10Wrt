@@ -43,8 +43,8 @@ ImmortalWrt 新发布统一使用 `v年.月.日-t时分秒-immortalwrt-设备-�
 | **luci-app-wol** | 网络唤醒 | |
 | **luci-app-ttyd** | 网页终端 | |
 | **luci-app-firewall** | 防火墙管理 | |
-| **luci-theme-zen** | Zen 主题（默认）：首页仪表盘、明暗切换、响应式侧栏 | [zdabing/luci-zen](https://github.com/zdabing/luci-zen) |
-| **luci-app-zen-traffic** | 设备流量统计、日/月用量与历史记录，内置 `zen-traffic` 后端 | [zdabing/luci-zen](https://github.com/zdabing/luci-zen) |
+| **luci-app-zen** | Zen 主题与流量分析控制台（默认主题）：首页仪表盘、明暗切换、响应式侧栏、历史用量及通知 | [zdabing/luci-zen](https://github.com/zdabing/luci-zen) |
+| **luci-zen** | Zen Rust/eBPF 流量统计与识别后端（提供 `zen-traffic` 服务） | [zdabing/luci-zen](https://github.com/zdabing/luci-zen) |
 | **luci-theme-bootstrap** | Bootstrap 备用主题 | |
 
 x86/64 与 NanoPi R5C 均集成 Zen 的主题、流量后端和 LuCI 应用，默认使用 Zen。
@@ -113,7 +113,7 @@ git push
 3. 点击 **Run workflow** → 选择 `main` 分支 → 点击 **Run**
 
 Zen 与 Bettbox 源码均使用各自仓库的 `main` 分支。
-自有项目 `zdabing/luci-zen` 的三个软件包放在构建树 `package/zen/`，`zdabing/Z_bett` 的 `bettbox` 与 `luci-app-bettbox` 放在 `package/bettbox/`，由构建系统直接扫描。目录名称不作为在线 APK 软件源；不再注册 `new` 或 `kenzok8` feed。
+自有项目 `zdabing/luci-zen` 的两个软件包（`luci-zen` 与 `luci-app-zen`）放在构建树 `package/zen/`，`zdabing/Z_bett` 的 `bettbox` 与 `luci-app-bettbox` 放在 `package/bettbox/`，由构建系统直接扫描。目录名称不作为在线 APK 软件源；不再注册 `new` 或 `kenzok8` feed。
 
 **方式二：推送代码自动触发**
 - 如需推送触发，在 workflow 文件中添加 `push` 触发器即可
@@ -179,8 +179,8 @@ dd if=immortalwrt-*-x86-64-generic-ext4-combined-efi.img of=/dev/sdX bs=4M statu
 
 ## Zen eBPF 安装依赖与配套模块
 
-两个目标明确内置 `zen-traffic`、`kmod-sched-bpf`、`kmod-sched-core`。构建会验证选包和实际内核 BPF 能力，缺少配套包时停止发布。
+两个目标明确内置 `luci-zen`（提供 `zen-traffic`）、`kmod-sched-bpf`、`kmod-sched-core`。构建会验证选包和实际内核 BPF 能力，缺少配套包时停止发布。
 
-每次固件附带 `zen-support.tar.gz` 和 `zen-support.json`，保留同一构建的目标 APK 软件源、签名公钥、三个 Zen 功能包及配置/校验清单。该归档只用于对应固件，不能把其他构建的内核模块混装；用户态依赖仍使用匹配软件源。
+每次固件附带 `zen-support.tar.gz` 和 `zen-support.json`，保留同一构建的目标 APK 软件源、签名公钥、两个 Zen 功能包（`luci-zen`、`luci-app-zen`）及配置/校验清单。该归档只用于对应固件，不能把其他构建的内核模块混装；用户态依赖仍使用匹配软件源。
 
 Zen 签名软件源与安装入口说明：[APK 安装与发布](https://github.com/zdabing/luci-zen/blob/main/docs/APK-DISTRIBUTION.md)。官方 OpenWrt 软件源不自动用于 ImmortalWrt 或其他自编译固件。

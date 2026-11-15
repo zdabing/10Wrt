@@ -20,11 +20,11 @@ class SupportTests(unittest.TestCase):
         modules = root / 'bin/targets/rockchip/armv8/packages'
         modules.mkdir(parents=True)
         (modules / 'packages.adb').write_bytes(b'original signed index')
-        for name in module.REQUIRED[3:]:
+        for name in module.KERNEL_MODULES:
             (modules / (name + '-6.12.108-r1.apk')).write_bytes(b'matching module')
         packages = root / 'bin/packages/aarch64/new'
         packages.mkdir(parents=True)
-        for name in module.REQUIRED[:3]:
+        for name in module.ZEN_PACKAGES:
             (packages / (name + '-0.2.0-r13.apk')).write_bytes(b'zen package')
         keys = root / 'build_dir/target-aarch64/root-rockchip/etc/apk/keys'
         keys.mkdir(parents=True)
