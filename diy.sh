@@ -141,10 +141,10 @@ clone_required() {
 
 # 暂停 Quickfile：上游改为 Rust 源码版，当前工具链链接失败。
 # clone_required "https://github.com/sbwml/luci-app-quickfile.git" "custom-packages/quickfile" "luci-app-quickfile"
-# 从同一份 luci-zen 源码集成主题、Rust 流量后端和 LuCI 流量应用。
+# 从同一份 luci-zen 源码集成 Rust/eBPF 后端 (luci-zen) 与主题/LuCI 控制台前端 (luci-app-zen)。
 ZEN_SOURCE=$(mktemp -d)
 clone_required "https://github.com/zdabing/luci-zen.git" "$ZEN_SOURCE" "luci-zen" "${ZEN_REF:-main}"
-for pkg in luci-theme-zen zen-traffic luci-app-zen-traffic; do
+for pkg in luci-zen luci-app-zen; do
     test -f "$ZEN_SOURCE/$pkg/Makefile"
     cp -R "$ZEN_SOURCE/$pkg" "custom-packages/$pkg"
 done
@@ -171,7 +171,7 @@ rm -rf "$BETTBOX_SOURCE"
 
 # 将首次启动的默认主题设为 Zen。
 sed -i 's|/luci-static/bootstrap|/luci-static/zen|g' feeds/luci/modules/luci-base/root/etc/config/luci
-echo ">>> 默认主题已改为 luci-theme-zen"
+echo ">>> 默认主题已改为 Zen (/luci-static/zen)"
 
 # 默认语言固定为简体中文（需配合 seed 里的 CONFIG_LUCI_LANG_zh_Hans 全局开关）
 LUCI_CFG="feeds/luci/modules/luci-base/root/etc/config/luci"

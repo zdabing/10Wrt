@@ -46,8 +46,8 @@ OpenWrt 新发布使用 `v年.月.日-t时分秒-openwrt-设备-构建编号-重
 | **luci-app-ttyd** | 网页终端 | |
 | **luci-app-librespeed** | LibreSpeed 测速客户端：路由器主动测指定测速服务器，支持定时任务与历史记录（界面为英文，上游暂无中文翻译） | 官方 feed（luci + packages） |
 | **luci-app-firewall** | 防火墙管理 | |
-| **luci-theme-zen** | Zen 主题（默认）：登录页、首页仪表盘、明暗切换、响应式侧栏 | [zdabing/luci-zen](https://github.com/zdabing/luci-zen) |
-| **luci-app-zen-traffic** | 设备流量统计、日/月用量与 WAN 实时历史；内置 `zen-traffic` 后端 | [zdabing/luci-zen](https://github.com/zdabing/luci-zen) |
+| **luci-app-zen** | Zen 主题与流量分析控制台（默认主题）：登录页、首页仪表盘、明暗切换、响应式侧栏、历史用量及通知 | [zdabing/luci-zen](https://github.com/zdabing/luci-zen) |
+| **luci-zen** | Zen Rust/eBPF 流量统计与识别后端（提供 `zen-traffic` 服务） | [zdabing/luci-zen](https://github.com/zdabing/luci-zen) |
 
 #### 网络工具
 
@@ -162,7 +162,7 @@ R5C 还可选择 **Zen 源码分支或标签**，默认 `main`；验收修复版
 正式版本会发布到 **Releases** 页面，除镜像外还附带三类记录文件：
 
 x86/64 和 R5C 默认使用 Zen 主题，并内置同一份 `luci-zen` 源码中的
-`zen-traffic` 后端、`luci-app-zen-traffic` 应用及 `kmod-sched-core`、
+`luci-zen` 后端、`luci-app-zen` 前端应用及 `kmod-sched-core`、
 `kmod-sched-bpf` 内核模块。刷入新编译的固件后可使用主题设备统计和
 “状态 → Zen 流量”页面。Quickfile 仍暂时停用。
 
@@ -232,20 +232,18 @@ dd if=openwrt-*-x86-64-generic-ext4-combined-efi.img of=/dev/sdX bs=4M status=pr
 保留 R5C 官方 CI LLVM 复用和匹配的 Rust 分发包缓存，减少重复构建。
 发布时保留校验值、软件包清单、源码版本和 Zen 固件更新信息。
 
-后续只修改 Zen 时，优先在保留的同目标 Linux OpenWrt 工作目录中单独重编三包，
+后续只修改 Zen 时，优先在保留的同目标 Linux OpenWrt 工作目录中单独重编两个包，
 保留 `staging_dir` 和工具链。替换源码后只清理修改的包，不执行整个 `dirclean`。
 第三方源码放在 `custom-packages`，通过 `new` feed 按需接入构建。重编译路径为：
 
 ```sh
-make package/feeds/new/zen-traffic/clean
-make package/feeds/new/zen-traffic/compile V=s -j"$(nproc)"
-make package/feeds/new/luci-theme-zen/clean
-make package/feeds/new/luci-theme-zen/compile V=s -j"$(nproc)"
-make package/feeds/new/luci-app-zen-traffic/clean
-make package/feeds/new/luci-app-zen-traffic/compile V=s -j"$(nproc)"
+make package/feeds/new/luci-zen/clean
+make package/feeds/new/luci-zen/compile V=s -j"$(nproc)"
+make package/feeds/new/luci-app-zen/clean
+make package/feeds/new/luci-app-zen/compile V=s -j"$(nproc)"
 ```
 
-只改主题/应用时跳过后端两条命令。向现有路由器安装包前核对目标、固件和依赖
+只改前端/主题时跳过 `luci-zen` 两条后端命令。向现有路由器安装包前核对目标、固件和依赖
 版本；独立出包不需要重刷整机。如采用 SDK，应匹配本次源码与 feeds，不能拿
 其他目标或不同内核 ABI 的模块混装。
 
@@ -294,8 +292,8 @@ R5C 构建现增加独立的 Rust 分发包缓存：首次仍按 OpenWrt 配方�
 
 ## Zen eBPF 安装依赖与配套模块
 
-两个目标明确内置 `zen-traffic`、`kmod-sched-bpf`、`kmod-sched-core`。构建会验证选包和实际内核 BPF 能力，缺少配套包时停止发布。
+两个目标明确内置 `luci-zen`（提供 `zen-traffic`）、`kmod-sched-bpf`、`kmod-sched-core`。构建会验证选包和实际内核 BPF 能力，缺少配套包时停止发布。
 
-每次固件附带 `zen-support.tar.gz` 和 `zen-support.json`，保留同一构建的目标 APK 软件源、签名公钥、三个 Zen 功能包及配置/校验清单。该归档只用于对应固件，不能把其他构建的内核模块混装；用户态依赖仍使用匹配软件源。
+每次固件附带 `zen-support.tar.gz` 和 `zen-support.json`，保留同一构建的目标 APK 软件源、签名公钥、两个 Zen 功能包（`luci-zen`、`luci-app-zen`）及配置/校验清单。该归档只用于对应固件，不能把其他构建的内核模块混装；用户态依赖仍使用匹配软件源。
 
 Zen 签名软件源与安装入口说明：[APK 安装与发布](https://github.com/zdabing/luci-zen/blob/main/docs/APK-DISTRIBUTION.md)。官方 OpenWrt 软件源不自动用于 ImmortalWrt 或其他自编译固件。

@@ -6,8 +6,9 @@ import re
 import tarfile
 from pathlib import Path
 
-REQUIRED = ('zen-traffic', 'luci-app-zen-traffic', 'luci-theme-zen',
-            'kmod-sched-bpf', 'kmod-sched-core')
+ZEN_PACKAGES = ('luci-zen', 'luci-app-zen')
+KERNEL_MODULES = ('kmod-sched-bpf', 'kmod-sched-core')
+REQUIRED = ZEN_PACKAGES + KERNEL_MODULES
 
 
 def check_config(root):
@@ -34,7 +35,7 @@ def export(root, target):
     modules = output / 'packages'
     if not (modules / 'packages.adb').is_file():
         raise ValueError('Matching kernel APK repository missing')
-    for name in REQUIRED[3:]:
+    for name in KERNEL_MODULES:
         if len(list(modules.glob(name + '-[0-9]*.apk'))) != 1:
             raise ValueError('Missing or ambiguous kernel package: ' + name)
     keys = list((root / 'build_dir').glob('target-*/root-*/etc/apk/keys/*.pem'))
@@ -43,7 +44,7 @@ def export(root, target):
     if any(b'-----BEGIN PUBLIC KEY-----' not in file.read_bytes() or b'PRIVATE KEY' in file.read_bytes() for file in keys):
         raise ValueError('Unexpected non-public key in firmware APK key directory')
     files = [(file, 'target/' + file.name) for file in modules.iterdir() if file.is_file() and file.suffix in ('.apk', '.adb')]
-    for name in REQUIRED[:3]:
+    for name in ZEN_PACKAGES:
         packages = list((root / 'bin/packages').rglob(name + '-[0-9]*.apk'))
         if len(packages) != 1:
             raise ValueError('Missing or ambiguous Zen APK: ' + name)
