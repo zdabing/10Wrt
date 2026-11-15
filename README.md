@@ -39,7 +39,7 @@ OpenWrt 新发布使用 `v年.月.日-t时分秒-openwrt-设备-构建编号-重
 
 | 插件 | 说明 | 来源 |
 |---|---|---|
-| **luci-app-clashoo** | Clashoo 双内核代理（mihomo + sing-box） | [kenzok8/openwrt-clashoo](https://github.com/kenzok8/openwrt-clashoo) |
+| **luci-app-bettbox** | Bettbox 代理管理（内置 `bettbox` 核心与 `bettbox-forge` 脚本引擎） | [zdabing/Z_bett](https://github.com/zdabing/Z_bett) |
 | **luci-app-oxidns** | OxiDNS 高性能可编程 DNS 引擎（Rust） | [hahaher123/luci-app-oxidns](https://github.com/hahaher123/luci-app-oxidns) |
 | **luci-app-ddns** | 动态域名解析 | |
 | **luci-app-upnp** | UPnP IGD / NAT-PMP | |
@@ -78,6 +78,14 @@ OpenWrt 新发布使用 `v年.月.日-t时分秒-openwrt-设备-构建编号-重
 - `zram-swap`（内存压缩交换）
 - `ca-certificates`（HTTPS 证书）
 - `blockdev` / `fdisk` / `lsblk`（磁盘工具，x86 额外含 `parted`）
+
+### 脚本与诊断兼容
+
+两种设备明确启用 BusyBox 的小数秒 `sleep`、`timeout`、`flock`、`stat -c`、完整 `nslookup`，以及支持 UDP、端口探测和超时的 `nc`（`-u/-z/-w`）。`nc` 使用 1.10 兼容实现，不再提供旧实现的 `-f FILE` 扩展。
+
+预装 `gzip`、`coreutils-sha256sum`、`yq`、`unzip`、ucode 的文件系统／UCI 模块和匹配内核的 `kmod-nft-socket`，满足插件下载校验、配置转换与诊断所需的实际包依赖。BusyBox 已有同名命令并不能代替 APK 对独立软件包的依赖检查。
+
+构建在 `make defconfig` 后检查功能选项，打包后再检查 BusyBox 的实际编译配置和固件软件包清单；任一缺失会停止发布，避免忽略编译错误后产出缺工具的固件。不增加常驻服务。这些设置需重新构建并升级固件才生效，单独更新 Bettbox APK 不会替换系统 BusyBox。
 
 ### 首次启动自动配置
 
@@ -270,7 +278,7 @@ R5C 构建现增加独立的 Rust 分发包缓存：首次仍按 OpenWrt 配方�
 
 - [OpenWrt](https://github.com/openwrt/openwrt)
 - [xuanranran/OpenWrt_RockChip](https://github.com/xuanranran/OpenWrt_RockChip) — 参考项目
-- [kenzok8/openwrt-clashoo](https://github.com/kenzok8/openwrt-clashoo) — Clashoo 双内核代理（mihomo + sing-box）
+- [zdabing/Z_bett](https://github.com/zdabing/Z_bett) — Bettbox 代理核心与 LuCI 界面
 - [nikkinikki-org/OpenWrt-nikki](https://github.com/nikkinikki-org/OpenWrt-nikki) — Nikki 代理客户端
 - [sbwml](https://github.com/sbwml) — 多个插件包
 - [hahaher123/luci-app-oxidns](https://github.com/hahaher123/luci-app-oxidns) — OxiDNS LuCI 管理界面

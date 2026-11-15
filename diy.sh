@@ -152,31 +152,23 @@ done
 rm -rf "$ZEN_SOURCE"
 # 主题 Makefile 自包含，中文翻译由 luci-base/host 的 po2lmo 生成并随包安装。
 # Rust/C LTO 的 SQLite 链接兼容配置由 Zen 自身 Makefile 提供。
-# clone_required "https://github.com/nikkinikki-org/OpenWrt-nikki.git" "custom-packages/nikki" "luci-app-nikki"  # 已注释：不再使用
 
-# ---- Mihomo 格式 geodata（来自 MetaCubeX/meta-rules-dat）----
-# 关键：Clashoo 基于 Mihomo 内核，需要 MetaCubeX 格式的 geodata！
-# 不能用 V2Ray 格式（/usr/share/v2ray/geosite.dat）混用，否则报：
-#   "list cn not found" / "proto: cannot parse invalid wire-format data"
-#
-# 各组件 geodata 分布：
-#   /etc/nikki/run/GeoSite.dat    → Mihomo 格式（MetaCubeX）         → Nikki  # 已注释
-#   /etc/clashoo/GeoSite.dat      → Mihomo 格式（MetaCubeX）         → Clashoo
-#   /usr/share/daed/geosite.dat   → daed 自带                        → Daed  # 已注释
-echo ">>> 下载 Mihomo 格式 geodata (MetaCubeX/meta-rules-dat)..."
-META_GEO_URL="https://github.com/MetaCubeX/meta-rules-dat/releases/latest/download"
-
-# Nikki 工作目录: /etc/nikki/run/
-# mkdir -p files/etc/nikki/run
-# wget -q --show-progress -O files/etc/nikki/run/GeoSite.dat "${META_GEO_URL}/geosite.dat" || echo "!!! 警告：Nikki GeoSite.dat 下载失败"
-# wget -q --show-progress -O files/etc/nikki/run/GeoIP.dat   "${META_GEO_URL}/geoip.dat"   || echo "!!! 警告：Nikki GeoIP.dat 下载失败"
-# echo ">>> Nikki geodata → files/etc/nikki/run/"
-
-# Clashoo 工作目录: /etc/clashoo/
-# mkdir -p files/etc/clashoo
-# wget -q --show-progress -O files/etc/clashoo/GeoSite.dat   "${META_GEO_URL}/geosite.dat" || echo "!!! 警告：Clashoo GeoSite.dat 下载失败"
-# wget -q --show-progress -O files/etc/clashoo/GeoIP.dat     "${META_GEO_URL}/geoip.dat"   || echo "!!! 警告：Clashoo GeoIP.dat 下载失败"
-# echo ">>> Clashoo geodata → files/etc/clashoo/"
+# 从自有 zdabing/Z_bett 项目集成 bettbox 与 luci-app-bettbox（稀疏检出仅拉取包目录）。
+BETTBOX_SOURCE=$(mktemp -d)
+if git clone --depth 1 --filter=blob:none --sparse -b "${BETTBOX_REF:-main}" "https://github.com/zdabing/Z_bett.git" "$BETTBOX_SOURCE" 2>/dev/null && \
+   (cd "$BETTBOX_SOURCE" && git sparse-checkout set bettbox luci-app-bettbox); then
+    printf '%s\t%s\t%s\n' "Z_bett" "https://github.com/zdabing/Z_bett.git" "$(git -C "$BETTBOX_SOURCE" rev-parse HEAD)" >> "$SOURCE_REVISIONS_FILE"
+    echo ">>> 已添加 Z_bett"
+else
+    rm -rf "$BETTBOX_SOURCE"
+    echo "!!! 错误：必需软件源 Z_bett 克隆失败"
+    exit 1
+fi
+for pkg in bettbox luci-app-bettbox; do
+    test -f "$BETTBOX_SOURCE/$pkg/Makefile"
+    cp -R "$BETTBOX_SOURCE/$pkg" "custom-packages/$pkg"
+done
+rm -rf "$BETTBOX_SOURCE"
 
 # 将首次启动的默认主题设为 Zen。
 sed -i 's|/luci-static/bootstrap|/luci-static/zen|g' feeds/luci/modules/luci-base/root/etc/config/luci
@@ -191,16 +183,6 @@ if [ -f "$LUCI_CFG" ]; then
         sed -i '/^config core/a\\toption lang zh_cn' "$LUCI_CFG"
     fi
     echo ">>> LuCI 默认语言已设为 zh_cn"
-fi
-
-# ---- kenzok8 feed ----
-KENZOK8_FEED="src-git kenzok8 https://github.com/kenzok8/openwrt-clashoo.git"
-if ! grep -qF "$KENZOK8_FEED" feeds.conf.default; then
-    echo "$KENZOK8_FEED" >> feeds.conf.default
-    ./scripts/feeds update kenzok8
-    echo ">>> 已添加 kenzok8/openwrt-clashoo 软件源"
-else
-    echo ">>> kenzok8 feed 已存在，跳过"
 fi
 
 # ---- 将 custom-packages 注册为本地 feed ----
