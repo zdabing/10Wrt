@@ -167,6 +167,22 @@ for pkg in bettbox luci-app-bettbox; do
     test -f "$BETTBOX_SOURCE/$pkg/Makefile"
     cp -R "$BETTBOX_SOURCE/$pkg" "custom-packages/$pkg"
 done
+BETTBOX_MAKEFILE="custom-packages/bettbox/Makefile"
+if ! grep -q -- '-ffat-lto-objects' "$BETTBOX_MAKEFILE"; then
+    awk '
+        !patched && /^define Build\/Prepare/ {
+            print "# CONFIG_USE_LTO=y 下 rquickjs-sys 编译出的 C 静态库需保留机器码并启用链接器 LTO 插件。"
+            print "ifeq ($(CONFIG_USE_LTO),y)"
+            print "  TARGET_CFLAGS := $(filter-out -fno-fat-lto-objects,$(TARGET_CFLAGS)) -ffat-lto-objects"
+            print "  CARGO_RUSTFLAGS += -Clink-arg=-flto=auto -Clink-arg=-fuse-linker-plugin"
+            print "endif"
+            print ""
+            patched = 1
+        }
+        { print }
+    ' "$BETTBOX_MAKEFILE" > "${BETTBOX_MAKEFILE}.tmp" && mv "${BETTBOX_MAKEFILE}.tmp" "$BETTBOX_MAKEFILE"
+    grep -q -- '-ffat-lto-objects' "$BETTBOX_MAKEFILE"
+fi
 rm -rf "$BETTBOX_SOURCE"
 
 # 将首次启动的默认主题设为 Zen。
