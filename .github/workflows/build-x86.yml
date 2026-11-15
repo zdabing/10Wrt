@@ -99,6 +99,8 @@ jobs:
         run: |
           cd immortalwrt
           make defconfig
+          bash ../config/.github/scripts/check-runtime-tools.sh . --config-only
+          bash ../config/.github/scripts/check-bettbox-packages.sh . --config-only
           python3 ../config/.github/scripts/export-zen-support.py . --check-config
           echo "=== 关键配置项 ==="
           grep -E '^(CONFIG_TARGET|CONFIG_PACKAGE_luci)' .config | sort
@@ -158,7 +160,10 @@ jobs:
         timeout-minutes: 360
 
       - name: 保留匹配固件的 Zen 与内核模块
-        run: python3 config/.github/scripts/export-zen-support.py immortalwrt --target x86/64
+        run: |
+          bash config/.github/scripts/check-runtime-tools.sh immortalwrt
+          bash config/.github/scripts/check-bettbox-packages.sh immortalwrt
+          python3 config/.github/scripts/export-zen-support.py immortalwrt --target x86/64
 
       - name: 调试 - 列出构建输出
         if: always()

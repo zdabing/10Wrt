@@ -112,7 +112,7 @@ echo ">>> 安装 feeds..."
 # 自定义软件包（按项目放入 package/，由构建系统直接扫描）
 # ============================================================
 
-mkdir -p package/custom package/zen
+mkdir -p package/custom package/zen package/bettbox
 
 clone_or_warn() {
     local repo="$1" dst="$2" name="$3" branch="$4"
@@ -136,6 +136,19 @@ for pkg in luci-theme-zen zen-traffic luci-app-zen-traffic; do
 done
 echo ">>> 已集成 Zen 主题与流量统计：$(git -C "$ZEN_SOURCE" rev-parse HEAD)"
 rm -rf "$ZEN_SOURCE"
+
+# 从自有 zdabing/Z_bett 项目导入 bettbox 与 luci-app-bettbox，单独放入 package/bettbox。
+# 仅稀疏检出两个 OpenWrt 软件包目录，避免拉取完整上游源码，也不注册为在线 feed。
+BETTBOX_SOURCE=$(mktemp -d)
+git clone --depth 1 --filter=blob:none --sparse --branch "${BETTBOX_REF:-main}" https://github.com/zdabing/Z_bett.git "$BETTBOX_SOURCE"
+(cd "$BETTBOX_SOURCE" && git sparse-checkout set bettbox luci-app-bettbox)
+for pkg in bettbox luci-app-bettbox; do
+    test -f "$BETTBOX_SOURCE/$pkg/Makefile"
+    mkdir -p "package/bettbox/$pkg"
+    cp -R "$BETTBOX_SOURCE/$pkg/." "package/bettbox/$pkg/"
+done
+echo ">>> 已集成 Bettbox：$(git -C "$BETTBOX_SOURCE" rev-parse HEAD)"
+rm -rf "$BETTBOX_SOURCE"
 
 # ---- 默认使用 Zen 主题 ----
 sed -i 's|/luci-static/bootstrap|/luci-static/zen|g' feeds/luci/modules/luci-base/root/etc/config/luci

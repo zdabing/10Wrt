@@ -37,6 +37,7 @@ ImmortalWrt 新发布统一使用 `v年.月.日-t时分秒-immortalwrt-设备-�
 | 插件 | 说明 | 来源 |
 |---|---|---|
 | **luci-app-oxidns** | OxiDNS 高性能可编程 DNS 引擎（Rust） | [svenshi/luci-app-oxidns](https://github.com/svenshi/luci-app-oxidns) |
+| **luci-app-bettbox** | Bettbox 代理管理（内置 `bettbox` 核心与 `bettbox-forge` 脚本引擎） | [zdabing/Z_bett](https://github.com/zdabing/Z_bett) |
 | **luci-app-ddns** | 动态域名解析 | |
 | **luci-app-upnp** | UPnP IGD / NAT-PMP | |
 | **luci-app-3cat** | 3Cat 工具 | |
@@ -77,6 +78,14 @@ x86/64 与 NanoPi R5C 均集成 Zen 的主题、流量后端和 LuCI 应用，�
 - `ca-certificates`（HTTPS 证书）
 - `blockdev` / `fdisk` / `lsblk`（磁盘工具，x86 额外含 `parted`）
 
+### 脚本与诊断兼容
+
+两种设备明确启用 BusyBox 的小数秒 `sleep`、`timeout`、`flock`、`stat -c`、完整 `nslookup`，以及支持 UDP、端口探测和超时的 `nc`（`-u/-z/-w`）。`nc` 使用 1.10 兼容实现，不再提供旧实现的 `-f FILE` 扩展。
+
+预装 `gzip`、`coreutils-sha256sum`、`yq`、`unzip`、ucode 的文件系统／UCI 模块和匹配内核的 `kmod-nft-socket`，满足插件下载校验、配置转换与诊断所需的实际包依赖。BusyBox 已有同名命令并不能代替 APK 对独立软件包的依赖检查。
+
+构建在 `make defconfig` 后检查功能选项，打包后再检查 BusyBox 的实际编译配置和固件软件包清单；任一缺失会停止发布，避免忽略编译错误后产出缺工具的固件。不增加常驻服务。这些设置需重新构建并升级固件才生效，单独更新 Bettbox APK 不会替换系统 BusyBox。
+
 ### 首次启动自动配置
 
 - 开启 **Packet Steering**（多队列软中断均衡）
@@ -104,8 +113,8 @@ git push
 2. 选择 **Build NanoPi R5C** 或 **Build x86/64**
 3. 点击 **Run workflow** → 选择 `main` 分支 → 点击 **Run**
 
-Zen 源码使用 `luci-zen` 仓库的 `main` 分支。
-自有项目 `zdabing/luci-zen` 的三个软件包放在构建树 `package/zen/`，OxiDNS 放在 `package/custom/`，由构建系统直接扫描。目录名称不作为在线 APK 软件源；不再注册 `new` 或 `kenzok8` feed。
+Zen 与 Bettbox 源码均使用各自仓库的 `main` 分支。
+自有项目 `zdabing/luci-zen` 的三个软件包放在构建树 `package/zen/`，`zdabing/Z_bett` 的 `bettbox` 与 `luci-app-bettbox` 放在 `package/bettbox/`，OxiDNS 放在 `package/custom/`，由构建系统直接扫描。目录名称不作为在线 APK 软件源；不再注册 `new` 或 `kenzok8` feed。
 
 **方式二：推送代码自动触发**
 - 如需推送触发，在 workflow 文件中添加 `push` 触发器即可
@@ -162,6 +171,7 @@ dd if=immortalwrt-*-x86-64-generic-ext4-combined-efi.img of=/dev/sdX bs=4M statu
 - [sbwml](https://github.com/sbwml) — 多个插件包
 - [svenshi/luci-app-oxidns](https://github.com/svenshi/luci-app-oxidns) — OxiDNS LuCI 管理界面
 - [zdabing/luci-zen](https://github.com/zdabing/luci-zen) — Zen 主题与流量统计
+- [zdabing/Z_bett](https://github.com/zdabing/Z_bett) — Bettbox 代理核心与 LuCI 界面
 - [P3TERX/Actions-OpenWrt](https://github.com/P3TERX/Actions-OpenWrt)
 - [SuLingGG/OpenWrt-Rpi](https://github.com/SuLingGG/OpenWrt-Rpi)
 
