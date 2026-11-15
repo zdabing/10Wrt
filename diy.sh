@@ -136,22 +136,6 @@ for pkg in bettbox luci-app-bettbox; do
     mkdir -p "package/bettbox/$pkg"
     cp -R "$BETTBOX_SOURCE/$pkg/." "package/bettbox/$pkg/"
 done
-BETTBOX_MAKEFILE="package/bettbox/bettbox/Makefile"
-if ! grep -q -- '-ffat-lto-objects' "$BETTBOX_MAKEFILE"; then
-    awk '
-        !patched && /^define Build\/Prepare/ {
-            print "# CONFIG_USE_LTO=y 下 rquickjs-sys 编译出的 C 静态库需保留机器码并启用链接器 LTO 插件。"
-            print "ifeq ($(CONFIG_USE_LTO),y)"
-            print "  TARGET_CFLAGS := $(filter-out -fno-fat-lto-objects,$(TARGET_CFLAGS)) -ffat-lto-objects"
-            print "  CARGO_RUSTFLAGS += -Clink-arg=-flto=auto -Clink-arg=-fuse-linker-plugin"
-            print "endif"
-            print ""
-            patched = 1
-        }
-        { print }
-    ' "$BETTBOX_MAKEFILE" > "${BETTBOX_MAKEFILE}.tmp" && mv "${BETTBOX_MAKEFILE}.tmp" "$BETTBOX_MAKEFILE"
-    grep -q -- '-ffat-lto-objects' "$BETTBOX_MAKEFILE"
-fi
 echo ">>> 已集成 Bettbox：$(git -C "$BETTBOX_SOURCE" rev-parse HEAD)"
 rm -rf "$BETTBOX_SOURCE"
 
