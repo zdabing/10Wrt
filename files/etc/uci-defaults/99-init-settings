@@ -4,9 +4,11 @@
 # 避免开机早期 restart 与 netifd/wan 拨号产生时序竞争（导致升级后首次无网络）。
 # 服务刷新交给 OpenWrt 后续正常启动流程接管。
 
-# ---- Packet Steering（多队列网卡软中断均衡）----
+# ---- Packet Steering（全核软中断均衡 + RFS 流亲和）----
 uci -q get network.globals.packet_steering >/dev/null || \
-uci set network.globals.packet_steering='1'
+uci set network.globals.packet_steering='2'
+uci -q get network.globals.steering_flows >/dev/null || \
+uci set network.globals.steering_flows='128'
 
 # ---- IRQ Balance（自动分配硬件中断）----
 if [ -x /etc/init.d/irqbalance ]; then

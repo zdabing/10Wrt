@@ -87,7 +87,8 @@ x86/64 与 NanoPi R5C 均集成 Zen 的主题、流量后端和 LuCI 应用，�
 
 ### 首次启动自动配置
 
-- 开启 **Packet Steering**（多队列软中断均衡）
+- 开启 **Packet Steering**（全核软中断均衡 `packet_steering='2'` + RFS 流亲和 `steering_flows='128'`）
+- 默认通过 `etc/sysctl.d/99-10wrt-network.conf` 启用 **TCP BBR** 并调优 socket 缓冲、网卡接收队列及 RFS 流表（用户可在 `/etc/sysctl.conf` 覆盖）
 - 默认启用 **irqbalance** 分配硬件中断；R5C 的 ImmortalWrt `kmod-r8125` 默认支持 RSS 与多发送队列。
 - 时区设为 `Asia/Shanghai`
 - Luci 诊断地址改百度
@@ -149,6 +150,7 @@ dd if=immortalwrt-*-x86-64-generic-ext4-combined-efi.img of=/dev/sdX bs=4M statu
 │   ├── x86_64.seed                           # x86/64 种子配置
 │   └── r5c.seed                              # NanoPi R5C 种子配置
 ├── files/
+│   ├── etc/sysctl.d/99-10wrt-network.conf    # 网络缓冲与 BBR 调优
 │   └── etc/uci-defaults/99-init-settings     # 首次启动脚本
 ├── .github/workflows/build-r5c.yml           # R5C 工作流
 ├── .github/workflows/build-x86.yml           # x86/64 工作流

@@ -11,7 +11,7 @@ applets=(SLEEP FLOAT_DURATION FEATURE_FANCY_SLEEP NC NC_EXTRA NC_110_COMPAT
     NSLOOKUP FEATURE_NSLOOKUP_BIG LONG_OPTS FEATURE_NSLOOKUP_LONG_OPTIONS
     TIMEOUT STAT FEATURE_STAT_FORMAT FLOCK OD)
 packages=(busybox curl ca-bundle gzip coreutils-sha256sum yq ucode
-    ucode-mod-fs ucode-mod-uci unzip ip-full iperf3 kmod-nft-socket)
+    ucode-mod-fs ucode-mod-uci unzip ip-full iperf3 kmod-nft-socket kmod-tcp-bbr)
 
 require_yes() {
     local file=$1 symbol=$2
