@@ -88,7 +88,8 @@ OpenWrt 新发布使用 `v年.月.日-t时分秒-openwrt-设备-构建编号-重
 
 ### 首次启动自动配置
 
-- 开启 **Packet Steering**（多队列软中断均衡）
+- 开启 **Packet Steering**（全核软中断均衡 `packet_steering='2'` + RFS 流亲和 `steering_flows='128'`）
+- 默认通过 `etc/sysctl.d/99-10wrt-network.conf` 启用 **TCP BBR** 并调优 socket 缓冲、网卡接收队列及 RFS 流表（用户可在 `/etc/sysctl.conf` 覆盖）
 - 默认启用 **irqbalance** 分配硬件中断；R5C 使用 `kmod-r8125-rss` 启用多接收队列和多发送队列，与普通 `kmod-r8125` 互斥。
 - 时区设为 `Asia/Shanghai`
 - Luci 诊断地址改百度
@@ -196,6 +197,7 @@ dd if=openwrt-*-x86-64-generic-ext4-combined-efi.img of=/dev/sdX bs=4M status=pr
 │   ├── x86_64.seed                           # x86/64 种子配置
 │   └── r5c.seed                              # NanoPi R5C 种子配置
 ├── files/
+│   ├── etc/sysctl.d/99-10wrt-network.conf    # 网络缓冲与 BBR 调优
 │   ├── etc/uci-defaults/99-init-settings     # 首次启动脚本
 │   └── root/
 │       ├── mijia-guard.sh                    # 小米 CDN 坏节点体检与规避
