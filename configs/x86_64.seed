@@ -63,7 +63,12 @@ CONFIG_PACKAGE_procd-seccomp=y
 CONFIG_PACKAGE_urngd=y
 
 # Luci Web 界面
-CONFIG_PACKAGE_luci=y
+# 使用 luci-nginx 替代默认 uhttpd，避免 80/443 端口冲突并启用 HTTP/2 + Brotli + 反向代理
+# CONFIG_PACKAGE_luci is not set
+# CONFIG_PACKAGE_luci-light is not set
+# CONFIG_PACKAGE_uhttpd is not set
+# CONFIG_PACKAGE_uhttpd-mod-ubus is not set
+CONFIG_PACKAGE_luci-nginx=y
 CONFIG_PACKAGE_luci-base=y
 CONFIG_PACKAGE_luci-compat=y
 CONFIG_PACKAGE_luci-mod-admin-full=y
