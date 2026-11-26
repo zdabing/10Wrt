@@ -19,10 +19,13 @@ MARKER="# mijia-guard"
 
 log(){ echo "$(date '+%F %T') $*" >> "$LOG"; }
 
+wan_dev(){ ubus -t 2 call network.interface.wan status 2>/dev/null | jsonfilter -e '@.l3_device' 2>/dev/null; }
+
 wait_wan(){
 	n=0
 	while [ $n -lt 20 ]; do
-		ping -c1 -W2 "$RESOLVER" >/dev/null 2>&1 && return 0
+		WAN_DEV=$(wan_dev)
+		ping ${WAN_DEV:+-I "$WAN_DEV"} -c1 -W2 "$RESOLVER" >/dev/null 2>&1 && return 0
 		n=$((n+1)); sleep 3
 	done
 	return 1
@@ -31,6 +34,7 @@ wait_wan(){
 in_list(){ case " $1 " in *" $2 "*) return 0;; *) return 1;; esac; }
 
 wait_wan || { log "WARN wan not ready, skip"; exit 1; }
+WAN_DEV=$(wan_dev)
 
 # ---- 1. 收集候选IP: 种子 + 外部DNS解析
 CAND=""
@@ -44,9 +48,9 @@ done
 # ---- 2. 体检
 GOOD=""; BAD80=""; DEAD=""
 for ip in $CAND; do
-	if curl -m 2 -s -o /dev/null "http://$ip/"; then
+	if curl --noproxy '*' ${WAN_DEV:+--interface "$WAN_DEV"} -m 2 -s -o /dev/null "http://$ip/"; then
 		GOOD="$GOOD $ip"
-	elif curl -m 2 -sk -o /dev/null "https://$ip/"; then
+	elif curl --noproxy '*' ${WAN_DEV:+--interface "$WAN_DEV"} -m 2 -sk -o /dev/null "https://$ip/"; then
 		BAD80="$BAD80 $ip"
 	else
 		DEAD="$DEAD $ip"
@@ -69,7 +73,7 @@ fi
 if [ -n "$PIN_BLOCK" ]; then
 	if [ "$(cat $STATE_PINS 2>/dev/null)" != "$PIN_BLOCK" ]; then
 		sed -i "\@$MARKER@d" /etc/hosts
-		printf '%s\n' "$PIN_BLOCK" >> /etc/hosts
+		printf '%s' "$PIN_BLOCK" >> /etc/hosts
 		printf '%s' "$PIN_BLOCK" > $STATE_PINS
 		/etc/init.d/dnsmasq restart >/dev/null 2>&1
 		log "hosts pinned: $TGT $(echo $GOOD | awk '{print $2}') -> $PIN_DOMAINS"
